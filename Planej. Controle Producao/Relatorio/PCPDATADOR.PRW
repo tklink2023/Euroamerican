@@ -171,14 +171,14 @@ Static Function RunProc()
 			cFabrica := Substr((cAlias)->C2_DATPRF,7,2)+"/"+Substr((cAlias)->C2_DATPRF,5,2)+"/"+Substr((cAlias)->C2_DATPRF,1,4)
 			cValida := Substr((cAlias)->C2_XDTVALI,7,2)+"/"+Substr((cAlias)->C2_XDTVALI,5,2)+"/"+Substr((cAlias)->C2_XDTVALI,1,4)
           
-			cMsg +=	Alltrim((cAlias)->B1_DESC) 		+	TAB //";"			
-			cMsg +=	Alltrim((cAlias)->C2_PRODUTO) 	+  TAB	
-			cMsg += Alltrim((cAlias)->C2_NUM)   	+	TAB	
-			cMsg += cFabrica      					+	TAB		
-			cMsg += cValida	 						+ 	TAB		
-			cMsg += Alltrim((cAlias)->B1_CODBAR) 	+ 	TAB		
-			cMsg += (cAlias)->B1_U_UMETQ 			+	TAB
-			cMsg +=	alltrim((cAlias)->C2_PRODUTO) 	+	cEof	
+			cMsg +=	Alltrim(FWNoAccent((cAlias)->B1_DESC)) 	+	TAB //";"			FWNoAccent(cFrase)
+			cMsg +=	Alltrim((cAlias)->C2_PRODUTO) 			+   TAB	
+			cMsg += Alltrim((cAlias)->C2_NUM)   			+	TAB	
+			cMsg += cFabrica      							+	TAB		
+			cMsg += cValida	 								+ 	TAB		
+			cMsg += Alltrim((cAlias)->B1_CODBAR) 			+ 	TAB		
+			cMsg += (cAlias)->B1_U_UMETQ 					+	TAB
+			cMsg +=	alltrim((cAlias)->C2_PRODUTO) 			+	cEof	
 			oFWriter:Write(cMsg)
 		Endif	
 		(cAlias)->(dbskip())
