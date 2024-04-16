@@ -20,11 +20,11 @@
 #Define NCOLN03     090
 
 
-#Define NFAXN01     080
-#Define NFAXN02     125
-#Define NFAXN03     210
-#Define NFAXN04     310
-#Define NFAXN05     410
+#Define NFAXN01     130
+#Define NFAXN02     180
+#Define NFAXN03     260
+#Define NFAXN04     350
+#Define NFAXN05     450
 
 #Define NCOLBX1     100 
 #Define NCOLBX2     310 
@@ -69,6 +69,7 @@ User Function PCPR280()
     Private nLinQB    := 0
     Private lAssina   := .T.
     Private nPag      := 0
+    Private lQuadro   := .T.
 
     // Fontes para impressao grafica
     Private oFont06  := TFont():New( "Courier New",, 06,,.F.) 
@@ -183,6 +184,7 @@ Static Function ExecRun(oSay)
         if cNumeroOP <> (cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN
            // Imprime as linha de colunas
            if !Empty(cNumeroOP)      
+                 nLinha:=FGeraLinhas(nLinha)
                  ImpColunas(TipoRecurso,nlinha-10)
            Endif
             // Imprime o quadro de assinaturas
@@ -224,16 +226,16 @@ Static Function ExecRun(oSay)
         // Impressao dos detalhes
         if TipoRecurso $ "10#20#40"
             aDados := {(cAlias)->C2_FILIAL,(cAlias)->C2_NUM,(cAlias)->C2_ITEM,(cAlias)->C2_SEQUEN,(cAlias)->C2_PRODUTO,(cAlias)->C2_ORDSEP,(cAlias)->C2_QUANT,(cAlias)->C2_UM,(cAlias)->C2_REVISAO}
-            oPrn:say(nLinha, NCOLN01, (cAlias)->D4_TRT,oFont07,,CLR_BLACK)   
-            oPrn:say(nLinha, NCOLN02, (cAlias)->D4_COD,oFont07,,CLR_BLACK)           
-            oPrn:say(nLinha, NCOLN03, Transform((cAlias)->D4_QTDEORI,"@E 9999999.99"),oFont07,,CLR_BLACK) 
+            oPrn:say(nLinha, NCOLN01, (cAlias)->D4_TRT,oFont09n,,CLR_BLACK)   
+            oPrn:say(nLinha, NCOLN02, (cAlias)->D4_COD,oFont09n,,CLR_BLACK)           
+            oPrn:say(nLinha, NFAXN01+5, Transform((cAlias)->D4_QTDEORI,"@E 9999999.99"),oFont09n,,CLR_BLACK) 
         endif
         if TipoRecurso $ "50"
-            oPrn:say(nLinha, NMINCOL+10,Transform((cAlias)->C2_ITEM,"@R 99"),oFont07,,CLR_BLACK)   
-            oPrn:say(nLinha, NCOLSEQ+05, (cAlias)->D4_TRT,oFont07,,CLR_BLACK) 
-            oPrn:say(nLinha, NCOLSEQ+20, (cAlias)->D4_COD,oFont07,,CLR_BLACK) 
-            oPrn:say(nLinha, NCOL501+05, Posicione("SB1",1,xFilial("SB1")+(cAlias)->D4_COD,"B1_DESC"),oFont07,,CLR_BLACK)                         
-            oPrn:say(nLinha, NCOL502+05,Transform((cAlias)->D4_QTDEORI,"@E 9999999.99"),oFont07,,CLR_BLACK) 
+            oPrn:say(nLinha, NMINCOL+10,Transform((cAlias)->C2_ITEM,"@R 99"),oFont09n,,CLR_BLACK)   
+            oPrn:say(nLinha, NCOLSEQ+05, (cAlias)->D4_TRT,oFont09n,,CLR_BLACK) 
+            oPrn:say(nLinha, NCOLSEQ+20, (cAlias)->D4_COD,oFont09n,,CLR_BLACK) 
+            oPrn:say(nLinha, NCOL501+05, Posicione("SB1",1,xFilial("SB1")+(cAlias)->D4_COD,"B1_DESC"),oFont09n,,CLR_BLACK)                         
+            oPrn:say(nLinha, NCOL502+05,Transform((cAlias)->D4_QTDEORI,"@E 9999999.99"),oFont09n,,CLR_BLACK) 
         endif
         
         nLinha := nLinha + 10
@@ -243,6 +245,7 @@ Static Function ExecRun(oSay)
         (cAlias)->( dbSkip() )      
     EndDo
      // impressão das colunas
+     nLinha:=FGeraLinhas(nLinha)
      ImpColunas(TipoRecurso,nlinha-10)
      
     // Impressao do quadro de Resumo de Analise
@@ -292,27 +295,37 @@ User Function PrnCabec()
 
     nLintopCabec := nLintopCabec + 10
     oPrn:SayBitmap(nLintopCabec ,nColtopCabec+10,GetSrvProfString("Startpath","")+LogoCabec,55,17)
-    oPrn:SayAlign(nLintopCabec  ,nColtopCabec+50, cTxtCabec, oFont12n, 240, 20, COR_CINZA, PAD_CENTER, 0)    
+    if lQuadro
+        oPrn:SayAlign(nLintopCabec  ,nColtopCabec+50, cTxtCabec, oFont12n, 240, 20, CLR_BLACK, PAD_CENTER, 0)    
+    else
+         oPrn:SayAlign(nLintopCabec  ,NCOLES2, cTxtCabec, oFont12n, 240, 20, CLR_BLACK, PAD_CENTER, 0)    
+    endif        
 
     nLintopCabec := nLintopCabec + 35
     oPrn:Say(nLintopCabec,nColtopCabec+05,"LOTE:",oFont07n,,CLR_BLACK) 
     oPrn:Say(nLintopCabec,nColtopCabec+55,cNumOP+"."+cItem+"."+cSequen,oFont07n,,CLR_BLACK) 
     oPrn:Say(nLintopCabec,nColtopCabec+155,"ORDEM SEP:",oFont07n,,CLR_BLACK) 
-    oPrn:Say(nLintopCabec,nColtopCabec+200,cOpsepara,oFont07,,CLR_BLACK) 
-    oPrn:Say(nLintopCabec,nColtopCabec+310,"Pag: "+Transform(nPag,"@R 999"),oFont07n,,CLR_BLACK) 
+    oPrn:Say(nLintopCabec,nColtopCabec+200,cOpsepara,oFont07n,,CLR_BLACK) 
+    if lQuadro
+            oPrn:Say(nLintopCabec,nColtopCabec+310,"Pag: "+Transform(nPag,"@R 999"),oFont07n,,CLR_BLACK) 
+    else
+            oPrn:Say(nLintopCabec,nColtopCabec+480,"Pag: "+Transform(nPag,"@R 999"),oFont07n,,CLR_BLACK) 
+    endif            
 
     nLintopCabec := nLintopCabec + 10
     oPrn:Say(nLintopCabec,nColtopCabec+05,"PRODUTO:",oFont07n,,CLR_BLACK) 
-    oPrn:Say(nLintopCabec,nColtopCabec+55,cProduto+" "+cDescr,oFont07,,CLR_BLACK) 
+    oPrn:Say(nLintopCabec,nColtopCabec+55,cProduto+" "+cDescr,oFont07n,,CLR_BLACK) 
        
     nLintopCabec := nLintopCabec + 10
     oPrn:Say(nLintopCabec,nColtopCabec+05,"QTDE PREV:",oFont07n,,CLR_BLACK) 
-    oPrn:Say(nLintopCabec,nColtopCabec+55,Transform(cQuant,"@E 999999.999999"),oFont07,,CLR_BLACK)     
+    oPrn:Say(nLintopCabec,nColtopCabec+55,Transform(cQuant,"@E 999999.999999"),oFont07n,,CLR_BLACK)     
     oPrn:Say(nLintopCabec,nColtopCabec+155,cUM,oFont07,,CLR_BLACK)  
     oPrn:Say(nLintopCabec,nColtopCabec+230,"QTDE REAL: _____________________",oFont07n,,CLR_BLACK)  
     oPrn:Say(nLintopCabec+5,nColtopCabec+480,"Rev:"+cRevisao,oFont07n,,CLR_BLACK) 
-
-    Quadro02()
+    if lQuadro
+        Quadro02()
+        lQuadro := .F.
+    endif   
     nLintopCabec := nLintopCabec + 10
     oPrn:Line( nLintopCabec, nColtopCabec, nLintopCabec, nColBtCabec)
     nLintopCabec := nLintopCabec + 10
@@ -386,21 +399,21 @@ User Function PrnOperac()
        QbTexto2 :=  Substr(cInstrucao,at(".",cInstrucao)+1,100 )
     Endif
 
-    oPrn:say(nLintopCabec, nColtopCabec+50,  cOper       ,oFont07,,CLR_BLACK)  
-    oPrn:say(nLintopCabec, nColtopCabec+80,  cDescr      ,oFont07,,CLR_BLACK)  
+    oPrn:say(nLintopCabec, nColtopCabec+50,  cOper       ,oFont07n,,CLR_BLACK)  
+    oPrn:say(nLintopCabec, nColtopCabec+80,  cDescr      ,oFont07n,,CLR_BLACK)  
 
     if Empty(QbTexto1)
-        oPrn:say(nLintopCabec, nColtopCabec+150, cInstrucao  ,oFont07,,CLR_BLACK) 
-        oPrn:say(nLintopCabec, nColtopCabec+380, "Seq Inical ",oFont07,,CLR_BLACK)  
-        oPrn:say(nLintopCabec, nColtopCabec+410, transform(cSeqInicio,"@E 999"),oFont07,,CLR_BLACK)  
-        oPrn:say(nLintopCabec, nColtopCabec+450, "Seq Final ",oFont07,,CLR_BLACK)  
-        oPrn:say(nLintopCabec, nColtopCabec+480, transform(cSeqFinal,"@E 999"),oFont07,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+150, cInstrucao  ,oFont07n,,CLR_BLACK) 
+        oPrn:say(nLintopCabec, nColtopCabec+380, "Seq Inical ",oFont07n,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+410, transform(cSeqInicio,"@E 999"),oFont07n,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+450, "Seq Final ",oFont07n,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+480, transform(cSeqFinal,"@E 999"),oFont07n,,CLR_BLACK)  
     else
-        oPrn:say(nLintopCabec, nColtopCabec+150, QbTexto1  ,oFont07,,CLR_BLACK) 
-        oPrn:say(nLintopCabec, nColtopCabec+380, "Seq Inical ",oFont07,,CLR_BLACK)  
-        oPrn:say(nLintopCabec, nColtopCabec+410, transform(cSeqInicio,"@E 999"),oFont07,,CLR_BLACK)  
-        oPrn:say(nLintopCabec, nColtopCabec+450, "Seq Final ",oFont07,,CLR_BLACK)  
-        oPrn:say(nLintopCabec, nColtopCabec+480, transform(cSeqFinal,"@E 999"),oFont07,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+150, QbTexto1  ,oFont07n,,CLR_BLACK) 
+        oPrn:say(nLintopCabec, nColtopCabec+380, "Seq Inical ",oFont07n,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+410, transform(cSeqInicio,"@E 999"),oFont07n,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+450, "Seq Final ",oFont07n,,CLR_BLACK)  
+        oPrn:say(nLintopCabec, nColtopCabec+480, transform(cSeqFinal,"@E 999"),oFont07n,,CLR_BLACK)  
         nLintopCabec := nLintopCabec + 10
         oPrn:say(nLintopCabec, nColtopCabec+150, QbTexto2  ,oFont07,,CLR_BLACK) 
     Endif
@@ -411,13 +424,15 @@ User Function PrnOperac()
     nLintopCabec := nLintopCabec + 10    
     // Cabeçalhos das colunas
     IF cOper $ "10#20#40"
-            oPrn:say(nLintopCabec, NMINCOL+5    , "TRT"         ,oFont07n,,CLR_BLACK)  
-            oPrn:say(nLintopCabec, NMINCOL+25   , "CODIGO"      ,oFont07n,,CLR_BLACK) 
-            oPrn:say(nLintopCabec, NMINCOL+65   , "FORMULA"     ,oFont07n,,CLR_BLACK)   
-            oPrn:say(nLintopCabec, NMINCOL+120  , "ALTERACAO LAB",oFont07n,,CLR_BLACK)   
-            oPrn:say(nLintopCabec, NMINCOL+220  , "PRODUCAO"    ,oFont07n,,CLR_BLACK)   
-            oPrn:say(nLintopCabec, NMINCOL+330  , "LOTE"        ,oFont07n,,CLR_BLACK)   
-            oPrn:say(nLintopCabec, NMINCOL+400  , "EXTRA FORMULA",oFont07n,,CLR_BLACK)              
+
+            oPrn:say(nLintopCabec, NMINCOL+5    ,"TRT"             ,oFont07n,,CLR_BLACK)  
+            oPrn:say(nLintopCabec, NMINCOL+25   ,"Codigo"          ,oFont07n,,CLR_BLACK) 
+            oPrn:say(nLintopCabec, NFAXN01+5    ,"Qtde Prev."      ,oFont07n,,CLR_BLACK)   
+            oPrn:say(nLintopCabec, NFAXN02+10   ,"ALteração P&D"   ,oFont07n,,CLR_BLACK)   
+            oPrn:say(nLintopCabec, NFAXN03+20   ,"Producao"        ,oFont07n,,CLR_BLACK)   
+            oPrn:say(nLintopCabec, NFAXN04+40   ,"Lote"            ,oFont07n,,CLR_BLACK)   
+            oPrn:say(nLintopCabec, NFAXN05+15   ,"Extra Formula"   ,oFont07n,,CLR_BLACK)              
+
             nLintopCabec := nLintopCabec + 10
             oPrn:Line( nLintopCabec, nColtopCabec, nLintopCabec, nColBtCabec)
             nLintopCabec := nLintopCabec + 10
@@ -460,6 +475,9 @@ User Function Analisy()
     Local cLimite       := " "
     Local cEnsaio       := " "
     Local nLinInicio    := 0  
+    Local nLinFinal     := 0
+    Local cQtLinhas     := 4
+    Local AB
     Local ctmp    := 'TMP' + getNextAlias()
 
     cQuery := "SELECT QPJ_ITEM, QPJ_ENSAIO, QPJ_DUNMED, " + CRLF
@@ -489,8 +507,8 @@ User Function Analisy()
         nLin:= ExecBlock("PrnCabec",.F.,.F.,aParam2)
     Endif
 
-    nLin := nLin + 10
-    oPrn:Line( nLin, NMINCOL, nLin, nTamLinha) 
+    //nLin := nLin + 10
+    //oPrn:Line( nLin, NMINCOL, nLin, nTamLinha) 
     nLin := nLin + 10
     oPrn:say(nLin, NCOLES3+5  , "RESULTADOS DE ANALISE"        ,oFont07n,,CLR_BLACK)  
     nLin := nLin + 10
@@ -519,22 +537,65 @@ User Function Analisy()
 		cEnsaio := Upper(Subs(cEnsaio, 1, 1)) + Subs(cEnsaio, 2, 50)
 		cEnsaio := Padr(cEnsaio, 20)
 
-        oPrn:say(nLin, NCOLES1+10,cEnsaio,oFont07n,,CLR_BLACK)   
-        oPrn:say(nLin, NCOLES2+05, cLimite,oFont07n,,CLR_BLACK)   
+        oPrn:say(nLin, NCOLES1+10,cEnsaio,oFont09n,,CLR_BLACK)   
+        oPrn:say(nLin, NCOLES2+05, cLimite,oFont09n,,CLR_BLACK)   
 
         nLin := nLin+10
         oPrn:Line( nLin, NMINCOL, nLin, nTamLinha) 
+        nLinFinal := nLin
         nLin := nLin+10
         (cTmp)->( DbSkip())
         
    End    
+
+    FOR AB:=1 TO cQtLinhas    
+        nLin := nLin+10
+        oPrn:Line( nLin, NMINCOL, nLin, nTamLinha) 
+        nLinFinal := nLin
+        nLin := nLin+10
+    NEXT
+    
     oPrn:Line( nLinInicio, NCOLES1, nLin-10, NCOLES1) 
     oPrn:Line( nLinInicio, NCOLES2, nLin-10, NCOLES2)  
     oPrn:Line( nLinInicio, NCOLES3, nLin-10, NCOLES3)  
     oPrn:Line( nLinInicio, NCOLES4, nLin-10, NCOLES4) 
     oPrn:Line( nLinInicio, NCOLES5, nLin-10, NCOLES5)   
-    oPrn:Line( nLinInicio, NCOLES6, nLin-10, NCOLES6)        
+    oPrn:Line( nLinInicio, NCOLES6, nLin-10, NCOLES6)     
+    Assinat02(nLinFinal)
+
 Return
+/*/{Protheus.doc} Assinat02
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 16/04/2024
+@param nLinha, numeric, param_description
+@return variant, return_description
+/*/
+Static Function Assinat02(nLinFinal)
+     Local nLin := nLinFinal
+     LOCAL cData1 := "Data Inicio:"
+     LOCAL cData2 := "Data Final:"
+     LOCAL cExtenso := "       /           /      "
+     Local cAnalResp:= "Analista Resp:"
+     Local cSuper := "Supervisor"
+     nLin := nLin+10
+     oPrn:say(nLin, NCOLES1+10,cData1,oFont09n,,CLR_BLACK) 
+     oPrn:say(nLin, NCOLES2+10,cExtenso,oFont09n,,CLR_BLACK) 
+     oPrn:say(nLin, NCOLES3+05,cAnalResp,oFont09n,,CLR_BLACK) 
+     nLin := nLin+10
+     oPrn:Line( nLin, NMINCOL, nLin, nTamLinha) 
+     nLin := nLin+10
+     oPrn:say(nLin, NCOLES1+10,cData2,oFont09n,,CLR_BLACK) 
+     oPrn:say(nLin, NCOLES2+10,cExtenso,oFont09n,,CLR_BLACK) 
+     oPrn:say(nLin, NCOLES3+05,cSuper,oFont09n,,CLR_BLACK) 
+     nLin := nLin+10
+     oPrn:Line( nLin, NMINCOL, nLin, nTamLinha)     
+     oPrn:Line( nLinFinal, NCOLES2, nLin, NCOLES2) 
+     oPrn:Line( nLinFinal, NCOLES3, nLin, NCOLES3)
+     oPrn:Line( nLinFinal, NCOLES4, nLin, NCOLES4)
+Return(nLin)
 
 /*/{Protheus.doc} ImpColunas
 description Impressao das colunas no formulario
@@ -574,6 +635,7 @@ description Impressao do Quadro de assinatura
 /*/
 Static Function Fassinatura(nLinha)
     Local nPrLin := nLinha + 10
+
      nLinha := nPrLin
      oPrn:Box(nLinha,NCOLBX1,nLinha+100,nTamLinha-10)
 
@@ -612,6 +674,27 @@ Static Function Fassinatura(nLinha)
      oPrn:Line( nPrLin, NCOLBX2, nLinha-20, NCOLBX2) 
 
 Return
+/*/{Protheus.doc} FGeraLinhas
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 16/04/2024
+@param nLinhas, numeric, param_description
+@return variant, return_description
+/*/
+Static Function FGeraLinhas(nLinhas)
+  Local nQtLin := 4
+  Local AB
+  Local nLin := nLinhas
+
+  FOR AB:=1 TO nQtLin
+     nLin := nLin + 10
+     oPrn:Line( nLin, NMINCOL, nLin, nTamLinha,,"-4")
+     nLin := nLin + 10
+   NEXT
+
+Return(nLin)
 // ==============================================================================================================================================//
 // FIM - Paulo Lenzi - 12/04/2024 Programa PCPR280 - Novo LayOut para Ordem de Producao
 //===============================================================================================================================================//
