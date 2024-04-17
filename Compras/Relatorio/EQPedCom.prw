@@ -701,6 +701,7 @@ Local cCco		:= ""
 Local cSubject  := cAssunto
 Local cBody		:= cMensagem
 Local cAnexo    := cPathDest + cRelName
+Local cEmailUsr := IIF(UsrExist(SC7->C7_USER),Alltrim(UsrRetMail(SC7->C7_USER)),cPara) // Alterado por Paulo Lenzi 17/04/2024
 
 IF lRh
 	SC7->( RestArea( aAreaSC7 ) )
@@ -710,7 +711,7 @@ Endif
 
 conout("*********************************************************************************")
 conout("## WF-ENVIO PC: (EQOrdPro)")
-conout("## MV_BE_PCEM.: "+alltrim(cPara))
+conout("## MV_BE_PCEM.: "+alltrim(cEmailUsr))
 conout("## INICIO.....: "+dtoc(dDatabase)+" as "+time() )
 conout("*********************************************************************************")
 
@@ -782,7 +783,7 @@ CONNECT SMTP SERVER cSrvMail ACCOUNT cUserAut PASSWORD cPassAut TIMEOUT 60 RESUL
 If (lOk)
 	MAILAUTH(cUserAut, cPassAut)
 
-	SEND MAIL FROM cDe TO cPara ;
+	SEND MAIL FROM cDe TO cEmailUsr ;
 	BCC cCco ;
 	CC cCc ;
 	SUBJECT cSubject ;
