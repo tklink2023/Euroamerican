@@ -50,7 +50,7 @@ description Programa de Impressão do novo layout de Ordem de Producao
 @since 12/04/2024
 @return variant, return_description
 /*/
-User Function PCPR280()
+User Function PCPR280(cOpenvio)
     Local cArea     := FwGetArea()
     Local aRet      := {}
     Local aPergs    := {}
@@ -91,6 +91,9 @@ User Function PCPR280()
 	Private oFontC7  := TFont():New( "Courier New",, 08,,.F.)
 	Private oFontCAn := TFont():New( "Courier New",, 16,,.T.)
 	Private oFontC10n:= TFont():New( "Courier New",, 10,,.T.)  
+    if !Empty(cOpenvio)
+        cNumOp := alltrim(cOpenvio)
+    Endif
 
     aAdd( aPergs ,{1,"Numero da OP"		, cNumOp   		, PesqPict("SC2", "C2_NUM"),'.T.',"SC2"   	,'.T.'	,50, .T.})
 
