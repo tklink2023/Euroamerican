@@ -8,6 +8,8 @@
 @type function
 /*/
 User Function mta650mnu()
+    Local cArea := FwGetArea()
+	Local cPosMn:= GetMv("ES_POSMENU")
 
 	aAdd(aRotina, {"Impressão de Etiqueta"	, "U_REST002" , 0, 2, Nil})
 	aAdd(aRotina, {"Revalidação de Etiqueta", "U_QEETQREV" , 0, 2, Nil})
@@ -16,7 +18,17 @@ User Function mta650mnu()
 	aAdd(aRotina, {"Etiq. Kits"           	, "U_QETIQ002", 0, 2, Nil})
 	aAdd(aRotina, {"Etiqueta HENKEL"      	, "U_EQEtHenk", 0, 2, Nil})
 	aAdd(aRotina, {"Mod Ant. Ordem Prd"   	, "U_EQNewOP2( SC2->C2_NUM )", 0, 2, Nil})
-	aAdd(aRotina, {"Mod Novo Ordem Prd"   	, "U_EQNewOP3( SC2->C2_NUM )", 0, 2, Nil})
+
+    if cPosMn = '1'
+	   aAdd(aRotina, {"Mod Novo Ordem Prd"   	, "U_EQNewOP3( SC2->C2_NUM )", 0, 2, Nil})
+	elseif cPosMn = '2'   
+       aAdd(aRotina, {"Novo Layout OP"      	, "U_PCPR280( SC2->C2_NUM )", 0, 2, Nil})
+	else
+       aAdd(aRotina, {"Mod Novo Ordem Prd"   	, "U_EQNewOP3( SC2->C2_NUM )", 0, 2, Nil})
+	   aAdd(aRotina, {"Novo Layout OP"      	, "U_PCPR280( SC2->C2_NUM )", 0, 2, Nil})
+	endif	   
+
     aAdd(aRotina, {"Arquivo Datador"   		, "U_MT650DATA( SC2->C2_NUM,SC2->C2_ITEM,SC2->C2_SEQUEN,SC2->C2_PRODUTO,SC2->C2_LOCAL)", 0, 2, Nil})
-	aAdd(aRotina, {"Ordem de Producao"   	, "U_PCPR280( SC2->C2_NUM )", 0, 2, Nil})
+
+	FwRestArea(cArea)
 Return
