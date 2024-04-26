@@ -1,6 +1,15 @@
 #Include 'Protheus.ch'
+/*/{Protheus.doc} A140IGRV
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 26/04/2024
+@return variant, return_description
+/*/
 User Function A140IGRV()
     Local cArea  := FwGetArea()
+
     Local cNota  := Paramixb[1]
     Local cSerie := Paramixb[2]
     Local cfornec:=Paramixb[3]
@@ -9,30 +18,53 @@ User Function A140IGRV()
     Local cQuery := ""
     Local cFilOp := cFilant
 
-    if cFilOp <> '1001'
-       FwRestArea(cArea)
-       Return
-    Endif
+    if cFilOp = '1001'
+   
+        cQuery:= "UPDATE "+RetSQLName("SDT")+" SET DT_LOTE = SD2.D2_LOTECTL , DT_DTVALID = SD2.D2_DTVALID "
+        cQuery+= "FROM "+RetSQLName("SDT")+" SDT "
+        cQuery+= "INNER JOIN "+RetSQLName("SD2")+" SD2 ON SD2.D2_FILIAL = '0803' AND SD2.D2_DOC = DT_DOC AND SD2.D2_COD = DT_PRODFOR AND SUBSTRING(DT_ITEM,3,2) = SD2.D2_ITEM AND SD2.D_E_L_E_T_ = ' ' "
+        cQuery+= "Where SDT.D_E_L_E_T_ = ' ' "
+        cQuery+= "AND DT_FILIAL = '"+xFilial("SDT")+"' "
+        cQuery+= "AND DT_DOC = '"+cNota+"' "
+        cQuery+= "AND DT_SERIE = '"+cSerie+"' "
+        cQuery+= "AND DT_FORNEC = '"+cfornec+"' "
+        cQuery+= "AND DT_LOJA = '"+cLoja+"' "
+        nRet := TCSQLExec(cQuery)
+    
+        If(nRet < 0 )
+            Conout("Erro na execução da query:"+TcSqlError(), "Atenção")
+        EndIf    
+    endif   
 
-    cQuery:= "UPDATE "+RetSQLName("SDT")+" SET DT_LOTE = SD2.D2_LOTECTL , DT_DTVALID = SD2.D2_DTVALID "
-    cQuery+= "FROM "+RetSQLName("SDT")+" SDT "
-    cQuery+= "INNER JOIN "+RetSQLName("SD2")+" SD2 ON SD2.D2_FILIAL = '0803' AND SD2.D2_DOC = DT_DOC AND SD2.D2_COD = DT_PRODFOR AND SUBSTRING(DT_ITEM,3,2) = SD2.D2_ITEM AND SD2.D_E_L_E_T_ = ' ' "
-    cQuery+= "Where SDT.D_E_L_E_T_ = ' ' "
-    cQuery+= "AND DT_FILIAL = '"+xFilial("SDT")+"' "
-    cQuery+= "AND DT_DOC = '"+cNota+"' "
-    cQuery+= "AND DT_SERIE = '"+cSerie+"' "
-    cQuery+= "AND DT_FORNEC = '"+cfornec+"' "
-    cQuery+= "AND DT_LOJA = '"+cLoja+"' "
-    nRet := TCSQLExec(cQuery)
- 
-    If(nRet < 0 )
-        Conout("Erro na execução da query:"+TcSqlError(), "Atenção")
-    EndIf    
+   if cFilOp = '0902'
+   
+        cQuery:= "UPDATE "+RetSQLName("SDT")+" SET DT_LOTE = SD2.D2_LOTECTL , DT_DTVALID = SD2.D2_DTVALID "
+        cQuery+= "FROM "+RetSQLName("SDT")+" SDT "
+        cQuery+= "INNER JOIN "+RetSQLName("SD2")+" SD2 ON SD2.D2_FILIAL = '0200' AND SD2.D2_DOC = DT_DOC AND SD2.D2_COD = DT_PRODFOR AND SUBSTRING(DT_ITEM,3,2) = SD2.D2_ITEM AND SD2.D_E_L_E_T_ = ' ' "
+        cQuery+= "Where SDT.D_E_L_E_T_ = ' ' "
+        cQuery+= "AND DT_FILIAL = '"+xFilial("SDT")+"' "
+        cQuery+= "AND DT_DOC = '"+cNota+"' "
+        cQuery+= "AND DT_SERIE = '"+cSerie+"' "
+        cQuery+= "AND DT_FORNEC = '"+cfornec+"' "
+        cQuery+= "AND DT_LOJA = '"+cLoja+"' "
+        nRet := TCSQLExec(cQuery)
+    
+        If(nRet < 0 )
+            Conout("Erro na execução da query:"+TcSqlError(), "Atenção")
+        EndIf    
+    endif    
 
     FwRestArea(cArea)
 Return
 
-
+/*/{Protheus.doc} COLSTTS
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 26/04/2024
+@return variant, return_description
+/*/
 User Function COLSTTS()
     Local cArea  := FwGetArea()
     Local cNota  := SDS->DS_DOC

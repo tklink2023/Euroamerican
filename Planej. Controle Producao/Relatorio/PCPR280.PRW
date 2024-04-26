@@ -56,10 +56,12 @@ User Function PCPR280(cOpenvio)
     Local aPergs    := {}
     Local oSay      := Nil
 
-    Local cNumOp    := Space(TamSX3("C2_NUM")[01])
-
+    Local cNumOpDE    := Space(11)
+    Local cNumOpATE    := Space(11)
     // Variaveis principais do relatorio
-    Private nNumOp  := Space(TamSX3("C2_NUM")[01])
+    Private nNumOpde  := Space(11)
+    Private nNumOpate := Space(11)
+
     Private cArqPrn := "OP_Print_" + dToS(dDataBase) + "_" + StrTran(Time(), ':', '-')
     Private cAlias  := 'Qry' + getNextAlias()
     Private oPrn as object
@@ -92,13 +94,16 @@ User Function PCPR280(cOpenvio)
 	Private oFontCAn := TFont():New( "Courier New",, 16,,.T.)
 	Private oFontC10n:= TFont():New( "Courier New",, 10,,.T.)  
     if !Empty(cOpenvio)
-        cNumOp := alltrim(cOpenvio)
+        cNumOpDE  := alltrim(cOpenvio)
+        cNumOpATE := alltrim(cOpenvio)
     Endif
 
-    aAdd( aPergs ,{1,"Numero da OP"		, cNumOp   		, PesqPict("SC2", "C2_NUM"),'.T.',"SC2"   	,'.T.'	,50, .T.})
+    aAdd( aPergs ,{1,"Numero da OP de"		, cNumOpde   		, ,'.T.',"SC2"   	,'.T.'	,50, .T.})
+    aAdd( aPergs ,{1,"Numero da OP ate"		, cNumOpate   		, ,'.T.',"SC2"   	,'.T.'	,50, .T.})
 
 	If ParamBox(aPergs ,"Parametros do Relatorio",aRet)     
-		nNumOp := aRet[1]
+		nNumOpde  := aRet[1]
+        nNumOpate := aRet[2]
         FWMsgRun(, {|oSay| ExecRun(oSay) }, "Processando", "Buscando informações")
 	Else
 		MsgAlert("Encerrado")
@@ -137,7 +142,7 @@ Static Function ExecRun(oSay)
     cQuery+="LEFT JOIN  " + RetSqlName("SZ0") + " SZ0 ON Z0_PRODUTO = G2_PRODUTO AND  Z0_OPERAC = G2_OPERAC AND SZ0.D_E_L_E_T_ = ' ' "+CRLF
     cQuery+="Where SC2.D_E_L_E_T_ = ' ' "+CRLF
     cQuery+="AND C2_FILIAL = '0803' "+CRLF
-    cQuery+="AND C2_NUM  = '"+nNumOp+"' "+CRLF
+    cQuery+="AND C2_NUM+C2_ITEM+C2_SEQUEN  BETWEEN '"+nNumOpDE+"' AND  '"+nNumOpATE+"' "+CRLF
     cQuery+="AND D4_TRT BETWEEN ISNULL(Z0_SEQINI,0) AND ISNULL(Z0_SEQFIN,999) "+CRLF
     cQuery+="ORDER BY C2_NUM, C2_ITEM, C2_SEQUEN, G2_OPERAC,D4_TRT  "+CRLF
     DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)

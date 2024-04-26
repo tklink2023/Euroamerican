@@ -66,7 +66,7 @@ Static Function ReportPrint(oReport)
     cQuery +="		 SB2.B2_CM1 AS CUSTOM,                        "+cEof
     cQuery +="		 SB1.B1_CUSTNET AS CUSTON,                    "+cEof
     cQuery +="		 C2_QUANT AS QUANT,                           "+cEof
-    cQuery +="		 C2_QUJE AS QTDUSA                            "+cEof
+    cQuery +="		 C2_QUJE AS QTDUSA ,                          "+cEof
     cQuery +="		 D4_TRT AS TRT,                               "+cEof
     cQuery +="		 D4_COD AS MATERIAL,                          "+cEof
     cQuery +="		 SB11.B1_DESC AS DESCMAT,                     "+cEof
