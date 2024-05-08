@@ -84,6 +84,7 @@ Static Function ReportPrint(oReport)
     cQuery +="Where SC2.D_E_L_E_T_ = ' ' "+cEof
     cQuery +="AND C2_FILIAL = '"+xFilial("SC2")+"' "+cEof
     cQuery +="AND C2_NUM+C2_ITEM+C2_SEQUEN BETWEEN  '"+MV_PAR01+"'  AND '"+MV_PAR02+"' "+cEof
+    
     cQuery +="ORDER BY D4_TRT,D4_COD "+cEof
 
 
