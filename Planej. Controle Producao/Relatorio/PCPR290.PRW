@@ -31,7 +31,9 @@ Static Function ReportDef()
     oSection1 := TRSection():New(oReport,"",{"cQry01"},aOrdem)
     TRCell():New(oSection1,'FILIAL'			,'cQry01','Filial'     		    	,PesqPict('SC2',"C2_FILIAL")	,TamSX3("C2_FILIAL") [1]+1,,) 	
 	TRCell():New(oSection1,'OP'				,'cQry01','Numero OP'            	,								, 						  ,,) 	
-    TRCell():New(oSection1,'PRODUTO'		,'cQry01','Produto'     	     	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 	
+    TRCell():New(oSection1,'EMISSAO'		,'cQry01','Emissao'     	     	,PesqPict('SC2',"C2_EMISSAO")	,TamSX3("C2_EMISSAO") [1]+1,,) 	
+    TRCell():New(oSection1,'FABRIC'  		,'cQry01','Fabricacao'     	     	,PesqPict('SC2',"C2_EMISSAO")	,TamSX3("C2_EMISSAO") [1]+1,,) 	
+    TRCell():New(oSection1,'PRODUTO'		,'cQry01','Produto'     	     	,PesqPict('SC2',"C2_DATRF")	    ,TamSX3("C2_DATRF") [1]+1,,) 	
     TRCell():New(oSection1,'DESCRIC'		,'cQry01','Descricao'  		    	,PesqPict('SB1',"B1_DESC")		,TamSX3("B1_DESC")    [1]+1,,) 	
     TRCell():New(oSection1,'UM'		    	,'cQry01','UM'     		    	    ,PesqPict('SB1',"B1_UM")		,TamSX3("B1_UM")     [1]+1,,) 	
     TRCell():New(oSection1,'REVISAO'		,'cQry01','Revisao'     		    ,PesqPict('SB1',"B1_REVATU")	,TamSX3("B1_REVATU")    [1]+1,,) 	
@@ -59,6 +61,8 @@ Static Function ReportPrint(oReport)
 
     cQuery :="Select C2_FILIAL AS FILIAL,                         "+cEof
     cQuery +="		 C2_NUM+C2_ITEM+C2_SEQUEN AS OP,              "+cEof
+    cQuery +="		 C2_EMISSAO AS EMISSAO,                       "+cEof
+    cQuery +="		 C2_DATRF   AS FABRIC,                        "+cEof
     cQuery +="		 C2_PRODUTO AS PRODUTO,                       "+cEof
     cQuery +="		 SB1.B1_DESC AS DESCRIC,                      "+cEof
     cQuery +="		 SB1.B1_UM AS UM,                             "+cEof
@@ -84,8 +88,8 @@ Static Function ReportPrint(oReport)
     cQuery +="Where SC2.D_E_L_E_T_ = ' ' "+cEof
     cQuery +="AND C2_FILIAL = '"+xFilial("SC2")+"' "+cEof
     cQuery +="AND C2_NUM+C2_ITEM+C2_SEQUEN BETWEEN  '"+MV_PAR01+"'  AND '"+MV_PAR02+"' "+cEof
-    
-    cQuery +="ORDER BY D4_TRT,D4_COD "+cEof
+    cQuery +="AND C2_EMISSAO BETWEEN  '"+Dtos(MV_PAR03)+"'  AND '"+Dtos(MV_PAR04)+"' "+cEof
+    cQuery +="ORDER BY C2_NUM,C2_ITEM,C2_SEQUEN,D4_TRT,D4_COD "+cEof
 
 
     If  Select("cQry01") > 0
@@ -94,7 +98,8 @@ Static Function ReportPrint(oReport)
     Endif
 
     DBUseArea(.T., "TOPCONN", TCGenQry(NIL,NIL,cQuery), "cQry01" , .F., .T. )
-    //TCSetField("cQry01", "C2_DATRF", "D")
+    TCSetField("cQry01", "EMISSAO", "D")
+    TCSetField("cQry01", "FABRIC", "D")
     
     
     oReport:SetMeter(("cQry01")->(LastRec()))
@@ -106,6 +111,8 @@ Static Function ReportPrint(oReport)
              
         oSection1:Cell("FILIAL"):SetValue(("cQry01")->FILIAL)
         oSection1:Cell("OP"):SetValue(("cQry01")->OP)
+        oSection1:Cell("EMISSAO"):SetValue(("cQry01")->EMISSAO)
+        oSection1:Cell("FABRIC"):SetValue(("cQry01")->FABRIC)
         oSection1:Cell("PRODUTO"):SetValue(("cQry01")->PRODUTO)
         oSection1:Cell("DESCRIC"):SetValue(("cQry01")->DESCRIC)
         oSection1:Cell("UM"):SetValue(("cQry01")->UM)

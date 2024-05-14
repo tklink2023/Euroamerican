@@ -173,6 +173,8 @@ Static Function ExecRun(oSay)
                Loop
             ENDIF
         ENDIF
+         // Ponto para Quebra de Ops.
+         
         // Ponto para Quebra de Linhas
         IF NQBLINHA <= nLinha
             ImpColunas(TipoRecurso,nlinha-10)
