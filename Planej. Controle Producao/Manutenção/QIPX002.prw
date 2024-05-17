@@ -105,7 +105,8 @@ User Function QIPX002V(cAlias, nReg, nOpcX)
 
 Local cLote   := SZD->ZD_LOTE  
 Local cLoteI  := SZD->ZD_LI
-Local cLoteE  := SZD->ZD_LE                                                                                        
+Local cLoteE  := SZD->ZD_LE   
+Local nCntFor := 0                                                                                     
 
 Private aEnchoice := {"ZD_CODANAL", "ZD_ANALIS", "ZD_DTATU", "ZD_LOTE", "ZD_PRODUT", "ZD_DESCRI", "ZD_LI", "ZD_LE", "ZD_DTFABR", "ZD_FORN"}
 Private oGet

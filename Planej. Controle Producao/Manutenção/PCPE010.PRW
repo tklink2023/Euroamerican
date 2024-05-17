@@ -36,12 +36,12 @@ User Function PCPE010()
     bSair   := {|| Iif(MsgYesNo('Deseja realmente sair do gerenciamento?','Gerenciamento'),(oDlgMark:End()),NIL)}
     bGrava  := {|| Iif(MsgYesNo('Grava Revisões?','Atualizar'),(PCPEGRV(),oDlgMark:End()),NIL)} 
 
-    aAdd(aFields,{"TMP_FILIAL"		, GetSx3Cache("G5_FILIAL","X3_TIPO")		,tamSx3("G5_FILIAL")[1]	    ,tamSx3(" G5_FILIAL")[2]})
-    aAdd(aFields,{"TMP_PROD"		, GetSx3Cache("G5_PRODUTO","X3_TIPO")		,tamSx3("G5_PRODUTO")[1]	,tamSx3(" G5_PRODUTO")[2]})
-    aAdd(aFields,{"TMP_DESC"		, GetSx3Cache("B1_DESC","X3_TIPO")		    ,tamSx3("B1_DESC")[1]	    ,tamSx3(" B1_DESC")[2]})
-    aAdd(aFields,{"TMP_REV"	    	, GetSx3Cache("G5_REVISAO","X3_TIPO")		,tamSx3("G5_REVISAO")[1]	,tamSx3(" G5_REVISAO")[2]})
-    aAdd(aFields,{"TMP_REVSTR"	   	, GetSx3Cache("G5_REVISAO","X3_TIPO")		,tamSx3("G5_REVISAO")[1]	,tamSx3(" G5_REVISAO")[2]})
-    aAdd(aFields,{"TMP_FINAL"		, GetSx3Cache("G5_REVISAO","X3_TIPO")		,tamSx3("G5_REVISAO")[1]	,tamSx3(" G5_REVISAO")[2]})
+    aAdd(aFields,{"TMP_FILIAL"		, GetSx3Cache("G5_FILIAL","X3_TIPO")		,tamSx3("G5_FILIAL")[1]	    ,tamSx3("G5_FILIAL")[2]})
+    aAdd(aFields,{"TMP_PROD"		, GetSx3Cache("G5_PRODUTO","X3_TIPO")		,tamSx3("G5_PRODUTO")[1]	,tamSx3("G5_PRODUTO")[2]})
+    aAdd(aFields,{"TMP_DESC"		, GetSx3Cache("B1_DESC","X3_TIPO")		    ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
+    aAdd(aFields,{"TMP_REV"	    	, GetSx3Cache("G5_REVISAO","X3_TIPO")		,tamSx3("G5_REVISAO")[1]	,tamSx3("G5_REVISAO")[2]})
+    aAdd(aFields,{"TMP_REVSTR"	   	, GetSx3Cache("G5_REVISAO","X3_TIPO")		,tamSx3("G5_REVISAO")[1]	,tamSx3("G5_REVISAO")[2]})
+    aAdd(aFields,{"TMP_FINAL"		, GetSx3Cache("G5_REVISAO","X3_TIPO")		,tamSx3("G5_REVISAO")[1]	,tamSx3("G5_REVISAO")[2]})
 
 	oTable:SetFields( aFields )
 	oTable:AddIndex("ind1",{"TMP_FILIAL","TMP_PROD"} )
