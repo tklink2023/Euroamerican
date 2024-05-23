@@ -70,8 +70,9 @@ User Function PCPR280(cOpenvio)
     Private aDados    := {}
     Private nLinQB    := 0
     Private lAssina   := .T.
-    Private nPag      := 0
+    Private nPag      := 1
     Private lQuadro   := .T.
+    Private lTpFolha  := "V"
 
     // Fontes para impressao grafica
     Private oFont06  := TFont():New( "Courier New",, 06,,.F.) 
@@ -124,11 +125,14 @@ description Rotina de execução da Query
 /*/
 Static Function ExecRun(oSay)
     Local cQuery  as character 
-    Local cPatch    := GetTempPath()
-    Local nLinha    := 10
-    Local cNumeroOP := ""
-    Local TipoRecurso := ""
-    Local lAnalisy  := .F.
+    Local cPatch        := GetTempPath()
+    Local nLinha        := 10
+    Local cNumeroOP     := ""
+    Local cNumSC2       := ""
+    Local TipoRecurso   := ""
+    Local cTpRecursos   := GETMV("ES_TPRECUR")
+    Local lAnalisy      := .F.
+
 
     cQuery:="Select DISTINCT "+CRLF
     cQuery+="		C2_FILIAL , C2_NUM, C2_ITEM, C2_SEQUEN, C2_PRODUTO,C2_QUANT, C2_UM, C2_REVISAO,C2_ORDSEP,D4_TRT,D4_COD, D4_QTDEORI,G2_OPERAC, G2_DESCRI,ISNULL(Z0_SEQINI,0) AS Z0_SEQINI,ISNULL(Z0_SEQFIN,999)  AS Z0_SEQFIN,B1_REVATU "+CRLF
@@ -173,8 +177,6 @@ Static Function ExecRun(oSay)
                Loop
             ENDIF
         ENDIF
-         // Ponto para Quebra de Ops.
-         
         // Ponto para Quebra de Linhas
         IF NQBLINHA <= nLinha
             ImpColunas(TipoRecurso,nlinha-10)
@@ -192,32 +194,54 @@ Static Function ExecRun(oSay)
 
         // Ponto de Quebra quando é outra Ordem de Produção
         if cNumeroOP <> (cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN
+
            // Imprime as linha de colunas
            if !Empty(cNumeroOP)      
                  nLinha:=FGeraLinhas(nLinha)
                  ImpColunas(TipoRecurso,nlinha-10)
            Endif
             // Imprime o quadro de assinaturas
-            if !Empty(TipoRecurso) .and. TipoRecurso $ '10#20#40'
+            if !Empty(TipoRecurso) .and. TipoRecurso $ cTpRecursos
                   if lAssina
                        Fassinatura(nLinha)
                        lAssina := .F. 
                    ENDIF
             endif
             // Imprime o quadro de Resumo de analises 
-           if !Empty(TipoRecurso) .and. TipoRecurso $ '10#20#40'
+           if !Empty(TipoRecurso) .and. TipoRecurso $ cTpRecursos
             IF ExistBlock("Analisy")
                 ExecBlock("Analisy",.F.,.F.,aDados)
                 lAnalisy := .T.
             Endif
            Endif
+
+           IF (cAlias)->C2_NUM <> cNumSC2
+              if !Empty(cNumSC2)
+                 lAssina:= .T.
+                 if !Empty(TipoRecurso) .and. TipoRecurso $ cTpRecursos
+                        if lAssina
+                            Fassinatura(nLinha)
+                            lAssina := .F. 
+                        ENDIF
+                 endif
+  				 oPrn:EndPage()
+                 IF lTpFolha = "F"
+                     oPrn:StartPage()
+                     lTpFolha := "V"
+                 ENDIF
+                 nPag := 1
+              endif
+           Endif
+
            // Imprime o Cabecalho
            if ExistBlock("PrnCabec")
-                aParam2 := {(cAlias)->C2_FILIAL,(cAlias)->C2_NUM,(cAlias)->C2_ITEM,(cAlias)->C2_SEQUEN,(cAlias)->C2_PRODUTO,(cAlias)->C2_ORDSEP,(cAlias)->C2_QUANT,(cAlias)->C2_UM,(cAlias)->C2_REVISAO}
-                nLinha:= ExecBlock("PrnCabec",.F.,.F.,aParam2)     
-                TipoRecurso:= ""         
-           Endif
+                    aParam2 := {(cAlias)->C2_FILIAL,(cAlias)->C2_NUM,(cAlias)->C2_ITEM,(cAlias)->C2_SEQUEN,(cAlias)->C2_PRODUTO,(cAlias)->C2_ORDSEP,(cAlias)->C2_QUANT,(cAlias)->C2_UM,(cAlias)->C2_REVISAO}
+                    nLinha:= ExecBlock("PrnCabec",.F.,.F.,aParam2)          
+                   TipoRecurso:= ""         
+           Endif  
+
            cNumeroOP := (cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN
+           cNumSc2   := (cAlias)->C2_NUM
 
         Endif
         // Quebra por tipo de operacao
@@ -234,7 +258,7 @@ Static Function ExecRun(oSay)
         Endif
    
         // Impressao dos detalhes
-        if TipoRecurso $ "10#20#40"
+        if TipoRecurso $ cTpRecursos
             aDados := {(cAlias)->C2_FILIAL,(cAlias)->C2_NUM,(cAlias)->C2_ITEM,(cAlias)->C2_SEQUEN,(cAlias)->C2_PRODUTO,(cAlias)->C2_ORDSEP,(cAlias)->C2_QUANT,(cAlias)->C2_UM,(cAlias)->C2_REVISAO}
             oPrn:say(nLinha, NCOLN01, (cAlias)->D4_TRT,oFont09n,,CLR_BLACK)   
             oPrn:say(nLinha, NCOLN02, (cAlias)->D4_COD,oFont09n,,CLR_BLACK)           
@@ -259,7 +283,7 @@ Static Function ExecRun(oSay)
      ImpColunas(TipoRecurso,nlinha-10)
      
     // Impressao do quadro de Resumo de Analise
-    if len(aDados) > 0 .AND. TipoRecurso $ "10#20#40"
+    if len(aDados) > 0 .AND. TipoRecurso $ cTpRecursos
         IF ExistBlock("Analisy")
            ExecBlock("Analisy",.F.,.F.,aDados)
         Endif
@@ -298,8 +322,10 @@ User Function PrnCabec()
     Local nlinbtCabec   := nTamPag+75
     Local nColBtCabec   := nTamLinha
 
-    nPag:=nPag+1
-
+    IF nPag = 1
+       lQuadro := .T.
+    ENDIF
+    
     oPrn:StartPage()
     oPrn:Box(nLintopCabec,nColtopCabec,nlinbtCabec,nColBtCabec)
 
@@ -339,7 +365,12 @@ User Function PrnCabec()
     nLintopCabec := nLintopCabec + 10
     oPrn:Line( nLintopCabec, nColtopCabec, nLintopCabec, nColBtCabec)
     nLintopCabec := nLintopCabec + 10
-
+    nPag := nPag + 1
+    IF lTpFolha = "F"
+       lTpFolha = "V"
+    else
+       lTpFolha = "F"
+    ENDIF   
 Return(nLintopCabec)
 
 /*/{Protheus.doc} Quadro02
@@ -403,6 +434,7 @@ User Function PrnOperac()
     Local QbTexto2  := ""
     Local nColtopCabec  := NMINCOL
     Local nColBtCabec   := nTamLinha
+    Local cTpRecursos   := GETMV("ES_TPRECUR")
 
     if len(cInstrucao) >= 122
        QbTexto1 :=  Substr(cInstrucao,1,at(".",cInstrucao) )
@@ -433,7 +465,7 @@ User Function PrnOperac()
     oPrn:Line( nLintopCabec, nColtopCabec, nLintopCabec, nColBtCabec)
     nLintopCabec := nLintopCabec + 10    
     // Cabeçalhos das colunas
-    IF cOper $ "10#20#40"
+    IF cOper $ cTpRecursos
 
             oPrn:say(nLintopCabec, NMINCOL+5    ,"TRT"             ,oFont07n,,CLR_BLACK)  
             oPrn:say(nLintopCabec, NMINCOL+25   ,"Codigo"          ,oFont07n,,CLR_BLACK) 
@@ -486,7 +518,7 @@ User Function Analisy()
     Local cEnsaio       := " "
     Local nLinInicio    := 0  
     Local nLinFinal     := 0
-    Local cQtLinhas     := 4
+    Local cQtLinhas     := 3
     Local AB
     Local ctmp    := 'TMP' + getNextAlias()
 
@@ -517,8 +549,6 @@ User Function Analisy()
         nLin:= ExecBlock("PrnCabec",.F.,.F.,aParam2)
     Endif
 
-    //nLin := nLin + 10
-    //oPrn:Line( nLin, NMINCOL, nLin, nTamLinha) 
     nLin := nLin + 10
     oPrn:say(nLin, NCOLES3+5  , "RESULTADOS DE ANALISE"        ,oFont07n,,CLR_BLACK)  
     nLin := nLin + 10
@@ -618,7 +648,8 @@ description Impressao das colunas no formulario
 @return variant, return_description
 /*/
 Static Function ImpColunas(cOperacao,nLinha)
-       if cOperacao $ '10#20#40'
+       Local cTpRecursos   := GETMV("ES_TPRECUR")
+       if cOperacao $ cTpRecursos
                     oPrn:Line( nLinQB, NFAXN01, nLinha, NFAXN01)    // TRT
                     oPrn:Line( nLinQB, NFAXN02, nLinha, NFAXN02)    // ALTERACAO
                     oPrn:Line( nLinQB, NFAXN03, nLinha, NFAXN03)    // PRODUCAO
@@ -644,7 +675,7 @@ description Impressao do Quadro de assinatura
 @return variant, return_description
 /*/
 Static Function Fassinatura(nLinha)
-    Local nPrLin := nLinha + 10
+    Local nPrLin := nLinha //+ 10
 
      nLinha := nPrLin
      oPrn:Box(nLinha,NCOLBX1,nLinha+100,nTamLinha-10)
@@ -694,7 +725,7 @@ description
 @return variant, return_description
 /*/
 Static Function FGeraLinhas(nLinhas)
-  Local nQtLin := 4
+  Local nQtLin := 3
   Local AB
   Local nLin := nLinhas
 
