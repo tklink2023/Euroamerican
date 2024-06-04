@@ -171,12 +171,12 @@ Static Function ExecRun(oSay)
     dbselectArea(cAlias)
     (cAlias)->( dbGoTop() )
     While (cAlias)->( !Eof())
-        IF (cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN = '01001'
-            IF (cAlias)->G2_OPERAC = '10'
+        // Não imprimir o primeiro item da primeira sequencia
+      
+         IF (cAlias)->G2_OPERAC = '10'
                (cAlias)->( dbSkip() )
                Loop
-            ENDIF
-        ENDIF
+         ENDIF
         // Ponto para Quebra de Linhas
         IF NQBLINHA <= nLinha
             ImpColunas(TipoRecurso,nlinha-10)
@@ -244,6 +244,7 @@ Static Function ExecRun(oSay)
            cNumSc2   := (cAlias)->C2_NUM
 
         Endif
+
         // Quebra por tipo de operacao
         if TipoRecurso <> (cAlias)->G2_OPERAC
            If !Empty(cNumeroOP)      
@@ -354,7 +355,7 @@ User Function PrnCabec()
        
     nLintopCabec := nLintopCabec + 10
     oPrn:Say(nLintopCabec,nColtopCabec+05,"QTDE PREV:",oFont07n,,CLR_BLACK) 
-    oPrn:Say(nLintopCabec,nColtopCabec+55,Transform(cQuant,"@E 999999.999999"),oFont07n,,CLR_BLACK)     
+    oPrn:Say(nLintopCabec,nColtopCabec+55,Transform(cQuant,"@E 999999.99"),oFont07n,,CLR_BLACK)     
     oPrn:Say(nLintopCabec,nColtopCabec+155,cUM,oFont07,,CLR_BLACK)  
     oPrn:Say(nLintopCabec,nColtopCabec+230,"QTDE REAL: _____________________",oFont07n,,CLR_BLACK)  
     oPrn:Say(nLintopCabec+5,nColtopCabec+480,"Rev:"+cRevisao,oFont07n,,CLR_BLACK) 

@@ -282,6 +282,7 @@ Private aCols     := {}
 Private aGets     := {}
 Private aTela     := {} 
 Private aButtons  := {}
+Private nCntFor
 
 dbSelectArea("SZD")
 dbSetOrder(2)

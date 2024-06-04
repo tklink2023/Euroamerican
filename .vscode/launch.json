@@ -27,6 +27,9 @@
 		},
 		{
 			"label": "SIGAFAT"
+		},
+		{
+			"label": "SIGAEST"
 		}
 	],
 	"lastProgramExecuted": "SIGAPCP",
