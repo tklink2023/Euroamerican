@@ -9,7 +9,7 @@ User Function PCPR300()
     Local oReport
      Private cArqTrab
     Private cPerg 		:= PADR("PCPR290",10)
-    Private cTitulo 	:= OemToAnsi("Relacao de Ordem Producao por Insumos")
+    Private cTitulo 	:= OemToAnsi("Relacao de Ordem Producao por Materiais usados")
     Pergunte(cPerg,.T.)	 
     oReport 			:= ReportDef()
     oReport:PrintDialog()
@@ -28,16 +28,19 @@ Static Function ReportDef()
 
     oSection1 := TRSection():New(oReport,"",{"cQry01"},aOrdem)
     TRCell():New(oSection1,'FILIAL'			,'cQry01','Filial'     		    	,PesqPict('SC2',"C2_FILIAL")	,TamSX3("C2_FILIAL") [1]+1,,) 
-    TRCell():New(oSection1,'OP'				,'cQry01','Ordem Producao'     		,	 							, 							,,) 
+    TRCell():New(oSection1,'OP'				,'cQry01','Lote'     		,	 							, 							,,) 
     TRCell():New(oSection1,'EMISSAO'		,'cQry01','Emissao'     		   	,PesqPict('SC2',"C2_EMISSAO")	,TamSX3("C2_EMISSAO") [1]+1,,) 
     TRCell():New(oSection1,'FABRIC'			,'cQry01','Fabricacao'     		   	,PesqPict('SC2',"C2_DATRF")		,TamSX3("C2_DATRF") [1]+1,,) 
     TRCell():New(oSection1,'PRODUTO'		,'cQry01','Produto'     		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
+    TRCell():New(oSection1,'DESCPROD'		,'cQry01','Descricao'     		    ,PesqPict('SB1',"B1_DESC")		,TamSX3("B1_DESC") [1]+1,,) 
+    TRCell():New(oSection1,'REVISAO'		,'cQry01','Revisao'     		   	,PesqPict('SG1',"G1_REVFIM")	,TamSX3("G1_REVFIM") [1]+1,,) 
     TRCell():New(oSection1,'QUANT'			,'cQry01','Previsto'     		   	,PesqPict('SC2',"C2_QUANT")		,TamSX3("C2_QUANT") [1]+1,,) 
     TRCell():New(oSection1,'QTDUSA'			,'cQry01','Realizado'     		   	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'DIF'			,'cQry01','Divergencia'     		,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'STATUS'			,'cQry01','Status'     		    	,								,						,,) 
     TRCell():New(oSection1,'TRT'			,'cQry01','TRT'     		    	,PesqPict('SD4',"D4_TRT")		,TamSX3("D4_TRT") [1]+1,,) 
     TRCell():New(oSection1,'MATERIAL'		,'cQry01','Material'     		    ,PesqPict('SD3',"D3_COD")		,TamSX3("D3_COD") [1]+1,,) 
+    TRCell():New(oSection1,'DESCMAT'		,'cQry01','Descricao'     		    ,PesqPict('SB1',"B1_DESC")		,TamSX3("B1_DESC") [1]+1,,) 
     TRCell():New(oSection1,'TIPO'			,'cQry01','Tipo'     		    	,PesqPict('SD3',"D3_TIPO")		,TamSX3("D3_TIPO") [1]+1,,)
     TRCell():New(oSection1,'QTDSTR'			,'cQry01','Qtd Stru'  		    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'TOTSTR'			,'cQry01','Qt. Total Stru'       	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,)     
@@ -57,10 +60,12 @@ Static Function ReportPrint(oReport)
 
     cQuery :="Select 	                                                                       "+cEof
     cQuery +="      C2_FILIAL  AS  FILIAL,                                                     "+cEof
-    cQuery +="		C2_NUM+C2_ITEM+C2_SEQUEN OP,                                                "+cEof
+    cQuery +="		C2_NUM AS OP,                                                              "+cEof
     cQuery +="  	C2_EMISSAO AS EMISSAO,                                                      "+cEof        
     cQuery +="		C2_DATRF   AS FABRIC,                                                       "+cEof
     cQuery +="		C2_PRODUTO AS PRODUTO,                                                      "+cEof
+    cQuery +="		XB1.B1_DESC AS DESCPROD,                                                     "+cEof
+    cQuery +="      G1_REVFIM  as REVISAO,                                                      "+cEof
     cQuery +="	    C2_QUANT AS QUANT,                                                          "+cEof             
     cQuery +="		C2_QUJE AS QTDUSA,                                                          "+cEof
     cQuery +="	   	CASE WHEN ( C2_QUJE-C2_QUANT) > 0 THEN ROUND(( C2_QUJE-C2_QUANT),2)         "+cEof
@@ -71,6 +76,7 @@ Static Function ReportPrint(oReport)
     cQuery +="		ELSE ' ' END AS STATUS,                                                     "+cEof
     cQuery +="		ISNULL(D4_TRT,' ') AS TRT,                                                  "+cEof
     cQuery +="		D3_COD  as MATERIAL,                                                        "+cEof
+    cQuery +="		SB1.B1_DESC AS DESCMAT,                                                     "+cEof
     cQuery +="		D3_TIPO as TIPO,                                                            "+cEof 
     cQuery +="      G1_QUANT as QTDSTR,                                                         "+cEof   
 	cQuery +="  CASE WHEN ( C2_QUJE-C2_QUANT) > 0 THEN  (G1_QUANT * C2_QUANT)                   "+cEof 
@@ -87,6 +93,7 @@ Static Function ReportPrint(oReport)
     cQuery +="From "+RetSqlName("SC2")+" SC2                                                    "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SD3")+" SD3 ON D3_FILIAL = C2_FILIAL AND D3_OP = C2_NUM+C2_ITEM+C2_SEQUEN AND SD3.D_E_L_E_T_ = ' ' "+cEof
     cQuery +="LEFT JOIN "+RetSqlName("SD4")+" SD4 ON D4_FILIAL = C2_FILIAL AND D4_OP = C2_NUM+C2_ITEM+C2_SEQUEN AND D4_COD = D3_COD AND D4_TRT = D3_TRT AND D4_LOCAL = D3_LOCAL AND SD4.D_E_L_E_T_ = ' ' "+cEof
+    cQuery +="INNER JOIN "+RetSqlName("SB1")+" XB1 ON XB1.B1_COD = C2_PRODUTO AND XB1.D_E_L_E_T_ = ' ' "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SB1")+" SB1 ON SB1.B1_COD = D3_COD AND SB1.D_E_L_E_T_ = ' ' "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SG1")+" SG1 ON G1_FILIAL = C2_FILIAL AND G1_COD = C2_PRODUTO AND G1_COMP = D3_COD AND G1_TRT = D3_TRT and G1_REVFIM = C2_REVISAO AND SG1.D_E_L_E_T_ = ' ' "+cEof
     cQuery +="WHERE SC2.D_E_L_E_T_ = ' ' "+cEof
@@ -119,12 +126,15 @@ Static Function ReportPrint(oReport)
         oSection1:Cell("EMISSAO"):SetValue(("cQry01")->EMISSAO)
         oSection1:Cell("FABRIC"):SetValue(("cQry01")->FABRIC)		
         oSection1:Cell("PRODUTO"):SetValue(("cQry01")->PRODUTO)
+        oSection1:Cell("DESCPROD"):SetValue(("cQry01")->DESCPROD)
+        oSection1:Cell("REVISAO"):SetValue(("cQry01")->REVISAO)
         oSection1:Cell("QUANT"):SetValue(("cQry01")->QUANT)	
         oSection1:Cell("QTDUSA"):SetValue(("cQry01")->QTDUSA)	
         oSection1:Cell("DIF"):SetValue(("cQry01")->DIF)	
         oSection1:Cell("STATUS"):SetValue(("cQry01")->STATUS)	
         oSection1:Cell("TRT"):SetValue(("cQry01")->TRT)	
         oSection1:Cell("MATERIAL"):SetValue(("cQry01")->MATERIAL)
+        oSection1:Cell("DESCMAT"):SetValue(("cQry01")->DESCMAT)
         oSection1:Cell("TIPO"):SetValue(("cQry01")->TIPO)	
         
         oSection1:Cell("QTDSTR"):SetValue(("cQry01")->QTDSTR)
