@@ -39,7 +39,7 @@ Private oPrn 		:= Nil
 Private oSetup		:= Nil
 Private cNumPC      := ""
 Private cQuery      := ""
-Private cPathDest   := "\relato\"
+Private cPathDest   := "C:\relato\"
 Private cRelName    := "PC_" + AllTrim( _cNumPC ) + "_"  + DTOS( dDataBase ) + "_" + Replace( Time(), ":", "") + ".PDF"
 Private cPedCompr	:= ""
 Private	cPedSolic	:= ""
@@ -65,9 +65,17 @@ Default _cNumPC     := ""
 // Data.....: 18/12/23
 //------------------------------------------------------------------------
 
+If !ExistDir(cPathDest)
+        MakeDir(cPathDest)
+        FWAlertSuccess("Pasta '" + cPathDest + "' criada", "Pasta criada")
+EndIf
+ 
+
 IF Funname() == "MATA235"
 	Return
 Endif
+
+
 
 cNumPC := AllTrim( _cNumPC )
 
@@ -78,6 +86,7 @@ dbSelectArea("TMPCOM")
 TMPCOM->( dbGoTop() )
 
 If TMPCOM->( Eof() )
+	Aviso("ATENCAO", "Não tem informações para serem processadas, confirme se está na filial correta", {"OK"}, 2, "Aguarde...", , , , 5000)
 	lProc := .F.
 EndIf
 
@@ -167,11 +176,12 @@ oFont14n := TFont():New( "Arial",, 16,,.T.)
 oFontCAc := TFont():New( "Courier New",, 20,,.F.)
 oFontCAn := TFont():New( "Courier New",, 20,,.T.)
 
-oPrn := FwMsPrinter():New(cRelName,IMP_PDF,.T.,cPathDest,.T.,.F.,@oPrn,,,.F.,.F.,.F.,)
+oPrn := FwMsPrinter():New(cRelName,IMP_PDF,.T.,cPathDest,.T.,.F.,@oPrn,,,.F.,.F.,.T.,)
 oPrn:SetResolution(75)
 oPrn:SetLandscape() 			//SetPortrait()
 oPrn:SetPaperSize(DMPAPER_A4)
 oPrn:SetMargin(00,00,00,00)		//nEsquerda, nSuperior, nDireita, nInferior
+oPrn:SetDevice(IMP_PDF)
 oPrn:cPathPDF := cPathDest		//Caso seja utilizada impressão em IMP_PDF
 
 oPrn:StartPage()
@@ -184,11 +194,20 @@ PCItem()
 PCTotal()
 
 oPrn:EndPage()
-oPrn:Print()
+oPrn:Preview( )
+//oPrn:Print()
 
-If File( AllTrim( cPathDest ) + AllTrim( cRelName ) )
-	PCEmail()
-EndIf
+if oPrn:GetViewPDF()
+	If MsgYesNo("Envia o Email", "Confirma?")
+		If File( AllTrim( cPathDest ) + AllTrim( cRelName ) )
+			PCEmail()
+		EndIf
+	endif
+endif
+
+//If File( AllTrim( cPathDest ) + AllTrim( cRelName ) )
+//	PCEmail()
+//EndIf
 
 Return
 
@@ -435,7 +454,7 @@ While !TMPCOM->(Eof())
 
 	NextLine(1,.f.)
     if TMPCOM->C7_PRODUTO $ cProdRH  //->Alterado Paulo Lenzi - 26/03/2024
-	    lRh := .t.
+	    lRh := .T.
 	endif
 	oPrn:Say(nLin-10,ini+0020,TMPCOM->C7_ITEM														,oFont08,100)
 	oPrn:Say(nLin-10,ini+0120,TMPCOM->C7_PRODUTO													,oFont08,100)
@@ -562,40 +581,24 @@ If nLin > nLinFim
 	PCCabec()
 	PCForn()
 EndIf
-
-//oPrn:Line(nLin,ini+0765,nLin+350,ini+0765)
-//oPrn:Line(nLin,ini+1525,nLin+350,ini+1525)
-//oPrn:Line(nLin,ini+2285,nLin+350,ini+2285)
 oPrn:Line(nLin,ini+1525,nLin+350,ini+1525)
 
 NextLine(1,.F.)
 
-//oPrn:Say(nLin,ini+0020,"Solicitante"	,oFont10n,100)
-//oPrn:Say(nLin,ini+0780,"Comprador"		,oFont10n,100)
-//oPrn:Say(nLin,ini+1540,"Visto"			,oFont10n,100)
-//oPrn:Say(nLin,ini+2300,"Aprovador"		,oFont10n,100)
 oPrn:Say(nLin,ini+0020,"Comprador:"		,oFont10n,100)
-//oPrn:Say(nLin,ini+2300,"Aprovador:"		,oFont10n,100)
 oPrn:Say(nLin,ini+1540,"Aprovador:"		,oFont10n,100)
 
 NextLine(1,.F.)
-//oPrn:Say(nLin,ini+0020,SubStr(cPedSolic,1,35)		,oFont08,100)
-//oPrn:Say(nLin,ini+0780,SubStr(cPedCompr,1,35)		,oFont08,100)
-//oPrn:Say(nLin,ini+1540,SubStr(cPedVisto,1,35)		,oFont08,100)
-//oPrn:Say(nLin,ini+2300,Upper(SubStr(cPedAprov,1,35)),oFont08,100)
 oPrn:Say(nLin,ini+0020,SubStr(cPedCompr,1,35)		,oFont08,100)
-//oPrn:Say(nLin,ini+2300,SubStr(cPedAprov,1,35)		,oFont08,100)
 oPrn:Say(nLin,ini+1540,SubStr(cPedAprov,1,35)		,oFont08,100)
 oPrn:Say(nLin+40,ini+1540,"Aprovado em: " + DTOC( MsDate() ) + " " + Time()		,oFont08,100)
 
 If !Empty(cPedCompr)
 	cAssComp := "ass_default.png"
-	//oPrn:SayBitmap(nLin+10,ini+0780,cAssComp,560,193, , .T. )
 EndIF
 
 If !Empty(cPedAprov)
 	cAssAprv := "ass_default.png"
-	//oPrn:SayBitmap(nLin+10,ini+2300,cAssAprv,560,193, , .T. )
 EndIf
 
 NextLine(4,.F.)
@@ -686,14 +689,12 @@ Local aAreaSC7  := SC7->( GetArea() )
 Local cSrvMail  := AllTrim(GetMV("MV_RELSERV"))
 Local cUserAut  := AllTrim(GetMV("MV_RELACNT")) 
 Local cPassAut  := AllTrim(GetMV("MV_RELPSW")) 
-//Local cAuthent	:= AllTrim(GetMV("MV_RELAUTH"))    
 Local lOK       := .T.
 Local aCabec	:= {}
 Local aColunas	:= {}
 Local cMensagem	:= "Abrir anexo."
 Local cNomEmp   := IIf( Left(cFilAnt,2) == "01", "QUALYCRIL", IIf( Left(cFilAnt,2) == "02", "EUROAMERICAN", IIf( Left(cFilAnt,2) == "03", "QUALYVINIL", "QUALYCRIL")))
 Local cAssunto	:= cNomEmp + " - Pedido de Compras: " + AllTrim( cNumPC ) + " Aprovado"
-//Local cMailTo	:= GetMv( "MV_BE_PCEM",, "fabio@xisinformatica.com.br;rodrigo.ferreira@euroamerican.com.br" )
 Local cDe		:= cUserAut
 Local cPara		:= GetMv( "MV_BE_PCEM",, "fabio@xisinformatica.com.br;rodrigo.ferreira@euroamerican.com.br" )
 Local cCc		:= ""
@@ -702,12 +703,17 @@ Local cSubject  := cAssunto
 Local cBody		:= cMensagem
 Local cAnexo    := cPathDest + cRelName
 Local cEmailUsr := IIF(UsrExist(SC7->C7_USER),Alltrim(UsrRetMail(SC7->C7_USER)),cPara) // Alterado por Paulo Lenzi 17/04/2024
+Local cEmailTeste  := AllTrim(GetMv("ES_EMTEST"))                                      // Incluido por Paulo Lenzi 26.06.2024
+Local aAnexos   := {}
 
 IF lRh
 	SC7->( RestArea( aAreaSC7 ) )
 	Return
 Endif
 
+IF !Empty(cEmailTeste)
+       cEmailUsr := cEmailTeste
+endif
 
 conout("*********************************************************************************")
 conout("## WF-ENVIO PC: (EQOrdPro)")
@@ -775,6 +781,9 @@ cMensagem += U_BeHtmRod(.T.)
 
 cBody := cMensagem
 
+aAdd(aAnexos,cAnexo)
+
+//U_TManagerEmail(cEmailUsr, cSubject, cBody, aAnexos)
 //+----------------------------------------------------------------------------
 //| Define objeto de email
 //+----------------------------------------------------------------------------
@@ -789,11 +798,13 @@ If (lOk)
 	SUBJECT cSubject ;
 	BODY cBody ;  
 	ATTACHMENT cAnexo;
-	RESULT lOK
+	RESULT lEnviado
 	DISCONNECT SMTP SERVER
 EndIf
+ if !lEnviado
+     Aviso("ATENCAO", "E-mail nao enviado para o destinatario, entrar em contato com a infra", {"OK"}, 2, "Aguarde...", , , , 5000)    
+ Endif
 
-//U_BeSendMail( { cMailTo, cAssunto , cMensagem, "", "", cPathDest + cRelName } )
 SC7->( RestArea( aAreaSC7 ) )
 
 Return
