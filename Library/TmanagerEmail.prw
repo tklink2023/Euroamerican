@@ -36,7 +36,8 @@ u_TManagerEmail("informatica@patral.com.br", "Teste", "Teste TMailMessage", , .T
 /*/
 User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTLS, lNovo)
 	Local aArea        := GetArea()
-	Local nAtual       := 0
+	Local cGuardaLoc   := "C:\relato\"
+    Local cGuardaServ  := "\workflow\email\"
 	Local lRet         := .T.
 	Local oMsg         := Nil
 	Local oSrv         := Nil
@@ -72,6 +73,8 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
 	IF !Empty(cEmailTeste)
        cPara := cEmailTeste
 	endif
+	
+	CpyT2S(cGuardaLoc+aAnexos,cGuardaServ , .T. )
 
 	If lRet
 		If lNovo
@@ -87,8 +90,7 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
 
 		//Cria a nova mensagem
 		oMsg := TMailMessage():New()
-		oMsg:Clear()
-
+        oMsg:Clear()
 		//Define os atributos da mensagem
 		oMsg:cDate    := cValToChar(Date())
 		oMsg:cFrom    := cFrom
@@ -96,33 +98,21 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
 		oMsg:cSubject := cAssunto
 		oMsg:cBody    := cCorpo
 
-		//Percorre os anexos
-		For nAtual := 1 To Len(aAnexos)
-			//Se o arquivo existir
-			If File(aAnexos[nAtual])
-
-				//Anexa o arquivo na mensagem de e-Mail
-				nRet := oMsg:AttachFile(aAnexos[nAtual])
-				If nRet < 0
-					cLog += "002 - Nao foi possivel anexar o arquivo '"+aAnexos[nAtual]+"'!" + CRLF
-				EndIf
-
-				//Senao, acrescenta no log
-			Else
-				cLog += "003 - Arquivo '"+aAnexos[nAtual]+"' nao encontrado!" + CRLF
-			EndIf
-		Next
-
-	//nAttach := oMsg:GetAttachCount()
-
-  	//for nI := 1 to nAttach
-    //		aAttInfo := oMsg:GetAttachInfo( nI )
-    //		varinfo( "attachment " + cValToChar( nI ), aAttInfo )
-    //next nI
+		If File(cGuardaServ+aAnexos)
+					//Anexa o arquivo na mensagem de e-Mail
+					nRet := oMsg:AttachFile(cGuardaServ+aAnexos)
+					If nRet < 0
+						cLog += "002 - Nao foi possivel anexar o arquivo '"+aAnexos+"'!" + CRLF
+					EndIf
+					//Senao, acrescenta no log
+		Else
+					cLog += "003 - Arquivo '"+aAnexos+"' nao encontrado!" + CRLF
+		EndIf
 
 		//Cria servidor para disparo do e-Mail
 		oSrv := tMailManager():New()
-
+		//oSrv:SetUseTLS( .T. )
+        //oSrv:SetUseSSL( .F. )
 		//Define se irá utilizar o TLS
 		If lUsaTLS
 			oSrv:SetUseTLS(.T.)

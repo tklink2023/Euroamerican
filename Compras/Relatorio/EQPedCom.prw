@@ -69,13 +69,10 @@ If !ExistDir(cPathDest)
         MakeDir(cPathDest)
         FWAlertSuccess("Pasta '" + cPathDest + "' criada", "Pasta criada")
 EndIf
- 
 
 IF Funname() == "MATA235"
 	Return
 Endif
-
-
 
 cNumPC := AllTrim( _cNumPC )
 
@@ -196,18 +193,14 @@ PCTotal()
 oPrn:EndPage()
 oPrn:Preview( )
 //oPrn:Print()
+//FreeObj(oPrn)
+//oPrn := Nil
 
 if oPrn:GetViewPDF()
-	If MsgYesNo("Envia o Email", "Confirma?")
 		If File( AllTrim( cPathDest ) + AllTrim( cRelName ) )
 			PCEmail()
 		EndIf
-	endif
 endif
-
-//If File( AllTrim( cPathDest ) + AllTrim( cRelName ) )
-//	PCEmail()
-//EndIf
 
 Return
 
@@ -240,11 +233,6 @@ nLin    := 50
 
 oPrn:Line(nLin,ini,nLin,3100)
 oPrn:SayBitmap(75,ini+20,cPCLogo,560,193, , .T. )
-
-//NextLine(2,.f.)
-//oPrn:Say(nLin-10,ini+2600,"Data:",oFont10n,100)
-//oPrn:Say(nLin-10,ini+2740, dtoc(MsDate())	,oFont10,100)
-
 cRevisao := fBuscaRev( TMPCOM->C7_NUM )
 
 NextLine(1,.f.)
@@ -686,34 +674,28 @@ Return
 Static Function PCEmail()
 
 Local aAreaSC7  := SC7->( GetArea() )
-Local cSrvMail  := AllTrim(GetMV("MV_RELSERV"))
-Local cUserAut  := AllTrim(GetMV("MV_RELACNT")) 
-Local cPassAut  := AllTrim(GetMV("MV_RELPSW")) 
-Local lOK       := .T.
+//Local cSrvMail  := AllTrim(GetMV("MV_RELSERV"))
+//Local cUserAut  := AllTrim(GetMV("MV_RELACNT")) 
+//Local cPassAut  := AllTrim(GetMV("MV_RELPSW")) 
+//Local lOK       := .T.
 Local aCabec	:= {}
 Local aColunas	:= {}
 Local cMensagem	:= "Abrir anexo."
 Local cNomEmp   := IIf( Left(cFilAnt,2) == "01", "QUALYCRIL", IIf( Left(cFilAnt,2) == "02", "EUROAMERICAN", IIf( Left(cFilAnt,2) == "03", "QUALYVINIL", "QUALYCRIL")))
 Local cAssunto	:= cNomEmp + " - Pedido de Compras: " + AllTrim( cNumPC ) + " Aprovado"
-Local cDe		:= cUserAut
+//Local cDe		:= cUserAut
 Local cPara		:= GetMv( "MV_BE_PCEM",, "fabio@xisinformatica.com.br;rodrigo.ferreira@euroamerican.com.br" )
-Local cCc		:= ""
-Local cCco		:= ""
+//Local cCc		:= ""
+//Local cCco		:= ""
 Local cSubject  := cAssunto
 Local cBody		:= cMensagem
-Local cAnexo    := cPathDest + cRelName
+//Local cAnexo    := cPathDest + cRelName
 Local cEmailUsr := IIF(UsrExist(SC7->C7_USER),Alltrim(UsrRetMail(SC7->C7_USER)),cPara) // Alterado por Paulo Lenzi 17/04/2024
-Local cEmailTeste  := AllTrim(GetMv("ES_EMTEST"))                                      // Incluido por Paulo Lenzi 26.06.2024
-Local aAnexos   := {}
 
 IF lRh
 	SC7->( RestArea( aAreaSC7 ) )
 	Return
 Endif
-
-IF !Empty(cEmailTeste)
-       cEmailUsr := cEmailTeste
-endif
 
 conout("*********************************************************************************")
 conout("## WF-ENVIO PC: (EQOrdPro)")
@@ -781,12 +763,13 @@ cMensagem += U_BeHtmRod(.T.)
 
 cBody := cMensagem
 
-aAdd(aAnexos,cAnexo)
+//aAdd(aAnexos,cAnexo)
 
-//U_TManagerEmail(cEmailUsr, cSubject, cBody, aAnexos)
+U_TManagerEmail(cEmailUsr, cSubject, cBody, cRelName)
 //+----------------------------------------------------------------------------
 //| Define objeto de email
 //+----------------------------------------------------------------------------
+/*
 CONNECT SMTP SERVER cSrvMail ACCOUNT cUserAut PASSWORD cPassAut TIMEOUT 60 RESULT lOk
 
 If (lOk)
@@ -801,9 +784,7 @@ If (lOk)
 	RESULT lEnviado
 	DISCONNECT SMTP SERVER
 EndIf
- if !lEnviado
-     Aviso("ATENCAO", "E-mail nao enviado para o destinatario, entrar em contato com a infra", {"OK"}, 2, "Aguarde...", , , , 5000)    
- Endif
+ */
 
 SC7->( RestArea( aAreaSC7 ) )
 
