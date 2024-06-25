@@ -83,12 +83,13 @@ dbSelectArea("TMPCOM")
 TMPCOM->( dbGoTop() )
 
 If TMPCOM->( Eof() )
-	Aviso("ATENCAO", "Não tem informações para serem processadas, confirme se está na filial correta", {"OK"}, 2, "Aguarde...", , , , 5000)
 	lProc := .F.
 EndIf
 
 If lProc
 	MsgRun("Enviando Pedido de Compras por E-mail. Aguarde.....", "Imprimindo", {|| RunImp() })
+else
+	Aviso("ATENCAO", "Não tem informações para serem processadas, confirme se está na filial correta", {"OK"}, 2, "Aguarde...", , , , 5000)
 EndIf
 
 TMPCOM->( dbCloseArea() )

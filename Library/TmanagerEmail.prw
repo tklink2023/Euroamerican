@@ -54,13 +54,13 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
 	Local cPassAuth    := ""
 	Local nAtu         := 0
 	Local cProcessos   := ""
-	Local cEmailTeste  := AllTrim(GetMv("ES_EMTEST"))
+	Local cEmailTeste  := AllTrim(SuperGetMV("ES_EMTEST",.F.,"paulo.lenzi@euroamerican.com.br"))
     
 	Default cPara      := ""
 	Default cAssunto   := ""
 	Default cCorpo     := ""
 	Default aAnexos    := {}
-	Default lMostraLog := GETMV("ES_EMAILOG")
+	Default lMostraLog := SuperGetMV("ES_EMAILOG", .F., ".F.") 
 	Default lUsaTLS    := .T.
 	Default lNovo      := .F.
 
@@ -74,6 +74,11 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
        cPara := cEmailTeste
 	endif
 	
+	If !ExistDir(cGuardaServ)
+        MakeDir(cGuardaServ)
+        FWAlertSuccess("Pasta '" + cGuardaServ + "' criada", "Pasta criada")
+	EndIf
+
 	CpyT2S(cGuardaLoc+aAnexos,cGuardaServ , .T. )
 
 	If lRet
