@@ -99,7 +99,7 @@ User Function zTstCNPJ()
     Local aDados    := {}
     Local cMensagem := ""
  
-    aDados := u_zBusCNPJ("28.671.016/0001-45")
+    aDados := u_zBusCNPJ("01.245.930/0001-78")
  
     If aDados[1]
         cMensagem += "Data de Abertura: "   + aDados[02] + " " + CRLF

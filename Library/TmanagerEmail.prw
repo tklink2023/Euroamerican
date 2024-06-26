@@ -71,7 +71,7 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
 	EndIf
 	
 	IF !Empty(cEmailTeste)
-       cPara := cEmailTeste
+       //cPara := cEmailTeste
 	endif
 	
 	If !ExistDir(cGuardaServ)

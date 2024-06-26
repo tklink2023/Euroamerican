@@ -67,7 +67,7 @@ Default _cNumPC     := ""
 
 If !ExistDir(cPathDest)
         MakeDir(cPathDest)
-        FWAlertSuccess("Pasta '" + cPathDest + "' criada", "Pasta criada")
+        //FWAlertSuccess("Pasta '" + cPathDest + "' criada", "Pasta criada")
 EndIf
 
 IF Funname() == "MATA235"
