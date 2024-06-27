@@ -12,13 +12,13 @@ User Function A140IGRV()
 
     Local cNota  := Paramixb[1]
     Local cSerie := Paramixb[2]
-    Local cfornec:=Paramixb[3]
+    Local cfornec:= Paramixb[3]
     Local cLoja  := Paramixb[4]
     Local nRet   := 0
     Local cQuery := ""
     Local cFilOp := cFilant
-
-    if cFilOp = '1001'
+ 
+    if cFilOp $ '1001'
    
         cQuery:= "UPDATE "+RetSQLName("SDT")+" SET DT_LOTE = SD2.D2_LOTECTL , DT_DTVALID = SD2.D2_DTVALID "
         cQuery+= "FROM "+RetSQLName("SDT")+" SDT "
@@ -74,7 +74,7 @@ User Function COLSTTS()
     Local nRet   := 0
     Local cQuery := ""
     Local cFilOp := cFilant
-    if cFilOp <> '1001'
+    if !cFilOp $ '1001/0902'
         FwRestArea(cArea)
         Return
     Endif
