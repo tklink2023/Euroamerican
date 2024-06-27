@@ -714,7 +714,7 @@ Static Function PCPCALCOM()
     Local AB
 
    aAdd(aFields,{"TMP_FILIAL"		, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
-   aAdd(aFields,{"TMP_PROD"		, GetSx3Cache("G5_PRODUTO","X3_TIPO")		,tamSx3("G5_PRODUTO")[1]	,tamSx3(" G5_PRODUTO")[2]})
+   aAdd(aFields,{"TMP_PROD"		, GetSx3Cache("C2_PRODUTO","X3_TIPO")		,tamSx3("C2_PRODUTO")[1]	 ,tamSx3("C2_PRODUTO")[2]})
    aAdd(aFields,{"TMP_JAN"  		, GetSx3Cache("C2_QUANT","X3_TIPO")		   ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
    aAdd(aFields,{"TMP_FEV"  		, GetSx3Cache("C2_QUANT","X3_TIPO")		   ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
    aAdd(aFields,{"TMP_MAR"  		, GetSx3Cache("C2_QUANT","X3_TIPO")		   ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
