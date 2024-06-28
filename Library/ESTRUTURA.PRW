@@ -30,11 +30,11 @@ Monta a estrutura de um produto em uma tabela temporária
     **** Apoie nosso projeto, se inscreva em https://www.youtube.com/TerminalDeInformacao ****
 /*/
  
-User Function zExe155()
+User Function zExe155(cProduto)
     Local aArea     := FWGetArea()
     Local cMensagem := ""
-    Local cCodProd  := "E0001" //Produto raíz da estrutura
-    Local nQuant    := 5       //Quantidade a produzir
+    Local cCodProd  := cProduto //Produto raíz da estrutura
+    Local nQuant    := 1       //Quantidade a produzir
  
     //Variáveis Private para utilização da função Estrut2
     Private oTempTable  := Nil
