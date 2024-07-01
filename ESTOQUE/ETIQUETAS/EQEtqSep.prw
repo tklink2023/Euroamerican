@@ -3,15 +3,15 @@
 
 User Function EQEtqSep() // Etiqueta de ordem de separação...
 
-Local cPorta 	:= "LPT1"
-Local nFaz      := 0
+Local cPorta 	:= "USB002"
+Local cModelo   := "ZEBRA"
 
 Private cPerg   := "BEETQORDEM"
 
 ValidPerg()
 
 If Pergunte(cPerg, .T.)
-	cQuery := "SELECT CB8_FILIAL, D4_OP, D4_COD, D4_LOCAL, D4_QUANT, CB8_QTDORI, CB8_ORDSEP, D4_LOTECTL, CB8_LOTECT, CB8_NUMLOT, CB8_LOCAL, CB8_PROD, CB8_ITEM, CB8_SEQUEN, CB8_LCALIZ " + CRLF
+	cQuery := "SELECT CB8_FILIAL, D4_OP, D4_COD, D4_LOCAL, D4_QUANT,D4_QTDORI, CB8_QTDORI, CB8_ORDSEP, D4_LOTECTL, CB8_LOTECT, CB8_NUMLOT, CB8_LOCAL, CB8_PROD, CB8_ITEM, CB8_SEQUEN, CB8_LCALIZ " + CRLF
 	cQuery += "FROM " + RetSqlName("SC2") + " AS SC2 WITH (NOLOCK) " + CRLF
 	cQuery += "INNER JOIN " + RetSqlName("SD4") + " AS SD4 WITH (NOLOCK) ON D4_FILIAL = C2_FILIAL " + CRLF
 	cQuery += "  AND D4_OP = C2_NUM + C2_ITEM + C2_SEQUEN " + CRLF
@@ -25,9 +25,7 @@ If Pergunte(cPerg, .T.)
 	cQuery += "AND C2_NUM BETWEEN '" + AllTrim( mv_par01 ) + "' AND '" + AllTrim( mv_par02 ) + "' " + CRLF // 010307
 	cQuery += "AND C2_ITEM = '01' AND C2_SEQUEN = '001' " + CRLF // 010307
 	cQuery += "AND SC2.D_E_L_E_T_ = ' ' " + CRLF
-	cQuery += "GROUP BY CB8_FILIAL, CB8_ORDSEP, D4_LOCAL, CB8_LCALIZ, CB8_ITEM, CB8_LOCAL, CB8_PROD, D4_COD, CB8_LOTECT, CB8_NUMLOT, D4_OP, D4_LOTECTL, D4_QUANT, CB8_QTDORI, CB8_SEQUEN " + CRLF
-	//cQuery += "ORDER BY CB8_ORDSEP, CB8_ITEM, D4_COD, CB8_LOTECT, D4_OP, D4_LOTECTL, D4_QUANT, CB8_QTDORI " + CRLF
-	//cQuery += "ORDER BY CB8_ORDSEP, CB8_LOCAL, CB8_ITEM, CB8_PROD " + CRLF
+	cQuery += "GROUP BY CB8_FILIAL, CB8_ORDSEP, D4_LOCAL, CB8_LCALIZ, CB8_ITEM, CB8_LOCAL, CB8_PROD, D4_COD, CB8_LOTECT, CB8_NUMLOT, D4_OP, D4_LOTECTL, D4_QUANT,D4_QTDORI, CB8_QTDORI, CB8_SEQUEN " + CRLF
 	cQuery += "ORDER BY CB8_FILIAL, CB8_ORDSEP, CB8_LOCAL, CB8_LCALIZ, CB8_PROD, CB8_LOTECT, CB8_NUMLOT, CB8_ITEM, CB8_SEQUEN " + CRLF  
 Else
 	Return
@@ -38,32 +36,24 @@ dbSelectArea("TMLBAR")
 dbGoTop()
 
 nConta := 0
-         
-//MSCBPRINTER("LPT1",cPorta,,40,.f.)
-//MSCBCHKSTATUS(.F.)
 
 Do While !TMLBAR->( Eof() )
-		MSCBPRINTER("LPT1",cPorta,,40,.f.)
+		MSCBPRINTER(cModelo,cPorta,,40,.f.)
 		MSCBCHKSTATUS(.F.)
 		MSCBBEGIN(1,6)
 		MSCBWrite("^FO400,070^BXN ,05,200,20^FD"+BeAscHex(TMLBAR->D4_COD + TMLBAR->D4_LOTECTL)+"^FS") 				// Código de Barras 2d - Data Matrix
-		MSCBSAY(014,004,"ORDEM DE PRODUCAO  :. " + Alltrim( TMLBAR->D4_OP ),"N","0","020,020")
-		MSCBSAY(014,008,"ORDEM DE SEPARACAO :. " + Alltrim( TMLBAR->CB8_ORDSEP ),"N","0","020,020")
-		MSCBSAY(014,012,"PRODUTO: " + Alltrim( TMLBAR->D4_COD ),"N","0","020,020")
-		MSCBSAY(014,016,"LOCAL: " + Alltrim( TMLBAR->D4_LOCAL ),"N","0","020,020")
-		MSCBSAY(014,020,"LOTE :. " + Alltrim( TMLBAR->D4_LOTECTL ),"N","0","020,020")
-		MSCBSAY(014,024,"QUANTIDADE: " + TRANSFORM( TMLBAR->CB8_QTDORI, "@E 999,999,999.9999"),"N","0","020,020")
+				MSCBSAY(014,004,"ORDEM DE PRODUCAO  :. " + Alltrim( TMLBAR->D4_OP ),"N","0","020,020")
+				MSCBSAY(014,008,"ORDEM DE SEPARACAO :. " + Alltrim( TMLBAR->CB8_ORDSEP ),"N","0","020,020")
+				MSCBSAY(014,012,"PRODUTO: " + Alltrim( TMLBAR->D4_COD ),"N","0","020,020")
+				MSCBSAY(014,016,"LOCAL: " + Alltrim( TMLBAR->D4_LOCAL ),"N","0","020,020")
+				MSCBSAY(014,020,"LOTE :. " + Alltrim( TMLBAR->D4_LOTECTL ),"N","0","020,020")
+				MSCBSAY(014,024,"QUANTIDADE: " + TRANSFORM( TMLBAR->CB8_QTDORI, "@E 999,999,999.9999"),"N","0","020,020")
 		MSCBEND()
-	MSCBCLOSEPRINTER()
-
-	Sleep(1000)
-
-	//nConta++
-
-	TMLBAR->( dbSkip() )
+		MSCBCLOSEPRINTER()
+		Sleep(1000)
+		TMLBAR->( dbSkip() )
 EndDo
 
-//MSCBCLOSEPRINTER()
 
 TMLBAR->( dbCloseArea() )
 	
@@ -128,6 +118,7 @@ Static Function BeAscHex(cString)
 Local cRet 		:= "^FH_^FD"
 Local aAcento	:= {}
 Local nPos		:= 0
+Local nX
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Define caracteres a serem tratados.									³
@@ -148,18 +139,13 @@ aAcento := {{"à","_85"},{"á","_a0"},{"â","_83"},{"ã","_c6"},;
 
 
 For nX := 1 to Len(cString)
-
 	cAux := Substr(cString,nX,1)
 	nPos := aScan(aAcento,{|x| x[1] == cAux })
-
 	If nPos > 0
 		cRet += aAcento[nPos][2]
 	Else
 		cRet += cAux
 	EndIf
-
 Next nX
-
 cRet := cRet+"^FS"
-
 Return cRet

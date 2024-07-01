@@ -56,11 +56,11 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
 	Local cProcessos   := ""
 	Local cEmailTeste  := AllTrim(SuperGetMV("ES_EMTEST",.F.,"paulo.lenzi@euroamerican.com.br"))
     
-	Default cPara      := ""
-	Default cAssunto   := ""
-	Default cCorpo     := ""
+	Default cPara      := "ti@euroamerican.com.br"
+	Default cAssunto   := "Envio do Email de Notificação"
+	Default cCorpo     := "Envio do Email de Notificação"
 	Default aAnexos    := {}
-	Default lMostraLog := SuperGetMV("ES_EMAILOG", .F., ".F.") 
+	Default lMostraLog := .F.
 	Default lUsaTLS    := .T.
 	Default lNovo      := .F.
 
