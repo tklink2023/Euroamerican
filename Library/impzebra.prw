@@ -47,6 +47,7 @@ Return
  
 Static Function fMontaRel()
     Local cPorta     := "LPT1"
+    Local cModulo    := "ZT230"
     Local nQtdCopias := 1
     Local nVolIniPvt := 1
     Local nVolFimPvt := 1
@@ -62,7 +63,7 @@ Static Function fMontaRel()
     If SC5->(MsSeek(FWxFilial("SC5") + MV_PAR01))
      
         //Cria a etiqueta com configuração de etiqueta de 80mm
-        MSCBPrinter("S600", cPorta, , , .F.)
+        MSCBPrinter(cModulo, cPorta, , , .F.)
         MSCBChkStatus(.F.) //Alguns modelos exigem esse comando
         MSCBInfoEti("ETIQUETA", "ROTULO")
         MSCBBegin(nQtdCopias, 6, 81) //Qtde de copias, velocidade (1 a 6) e tamanho da etiqueta em mm
