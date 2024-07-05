@@ -3,8 +3,8 @@
 
 User Function EQEtqSep() // Etiqueta de ordem de separação...
 
-Local cPorta 	:= "USB002"
-Local cModelo   := "ZEBRA"
+Local cPorta 	:= "LPT1"
+Local cModelo   := "LPT1"
 
 Private cPerg   := "BEETQORDEM"
 
@@ -149,3 +149,19 @@ For nX := 1 to Len(cString)
 Next nX
 cRet := cRet+"^FS"
 Return cRet
+
+/*
+Local nXLocal cPorta := "COM1:9600,N,8,1"  
+MSCBPRINTER("S500-8",cPorta,          , 40   ,.f.)
+
+For nx:=1 to 3   
+	MSCBBEGIN(1,6)             
+	MSCBSAY(10,06,"CODIGO","N","A","015,008")   
+	MSCBSAY(33,09, Strzero(nX,10), "N", "0", "032,035")    
+	MSCBSAY(05,17,"IMPRESSORA ZEBRA S500-8","N", "0", "020,030")   
+	MSCBEND()
+Next	
+MSCBCLOSEPRINTER()
+*/
+
+
