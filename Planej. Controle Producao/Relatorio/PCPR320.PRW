@@ -26,22 +26,34 @@ User Function PCPR320()
 	Local aSays		:= {}
 	Local aButtons	:= {}    
     lOCAL lOk
+    local aCombo    := {"Encerradas","Aberta"}
     Private cMvPar01
 	Private cMvPar02
 	Private cMvPar03
 	Private cMvPar04
+    Private cMvPar05
+    Private cMvPar06
+    Private cMvPar07
+
     Private cLogErro := {}
 
     aAdd( aPergs ,{1,"Da Ordem Produção"		, cOpIni   		, PesqPict("SD4", "D4_OP"),'.T.',"SC2"   	,'.T.'	,50, .T.})
     aAdd( aPergs ,{1,"Atea Ordem Produção"		, cOpFim   		, PesqPict("SD4", "D4_OP"),'.T.',"SC2"   	,'.T.'	,50, .T.})
 	aAdd( aPergs ,{1,"Da Data"					, cDtIni     	, PesqPict("SC2", "C2_Emissao"),'.T.',""   	,'.T.'	,50, .T.})
     aAdd( aPergs ,{1,"Ate a Data"				, cDtFim     	, PesqPict("SC2", "C2_Emissao"),'.T.',""   	,'.T.'	,50, .T.})
-
+    aAdd( aPergs ,{2,"Ordem Producao:"          , 01            ,aCombo                        ,50   ,"",.T.})
+    aAdd( aPergs ,{5,"Remove os Tipos PI dos Materiais"                ,.F.,90,"",.F.})
+    aAdd( aPergs ,{5,"Remove os Tipos PI dos Prod.Estruturas"         ,.F.,90,"",.F.})
+    
     If ParamBox(aPergs ,"Parametros para o relatorio",aRet)     
 		cMvPar01 := aRet[1]
 		cMvPar02 := aRet[2]
 		cMvPar03 := aRet[3]
         cMVPar04 := aRet[4]
+        cMvPar05 := aRet[5]
+        cMvPar06 := aRet[6]
+        cMvPar07 := aRet[7]
+
 	Else
 		MsgAlert("Encerrado")
 		Return
@@ -50,6 +62,11 @@ User Function PCPR320()
     AAdd(aSays,"Geração do Relatorio conforme os parametros selecionados")
 	AAdd(aSays,"Ordem de Produção de :"+cMvPar01+ " ate: "+cMvPar02  )
 	AAdd(aSays,"Filtrando as datas de:"+Dtoc(cMvPar03)+" ate: "+Dtoc(cMvPar04))
+    AAdd(aSays,"Ordens Producao :"+aCombo[cMvPar05])
+
+    AAdd(aSays,IIF(cMvPar06,"Remove PI dos Materiais","") )
+    AAdd(aSays,IIF(cMvPar07,"Remove PI dos Compoentes","") )
+
 	AAdd(aSays,"Filial : "+cFilant)
 
     aAdd(aButtons, { 5, .T., {|| Pergunte(cPerg, .T. ) } } )
@@ -80,7 +97,7 @@ Static Function ProcRun(oSay)
     Local oReport
     Local cTextoErro    := ""
     Local AB
-
+    Local cNumOP        := ""
     Private ctmp        := "Z-"+GetNextAlias()
     Private oTable      := FWTemporaryTable():New( ctmp ) 
 
@@ -88,31 +105,42 @@ Static Function ProcRun(oSay)
     Private oTempTable  := Nil
     Private cArq        := "ESTRUT"
     Private nEstru      := 0
-
+    
+    // Dados da Ordem de Producao
     aAdd(aFields,{"TMP_FILIAL"		, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
-    aAdd(aFields,{"TMP_OP"		    , GetSx3Cache("C2_NUM","X3_TIPO")		    ,tamSx3("C2_NUM")[1]	    ,tamSx3("C2_NUM")[2]})
-    aAdd(aFields,{"TMP_QTOP" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
+    aAdd(aFields,{"TMP_OP"		    , GetSx3Cache("C2_NUM","X3_TIPO")		    ,tamSx3("C2_NUM")[1]	    ,tamSx3("C2_NUM")[2]})  
     aAdd(aFields,{"TMP_ITEM"	    , GetSx3Cache("C2_ITEM","X3_TIPO")		    ,tamSx3("C2_ITEM")[1]	    ,tamSx3("C2_ITEM")[2]})
     aAdd(aFields,{"TMP_SEQ" 	    , GetSx3Cache("C2_SEQUEN","X3_TIPO")	    ,tamSx3("C2_SEQUEN")[1]	    ,tamSx3("C2_SEQUEN")[2]})
     aAdd(aFields,{"TMP_COD" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
-    aAdd(aFields,{"TMP_REV" 	    , GetSx3Cache("C2_REVISAO","X3_TIPO")	    ,tamSx3("C2_REVISAO")[1]	,tamSx3("C2_REVISAO")[2]})
-    aAdd(aFields,{"TMP_COMP" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
-    aAdd(aFields,{"TMP_NIVEL" 	    , GetSx3Cache("D3_NIVEL","X3_TIPO")	        ,tamSx3("D3_NIVEL")[1]	    ,tamSx3("D3_NIVEL")[2]})
-    aAdd(aFields,{"TMP_TRT" 	    , GetSx3Cache("D4_TRT","X3_TIPO")	        ,tamSx3("D4_TRT")[1]	    ,tamSx3("D4_TRT")[2]})
-    aAdd(aFields,{"TMP_MAT" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
-    aAdd(aFields,{"TMP_QTDE" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
-    aAdd(aFields,{"TMP_QUSE" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
     aAdd(aFields,{"TMP_DESC" 	    , GetSx3Cache("B1_DESC","X3_TIPO")	        ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
     aAdd(aFields,{"TMP_TIPO" 	    , GetSx3Cache("B1_TIPO","X3_TIPO")	        ,tamSx3("B1_TIPO")[1]	    ,tamSx3("B1_TIPO")[2]})
-    aAdd(aFields,{"TMP_UM" 	        , GetSx3Cache("B1_UM","X3_TIPO")	        ,tamSx3("B1_UM")[1]	        ,tamSx3("B1_UM")[2]})
-    aAdd(aFields,{"TMP_CUSTD" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})
-    aAdd(aFields,{"TMP_CNET" 	    , GetSx3Cache("B1_CUSTNET","X3_TIPO")       ,tamSx3("B1_CUSTNET")[1]	,tamSx3("B1_CUSTNET")[2]})
-    aAdd(aFields,{"TMP_QMOV" 	    , GetSx3Cache("D3_QUANT","X3_TIPO")         ,tamSx3("D3_QUANT")[1]	,tamSx3("D3_QUANT")[2]})
-    aAdd(aFields,{"TMP_MCUS" 	    , GetSx3Cache("D2_CUSTO1","X3_TIPO")        ,tamSx3("D2_CUSTO1")[1]	,tamSx3("D3_QUANT")[2]})
-    aAdd(aFields,{"TMP_SIT" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
-
+    aAdd(aFields,{"TMP_UM" 	        , GetSx3Cache("B1_UM","X3_TIPO")	        ,tamSx3("B1_UM")[1]	        ,tamSx3("B1_UM")[2]})  
+    aAdd(aFields,{"TMP_REV" 	    , GetSx3Cache("C2_REVISAO","X3_TIPO")	    ,tamSx3("C2_REVISAO")[1]	,tamSx3("C2_REVISAO")[2]})
+    
+    // Quantidades Prevista e Realizada e o Status de Perda ou Ganho
+    aAdd(aFields,{"TMP_SIT" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})    
+    aAdd(aFields,{"TMP_QTOP" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})   
+    aAdd(aFields,{"TMP_QUSE" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
+    
+    // Componentes
+    aAdd(aFields,{"TMP_NIVEL" 	    , GetSx3Cache("D3_NIVEL","X3_TIPO")	        ,tamSx3("D3_NIVEL")[1]	    ,tamSx3("D3_NIVEL")[2]})
+    aAdd(aFields,{"TMP_TRT" 	    , GetSx3Cache("D4_TRT","X3_TIPO")	        ,tamSx3("D4_TRT")[1]	    ,tamSx3("D4_TRT")[2]})
+    aAdd(aFields,{"TMP_COMP" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
     aAdd(aFields,{"TMP_DSC1" 	    , GetSx3Cache("B1_DESC","X3_TIPO")	        ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
     aAdd(aFields,{"TMP_TP1" 	    , GetSx3Cache("B1_TIPO","X3_TIPO")	        ,tamSx3("B1_TIPO")[1]	    ,tamSx3("B1_TIPO")[2]})    
+
+    aAdd(aFields,{"TMP_MAT" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
+    aAdd(aFields,{"TMP_DSC2" 	    , GetSx3Cache("B1_DESC","X3_TIPO")	        ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
+    aAdd(aFields,{"TMP_TP2" 	    , GetSx3Cache("B1_TIPO","X3_TIPO")	        ,tamSx3("B1_TIPO")[1]	    ,tamSx3("B1_TIPO")[2]})    
+
+    // Quantidade das movimentações geradas pela OP
+    aAdd(aFields,{"TMP_QTDE" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
+    aAdd(aFields,{"TMP_QMOV" 	    , GetSx3Cache("D3_QUANT","X3_TIPO")         ,tamSx3("D3_QUANT")[1]	    ,tamSx3("D3_QUANT")[2]})
+    // Valorização dos movimentos geradas pela OP
+    aAdd(aFields,{"TMP_CUSTD" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})
+    aAdd(aFields,{"TMP_CNET" 	    , GetSx3Cache("B1_CUSTNET","X3_TIPO")       ,tamSx3("B1_CUSTNET")[1]	,tamSx3("B1_CUSTNET")[2]})
+    aAdd(aFields,{"TMP_MCUS" 	    , GetSx3Cache("D2_CUSTO1","X3_TIPO")        ,tamSx3("D2_CUSTO1")[1]	,tamSx3("D3_QUANT")[2]})
+
 
     oTable:SetFields( aFields )
 	oTable:AddIndex("ind1",{"TMP_FILIAL","TMP_OP","TMP_COD","TMP_NIVEL","TMP_COMP","TMP_TRT"} )
@@ -133,7 +161,8 @@ Static Function ProcRun(oSay)
         and C2_NUM+C2_ITEM+C2_SEQUEN BETWEEN  %exp:cMvPar01% AND %exp:cMvPar02%
         and C2_EMISSAO BETWEEN  %exp:DTOS(cMvPar03)% AND %exp:DTOS(cMvPar04)%
         ORDER BY C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_PRODUTO
-    EndSQL  
+    EndSQL 
+
     if (cTrab)->(Eof())
         FWAlertError("Sem dados para processar!", "Falha")
 		Return
@@ -141,8 +170,25 @@ Static Function ProcRun(oSay)
 
     While !(cTrab)->(EoF())
 
-            oSay:SetText("Lendo : OP "+(cTrab)->C2_NUM+(cTrab)->C2_ITEM+(cTrab)->C2_SEQUEN+" Produto : "+(cTrab)->C2_PRODUTO)
+           if cMvPar05 = 1 // Ops Encerradas
+              if (cTrab)->C2_QUJE = 0.00
+                 (cTrab)->( dbSkip() )
+                 Loop
+              Endif
+            else 
+              if (cTrab)->C2_QUJE != 0.00 //Ops Abertas
+                 (cTrab)->( dbSkip() )
+                 Loop
+              Endif
+           endif
 
+           if (cTrab)->C2_NUM+(cTrab)->C2_ITEM+(cTrab)->C2_SEQUEN   <> cNumOP
+              if !Empty(cNumOP)
+                  oSay:SetText("Lendo : OP "+(cTrab)->C2_NUM+(cTrab)->C2_ITEM+(cTrab)->C2_SEQUEN+" Produto : "+(cTrab)->C2_PRODUTO)
+              endif
+              cNumOP := (cTrab)->C2_NUM+(cTrab)->C2_ITEM+(cTrab)->C2_SEQUEN
+           endif
+       
             cCodProd := AvKey((cTrab)->C2_PRODUTO, "B1_COD")
             Estrut2(cCodProd, (cTrab)->C2_QUANT, cArq, @oTempTable,.T.)
 
@@ -156,40 +202,49 @@ Static Function ProcRun(oSay)
             (cArq)->(DbGoTop())
             If ! (cArq)->(EoF())
                 While ! (cArq)->(EoF())
-                   
-                   aDados := SeacherR320((cTrab)->C2_NUM+(cTrab)->C2_ITEM+(cTrab)->C2_SEQUEN,(cArq)->COMP,(cArq)->TRT)
+                
+                                aDados := SeacherR320((cTrab)->C2_NUM+(cTrab)->C2_ITEM+(cTrab)->C2_SEQUEN,(cArq)->COMP,(cArq)->TRT)
 
-                     IF RecLock(ctmp,.T.)
-                         (ctmp)->TMP_FILIAL  := (cTrab)->C2_FILIAL
-                         (ctmp)->TMP_OP      := (cTrab)->C2_NUM
-                         (ctmp)->TMP_QTOP    := (cTrab)->C2_QUANT
-                         (ctmp)->TMP_ITEM    := (cTrab)->C2_ITEM
-                         (ctmp)->TMP_SEQ     := (cTrab)->C2_SEQUEN
-                         (ctmp)->TMP_COD     := (cTrab)->C2_PRODUTO
-                         (ctmp)->TMP_QUSE    := (cTrab)->C2_QUJE
-                         (ctmp)->TMP_REV     := (cTrab)->B1_REVATU
+                                    IF RecLock(ctmp,.T.)
+                                        // Dados da Ordem de Producao
+                                        (ctmp)->TMP_FILIAL  := (cTrab)->C2_FILIAL
+                                        (ctmp)->TMP_OP      := (cTrab)->C2_NUM
+                                        (ctmp)->TMP_ITEM    := (cTrab)->C2_ITEM
+                                        (ctmp)->TMP_SEQ     := (cTrab)->C2_SEQUEN
+                                        (ctmp)->TMP_COD     := (cTrab)->C2_PRODUTO
+                                        (ctmp)->TMP_DESC    := (cTrab)->B1_DESC
+                                        (ctmp)->TMP_TIPO    := (cTrab)->B1_TIPO
+                                        (ctmp)->TMP_UM 	    := (cTrab)->B1_UM
+                                        (ctmp)->TMP_REV     := (cTrab)->B1_REVATU
+                                    
+                                        // Quantidades Prevista e Realizada e o Status de Perda ou Ganho
+                                        (ctmp)->TMP_SIT     := (cTrab)->SITUACAO
+                                        (ctmp)->TMP_QTOP    := (cTrab)->C2_QUANT
+                                        (ctmp)->TMP_QUSE    := (cTrab)->C2_QUJE
+                                    
+                                        // Componentes
+                                        (ctmp)->TMP_NIVEL   := STRZERO(VAL((cArq)->NIVEL),3)
+                                        (ctmp)->TMP_TRT     := (cArq)->TRT
+                                        (ctmp)->TMP_COMP    := (cArq)->CODIGO
+                                        (ctmp)->TMP_DSC1    := Posicione("SB1",1,xFilial("SB1")+(cArq)->CODIGO,"B1_DESC")
+                                        (ctmp)->TMP_TP1     := Posicione("SB1",1,xFilial("SB1")+(cArq)->CODIGO,"B1_TIPO")
 
-                         (ctmp)->TMP_COMP    := (cArq)->CODIGO
-                         (ctmp)->TMP_NIVEL   := STRZERO(VAL((cArq)->NIVEL),3)
-                         (ctmp)->TMP_TRT     := (cArq)->TRT
-                         (ctmp)->TMP_MAT     := (cArq)->COMP
-                         (ctmp)->TMP_QTDE    := (cArq)->QUANT
+                                        (ctmp)->TMP_MAT     := (cArq)->COMP
+                                        (ctmp)->TMP_DSC2    := Posicione("SB1",1,xFilial("SB1")+(cArq)->COMP,"B1_DESC")
+                                        (ctmp)->TMP_TP2     := Posicione("SB1",1,xFilial("SB1")+(cArq)->COMP,"B1_TIPO")
+                                        
+                                        // Quantidade das movimentações geradas pela OP
+                                        (ctmp)->TMP_QTDE    := (cArq)->QUANT
+                                        (ctmp)->TMP_QMOV    := aDados[1]
+                                        
+                                        // Valorização dos movimentos geradas pela OP
+                                        (ctmp)->TMP_CUSTD   := (cTrab)->B1_CUSTD
+                                        (ctmp)->TMP_CNET    := (cTrab)->B1_CUSTNET
+                                        (ctmp)->TMP_MCUS    := aDados[2]
 
-                         (ctmp)->TMP_DESC    := (cTrab)->B1_DESC
-                         (ctmp)->TMP_TIPO    := (cTrab)->B1_TIPO
-                         (ctmp)->TMP_UM 	 := (cTrab)->B1_UM
-                         (ctmp)->TMP_CUSTD   := (cTrab)->B1_CUSTD
-                         (ctmp)->TMP_CNET    := (cTrab)->B1_CUSTNET
+                                        (ctmp)->( MsUnlock() )
+                                    Endif
 
-                         (ctmp)->TMP_QMOV    := aDados[1]
-                         (ctmp)->TMP_MCUS    := aDados[2]
-                         (ctmp)->TMP_DSC1    := Posicione("SB1",1,xFilial("SB1")+(cArq)->COMP,"B1_DESC")
-                         (ctmp)->TMP_TP1     := Posicione("SB1",1,xFilial("SB1")+(cArq)->COMP,"B1_TIPO")
-
-                         (ctmp)->TMP_SIT    := (cTrab)->SITUACAO
-
-                        (ctmp)->( MsUnlock() )
-                     Endif
                     (cArq)->(DbSkip())
                 EndDo
             Else
@@ -235,35 +290,48 @@ Static Function ReportDef()
     Local cDesc 	:= cTitulo
     Local cPerg     := " "
 
-    oReport:= TReport():New("PCPR300",cTitulo,cPerg, {|oReport| ReportPrint(oReport)},cDesc)
+    oReport:= TReport():New("PCPR320",cTitulo,cPerg, {|oReport| ReportPrint(oReport)},cDesc)
 
     oReport:SetLandscape() 
     oReport:SetTotalInLine(.F.)
     oReport:lParamPage := .T.
 
     oSection1 := TRSection():New(oReport,"",{"cQry01"},aOrdem)
+
+      // Dados da Ordem de Producao
     TRCell():New(oSection1,'FILIAL'			,'cQry01','Filial'     		    	,PesqPict('SC2',"C2_FILIAL")	,TamSX3("C2_FILIAL") [1]+1,,) 
-    TRCell():New(oSection1,'OP'				,'cQry01','Lote'     		,	 							, 							,,) 
+    TRCell():New(oSection1,'OP'				,'cQry01','Lote'     		        ,	 							, 							,,) 
+    TRCell():New(oSection1,'ITEM'			,'cQry01','Item'     		        ,	 							, 							,,) 
+    TRCell():New(oSection1,'SEQ'			,'cQry01','Seq'     		        ,	 							, 							,,) 
     TRCell():New(oSection1,'PRODUTO'		,'cQry01','Produto'     		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
 	TRCell():New(oSection1,'DESCRICAO'		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
 	TRCell():New(oSection1,'TIPO'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)
     TRCell():New(oSection1,'UM'		        ,'cQry01','U.M.'     		     	,PesqPict('SB1',"B1_UM")	    ,TamSX3("B1_UM") [1]+1,,)
+    TRCell():New(oSection1,'REVISAO'		,'cQry01','Revisao'     		   	,PesqPict('SC2',"C2_REVISAO")	,TamSX3("C2_REVISAO") [1]+1,,) 
     TRCell():New(oSection1,'CUSTO'	        ,'cQry01','Custo Standart'	     	,PesqPict('SB1',"B1_CUSTD")	    ,TamSX3("B1_CUSTD") [1]+1,,)
     TRCell():New(oSection1,'NET'	        ,'cQry01','Custo Net'	     		,PesqPict('SB1',"B1_CUSTNET")	,TamSX3("B1_CUSTNET") [1]+1,,)    
-    TRCell():New(oSection1,'REVISAO'		,'cQry01','Revisao'     		   	,PesqPict('SC2',"C2_REVISAO")	,TamSX3("C2_REVISAO") [1]+1,,) 
+
+     // Quantidades Prevista e Realizada e o Status de Perda ou Ganho
+    TRCell():New(oSection1,'SITUACAO'		,'cQry01','Situacao'     		    ,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,)  
     TRCell():New(oSection1,'PRODUZIR'		,'cQry01','Produzir'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'UTILIZA'		,'cQry01','Produzido'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
-    TRCell():New(oSection1,'SITUACAO'		,'cQry01','Situacao'     		    ,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,)  
-    TRCell():New(oSection1,'NIVEL'  		,'cQry01','Nivel'       		   	,PesqPict('SD3',"D3_NIVEL")	    ,TamSX3("D3_NIVEL") [1]+1,,) 
-    TRCell():New(oSection1,'COMPONENTE'		,'cQry01','Componente'     		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
-    TRCell():New(oSection1,'TRT'			,'cQry01','TRT'     		    	,PesqPict('SD4',"D4_TRT")		,TamSX3("D4_TRT") [1]+1,,) 
-    TRCell():New(oSection1,'MATERIAL'		,'cQry01','Material'     		    ,PesqPict('SD3',"D3_COD")		,TamSX3("D3_COD") [1]+1,,) 
     
+    // Componentes
+    TRCell():New(oSection1,'NIVEL'  		,'cQry01','Nivel'       		   	,PesqPict('SD3',"D3_NIVEL")	    ,TamSX3("D3_NIVEL") [1]+1,,) 
+     TRCell():New(oSection1,'TRT'			,'cQry01','TRT'     		    	,PesqPict('SD4',"D4_TRT")		,TamSX3("D4_TRT") [1]+1,,) 
+    TRCell():New(oSection1,'COMPONENTE'		,'cQry01','Prod.Estrutura' 		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
     TRCell():New(oSection1,'DESC1'  		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
 	TRCell():New(oSection1,'TIP1'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)
-    
+
+    TRCell():New(oSection1,'MATERIAL'		,'cQry01','Material'     		    ,PesqPict('SD3',"D3_COD")		,TamSX3("D3_COD") [1]+1,,) 
+    TRCell():New(oSection1,'DESC2'  		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
+	TRCell():New(oSection1,'TIP2'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)
+
+    // Quantidade das movimentações geradas pela OP
     TRCell():New(oSection1,'QUANT'			,'cQry01','Quant'    		    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'QTMOV'			,'cQry01','Qtde Mov'    	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
+
+    // Valorização dos movimentos geradas pela OP
     TRCell():New(oSection1,'CSTMED'	        ,'cQry01','Custo Mov'   	     	,PesqPict('SB1',"B1_CUSTD")	    ,TamSX3("B1_CUSTD") [1]+1,,)
     
 Return(oReport)
@@ -287,28 +355,42 @@ Static Function ReportPrint(oReport)
     oSection1:Init()
     
     While !oReport:Cancel() .And. !(ctmp)->(Eof())   
-    
+
+        // Dados da Ordem de Producao
         oSection1:Cell("FILIAL"):SetValue((ctmp)->TMP_FILIAL)
-        oSection1:Cell("OP"):SetValue((ctmp)->TMP_OP+"."+(ctmp)->TMP_ITEM+"."+(ctmp)->TMP_SEQ  )		
+        oSection1:Cell("OP"):SetValue((ctmp)->TMP_OP  )	
+        oSection1:Cell("ITEM"):SetValue((ctmp)->TMP_ITEM  )	
+        oSection1:Cell("SEQ"):SetValue((ctmp)->TMP_SEQ )		
         oSection1:Cell("PRODUTO"):SetValue((ctmp)->TMP_COD)
         oSection1:Cell("DESCRICAO"):SetValue((ctmp)->TMP_DESC)
         oSection1:Cell("TIPO"):SetValue((ctmp)->TMP_TIPO)
         oSection1:Cell("UM"):SetValue((ctmp)->TMP_UM)
+        oSection1:Cell("REVISAO"):SetValue((ctmp)->TMP_REV )
         oSection1:Cell("CUSTO"):SetValue((ctmp)->TMP_CUSTD)
         oSection1:Cell("NET"):SetValue((ctmp)->TMP_CNET)        
-        oSection1:Cell("REVISAO"):SetValue((ctmp)->TMP_REV )
+
+        // Quantidades Prevista e Realizada e o Status de Perda ou Ganho
+        oSection1:Cell("SITUACAO"):SetValue((ctmp)->TMP_SIT)      
         oSection1:Cell("PRODUZIR"):SetValue((ctmp)->TMP_QTOP)
         oSection1:Cell("UTILIZA"):SetValue((ctmp)->TMP_QUSE)
-        oSection1:Cell("SITUACAO"):SetValue((ctmp)->TMP_SIT)
+        
+        // Componentes
         oSection1:Cell("NIVEL"):SetValue((ctmp)->TMP_NIVEL)
-        oSection1:Cell("COMPONENTE"):SetValue((ctmp)->TMP_COMP)
         oSection1:Cell("TRT"):SetValue((ctmp)->TMP_TRT)	
-        oSection1:Cell("MATERIAL"):SetValue((ctmp)->TMP_MAT)
-        oSection1:Cell("QUANT"):SetValue((ctmp)->TMP_QTDE)
-        oSection1:Cell("QTMOV"):SetValue((ctmp)->TMP_QMOV)
-        oSection1:Cell("CSTMED"):SetValue((ctmp)->TMP_MCUS) 
+        oSection1:Cell("COMPONENTE"):SetValue((ctmp)->TMP_COMP)
         oSection1:Cell("DESC1"):SetValue((ctmp)->TMP_DSC1) 
         oSection1:Cell("TIP1"):SetValue((ctmp)->TMP_TP1)                	
+
+        oSection1:Cell("MATERIAL"):SetValue((ctmp)->TMP_MAT)
+        oSection1:Cell("DESC2"):SetValue((ctmp)->TMP_DSC2) 
+        oSection1:Cell("TIP2"):SetValue((ctmp)->TMP_TP2)                	
+
+        // Quantidade das movimentações geradas pela OP
+        oSection1:Cell("QUANT"):SetValue((ctmp)->TMP_QTDE)
+        oSection1:Cell("QTMOV"):SetValue((ctmp)->TMP_QMOV)
+
+        // Valorização dos movimentos geradas pela OP
+        oSection1:Cell("CSTMED"):SetValue((ctmp)->TMP_MCUS) 
         
 	    oSection1:PrintLine()
 	    oReport:IncMeter()
