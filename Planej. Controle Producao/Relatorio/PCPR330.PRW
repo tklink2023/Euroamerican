@@ -76,27 +76,49 @@ Static Function ProcRun(oSay)
 
     aAdd(aFields,{"TMP_FILIAL"		, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
     aAdd(aFields,{"TMP_LOTE"	    , GetSx3Cache("C2_NUM","X3_TIPO")		    ,tamSx3("C2_NUM")[1]	    ,tamSx3("C2_NUM")[2]})  
+    aAdd(aFields,{"TMP_ITEM"	    , GetSx3Cache("C2_ITEM","X3_TIPO")		    ,tamSx3("C2_ITEM")[1]	    ,tamSx3("C2_ITEM")[2]})
+    aAdd(aFields,{"TMP_SEQ" 	    , GetSx3Cache("C2_SEQUEN","X3_TIPO")	    ,tamSx3("C2_SEQUEN")[1]	    ,tamSx3("C2_SEQUEN")[2]})
+
+    aAdd(aFields,{"TMP_DTEMIS"	    , GetSx3Cache("C2_EMISSAO","X3_TIPO")		,tamSx3("C2_EMISSAO")[1]	,tamSx3("C2_EMISSAO")[2]})  
+    aAdd(aFields,{"TMP_DTFABR"	    , GetSx3Cache("C2_EMISSAO","X3_TIPO")		,tamSx3("C2_EMISSAO")[1]	,tamSx3("C2_EMISSAO")[2]})  
+
     aAdd(aFields,{"TMP_COD" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
+    aAdd(aFields,{"TMP_DESC" 	    , GetSx3Cache("B1_DESC","X3_TIPO")	        ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
+    aAdd(aFields,{"TMP_TIPO" 	    , GetSx3Cache("B1_TIPO","X3_TIPO")	        ,tamSx3("B1_TIPO")[1]	    ,tamSx3("B1_TIPO")[2]})
+
     aAdd(aFields,{"TMP_QTDPR" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDRA" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDPD" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_TRT" 	    , GetSx3Cache("D4_TRT","X3_TIPO")	        ,tamSx3("D4_TRT")[1]	    ,tamSx3("D4_TRT")[2]})
-    aAdd(aFields,{"TMP_COMP" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})    
+
+    aAdd(aFields,{"TMP_COMP" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})  
+    aAdd(aFields,{"TMP_CDES" 	    , GetSx3Cache("B1_DESC","X3_TIPO")	        ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
+    aAdd(aFields,{"TMP_CTIPO" 	    , GetSx3Cache("B1_TIPO","X3_TIPO")	        ,tamSx3("B1_TIPO")[1]	    ,tamSx3("B1_TIPO")[2]})
+
+    aAdd(aFields,{"TMP_STRUT" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDST" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDD4" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDD3" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
+
+    aAdd(aFields,{"TMP_CUSTM" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTD" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
+    aAdd(aFields,{"TMP_CUSTN" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})  
+
+    aAdd(aFields,{"TMP_QDIVER" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})    
+
     oTable:SetFields( aFields )
 	oTable:AddIndex("ind1",{"TMP_FILIAL","TMP_LOTE","TMP_COD","TMP_COMP","TMP_TRT"} )
  	oTable:Create()
 
     cQuery :="Select  C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_PRODUTO,C2_LOCAL,C2_QUANT,C2_QUJE,C2_EMISSAO,C2_DATRF,C2_PERDA,"+cEof
-    cQuery +="		   D4_TRT,D4_COD,(G1_QUANT*C2_QUANT)/100 QTD_STRU,D4_QTDEORI,D3_QUANT,D3_CUSTO1 "+cEof
+    cQuery +="         B1_DESC,B1_TIPO,B1_CUSTD,B1_CUSTNET,B1_REVATU,B1_QB, "+cEof
+    cQuery +="		   D4_TRT,D4_COD,G1_QUANT,(G1_QUANT*C2_QUANT)/100 QTD_STRU,D4_QTDEORI,D3_QUANT,D3_CUSTO1 "+cEof
     cQuery +="FROM "+RetSqlName("SC2")+" SC2 "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SB1")+" SB1 ON SB1.D_E_L_E_T_ = ' ' AND B1_COD = C2_PRODUTO "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SD4")+" SD4 ON SD4.D_E_L_E_T_ = ' ' AND D4_FILIAL = C2_FILIAL AND D4_OP = C2_NUM+C2_ITEM+C2_SEQUEN  "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SD3")+" SD3 ON D3_FILIAL = C2_FILIAL AND D3_OP = C2_NUM+C2_ITEM+C2_SEQUEN AND SD3.D_E_L_E_T_ = ' ' AND D3_TRT = D4_TRT "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SG1")+" SG1 ON SG1.D_E_L_E_T_ = ' ' AND G1_FILIAL = C2_FILIAL AND G1_COD = C2_PRODUTO AND G1_COMP = D4_COD AND G1_TRT = D4_TRT  "+cEof
+    cQuery +="AND G1_REVFIM = (SELECT MAX(G1_REVFIM) FROM "+RetSqlName("SG1")+" WHERE D_E_L_E_T_ = ' ' AND G1_FILIAL = C2_FILIAL AND G1_COD = C2_PRODUTO AND G1_COMP = D4_COD )"+cEof
     cQuery +="Where SC2.D_E_L_E_T_ = ' ' "+cEof
     cQuery +="AND C2_FILIAL =  '"+xFilial("SC2")+"'"+cEof
     cQuery +="AND C2_NUM+C2_ITEM+C2_SEQUEN BETWEEN '"+cMvPar01+"' AND '"+cMvPar02+"' "+cEof
@@ -118,19 +140,33 @@ Static Function ProcRun(oSay)
 
       While !(cAlias)->(EoF())
              IF RecLock(ctmp,.T.)
-                (ctmp)->TMP_FILIAL  := (cAlias)->C2_FILIAL
+                (ctmp)->TMP_FILIAL := (cAlias)->C2_FILIAL
                 (ctmp)->TMP_LOTE   := (cAlias)->C2_NUM
+                (ctmp)->TMP_ITEM   := (cAlias)->C2_ITEM
+                (ctmp)->TMP_SEQ    := (cAlias)->C2_SEQUEN
                 (ctmp)->TMP_COD    := (cAlias)->C2_PRODUTO
+                (ctmp)->TMP_DESC   := (cAlias)->B1_DESC
+                (ctmp)->TMP_TIPO   := (cAlias)->B1_TIPO
+                (ctmp)->TMP_DTEMIS := stod((cAlias)->C2_EMISSAO)
+                (ctmp)->TMP_DTFABR := stod((cAlias)->C2_DATRF)
                 (ctmp)->TMP_QTDPR  := (cAlias)->C2_QUANT
                 (ctmp)->TMP_QTDRA  := (cAlias)->C2_QUJE
                 (ctmp)->TMP_QTDPD  := (cAlias)->C2_PERDA
                 (ctmp)->TMP_TRT    := (cAlias)->D4_TRT
                 (ctmp)->TMP_COMP   := (cAlias)->D4_COD
-                (ctmp)->TMP_QTDST  := (cAlias)->QTD_STRU
+                (ctmp)->TMP_CDES   := Posicione("SB1",1,xFilial("SB1")+(cAlias)->D4_COD,"B1_DESC")
+                (ctmp)->TMP_CTIPO  := Posicione("SB1",1,xFilial("SB1")+(cAlias)->D4_COD,"B1_TIPO")
+                (ctmp)->TMP_STRUT  := (cAlias)->G1_QUANT
+                (ctmp)->TMP_QTDST  := ((cAlias)->G1_QUANT*(cAlias)->C2_QUANT)/(cAlias)->B1_QB 
                 (ctmp)->TMP_QTDD4  := (cAlias)->D4_QTDEORI
                 (ctmp)->TMP_QTDD3  := (cAlias)->D3_QUANT
-                (ctmp)->TMP_CUSTD  := (cAlias)->D3_CUSTO1
-               (ctmp)->( MsUnlock() )
+                (ctmp)->TMP_CUSTM  := (cAlias)->D3_CUSTO1 / (cAlias)->D3_QUANT
+                (ctmp)->TMP_CUSTD  := Posicione("SB1",1,xFilial("SB1")+(cAlias)->D4_COD,"B1_CUSTD")
+                (ctmp)->TMP_CUSTN  := Posicione("SB1",1,xFilial("SB1")+(cAlias)->D4_COD,"B1_CUSTNET")
+                (cTmp)->TMP_QDIVER := ((ctmp)->TMP_QTDD4 - (ctmp)->TMP_QTDST )
+
+                (ctmp)->( MsUnlock() )
+
              Endif
              (cAlias)->( dbSkip() )
       EndDo
@@ -149,7 +185,7 @@ Static Function ReportDef()
     Local cDesc 	:= cTitulo
     Local cPerg     := " "
 
-    oReport:= TReport():New("PCPR320",cTitulo,cPerg, {|oReport| ReportPrint(oReport)},cDesc)
+    oReport:= TReport():New("PCPR330",cTitulo,cPerg, {|oReport| ReportPrint(oReport)},cDesc)
 
     oReport:SetLandscape() 
     oReport:SetTotalInLine(.F.)
@@ -160,16 +196,33 @@ Static Function ReportDef()
       // Dados da Ordem de Producao
 	TRCell():New(oSection1,'FILIAL'			,'cQry01','Filial'     		    	,PesqPict('SC2',"C2_FILIAL")	,TamSX3("C2_FILIAL") [1]+1,,) 
     TRCell():New(oSection1,'LOTE'			,'cQry01','Lote'     		        ,PesqPict('SC2',"C2_NUM")		,TamSX3("C2_NUM") [1]+1,,) 
+    TRCell():New(oSection1,'ITEM'			,'cQry01','Item'     		        ,	 							, 							,,) 
+    TRCell():New(oSection1,'SEQ'			,'cQry01','Seq'     		        ,	 							, 							,,)    
+
+    TRCell():New(oSection1,'EMISSAO'		,'cQry01','Emissao'     		   	,PesqPict('SC2',"C2_EMISSAO")	,TamSX3("C2_EMISSAO") [1]+1,,) 
+    TRCell():New(oSection1,'FABRIC'			,'cQry01','Fabricacao'     		   	,PesqPict('SC2',"C2_DATRF")		,TamSX3("C2_DATRF") [1]+1,,) 
+
     TRCell():New(oSection1,'PRODUTO'		,'cQry01','Produto'     		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
+	TRCell():New(oSection1,'DESCRICAO'		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
+	TRCell():New(oSection1,'TIPO'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)    
+
 	TRCell():New(oSection1,'PRODUZIR'		,'cQry01','Produzir'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'UTILIZA'		,'cQry01','Produzido'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
 	TRCell():New(oSection1,'PERDA'			,'cQry01','Perda'     		   	    ,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 		
     TRCell():New(oSection1,'TRT'			,'cQry01','TRT'     		    	,PesqPict('SD4',"D4_TRT")		,TamSX3("D4_TRT") [1]+1,,) 
+
     TRCell():New(oSection1,'COMPONENTE'		,'cQry01','Prod.Estrutura' 		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
-    TRCell():New(oSection1,'QTDST'			,'cQry01','Qtde.Estrutura'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
-    TRCell():New(oSection1,'QTDD4'			,'cQry01','Qtde Empenhado' 	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
+    TRCell():New(oSection1,'DESC1'  		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
+	TRCell():New(oSection1,'TIP1'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)
+    TRCell():New(oSection1,'CREV'		    ,'cQry01','Revisao'    		     	,PesqPict('SB1',"B1_REVATU")    ,TamSX3("B1_REVATU") [1]+1,,)
+    TRCell():New(oSection1,'STRUT'			,'cQry01','Qtde.Estrutura'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
+    TRCell():New(oSection1,'QTDST'			,'cQry01','Qtde.Prevista'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
+    TRCell():New(oSection1,'QTDD4'			,'cQry01','Qtde Empenhado' 	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,)
+    TRCell():New(oSection1,'QDIVER'			,'cQry01','Qtde Divergente'      	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
 	TRCell():New(oSection1,'QTDD3'			,'cQry01','Qtde Movimentos' 	   	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
-    TRCell():New(oSection1,'CSTMED'	        ,'cQry01','Custo Mov'   	     	,PesqPict('SB1',"B1_CUSTD")	    ,TamSX3("B1_CUSTD") [1]+1,,)
+    TRCell():New(oSection1,'CSTMED'	        ,'cQry01','Custo Medio'   	     	,PesqPict('SB1',"B1_CUSTD")	    ,TamSX3("B1_CUSTD") [1]+1,,)
+    TRCell():New(oSection1,'CSTSTD'	        ,'cQry01','Custo Standart'	     	,PesqPict('SB1',"B1_CUSTD")	    ,TamSX3("B1_CUSTD") [1]+1,,)
+    TRCell():New(oSection1,'CSTNET'	        ,'cQry01','Custo Net'   	     	,PesqPict('SB1',"B1_CUSTD")	    ,TamSX3("B1_CUSTD") [1]+1,,)
     
 Return(oReport)
 
@@ -187,6 +240,9 @@ Static Function ReportPrint(oReport)
         // Dados da Ordem de Producao
         oSection1:Cell("FILIAL"):SetValue((ctmp)->TMP_FILIAL)
         oSection1:Cell("LOTE"):SetValue((ctmp)->TMP_LOTE  )	
+        oSection1:Cell("ITEM"):SetValue((ctmp)->TMP_ITEM  )	
+        oSection1:Cell("SEQ"):SetValue((ctmp)->TMP_SEQ )		        
+
         oSection1:Cell("PRODUTO"):SetValue((ctmp)->TMP_COD)
         oSection1:Cell("PRODUZIR"):SetValue((ctmp)->TMP_QTDPR)
         oSection1:Cell("UTILIZA"):SetValue((ctmp)->TMP_QTDRA)
@@ -196,8 +252,20 @@ Static Function ReportPrint(oReport)
         oSection1:Cell("QTDST"):SetValue((ctmp)->TMP_QTDST)
         oSection1:Cell("QTDD4"):SetValue((ctmp)->TMP_QTDD4)
         oSection1:Cell("QTDD3"):SetValue((ctmp)->TMP_QTDD3)
-        oSection1:Cell("CSTMED"):SetValue((ctmp)->TMP_CUSTD) 
-        
+        oSection1:Cell("CSTMED"):SetValue((ctmp)->TMP_CUSTM) 
+
+        oSection1:Cell("EMISSAO"):SetValue((ctmp)->TMP_DTEMIS) 
+        oSection1:Cell("FABRIC"):SetValue((ctmp)->TMP_DTFABR) 
+        oSection1:Cell("DESCRICAO"):SetValue((ctmp)->TMP_DESC) 
+        oSection1:Cell("TIPO"):SetValue((ctmp)->TMP_TIPO) 
+        oSection1:Cell("DESC1"):SetValue((ctmp)->TMP_CDES) 
+        oSection1:Cell("TIP1"):SetValue((ctmp)->TMP_CTIPO) 
+        oSection1:Cell("CREV"):SetValue(Posicione("SG1",2,xFilial("SG1")+(ctmp)->TMP_COMP+(ctmp)->TMP_COD,"G1_REVFIM")) 
+        oSection1:Cell("CSTSTD"):SetValue((ctmp)->TMP_CUSTD) 
+        oSection1:Cell("CSTNET"):SetValue((ctmp)->TMP_CUSTN) 
+        oSection1:Cell("STRUT"):SetValue((ctmp)->TMP_STRUT) 
+        oSection1:Cell("QDIVER"):SetValue((ctmp)->TMP_QDIVER) 
+
 	    oSection1:PrintLine()
 	    oReport:IncMeter()
 

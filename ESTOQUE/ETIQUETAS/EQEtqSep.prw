@@ -3,8 +3,8 @@
 
 User Function EQEtqSep() // Etiqueta de ordem de separação...
 
-Local cPorta 	:= "LPT1"
-Local cModelo   := "LPT1"
+Local cPorta 	:= "LTP1"
+Local cModelo   := "ZEBRA"
 
 Private cPerg   := "BEETQORDEM"
 
