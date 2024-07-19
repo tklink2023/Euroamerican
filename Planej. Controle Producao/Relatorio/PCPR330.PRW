@@ -170,7 +170,7 @@ Static Function ProcRun(oSay)
                 (ctmp)->TMP_DTFABR := stod((cAlias)->FABRICACAO)
                 (ctmp)->TMP_QTDPR  := (cAlias)->PREVISTO
                 (ctmp)->TMP_QTDRA  := (cAlias)->REALIZADO
-                (ctmp)->TMP_QTDPD  := (cAlias)->PREVISTO - (cAlias)->REALIZADO //(cAlias)->PERDA
+                (ctmp)->TMP_QTDPD  := (cAlias)->REALIZADO -(cAlias)->PREVISTO   //(cAlias)->PERDA
                 (ctmp)->TMP_COMP   := (cAlias)->COMPONENTE
                 (ctmp)->TMP_CDES   := (cAlias)->DESCCOMP
                 (ctmp)->TMP_CTIPO  := (cAlias)->TIPOCOMP
@@ -185,6 +185,8 @@ Static Function ProcRun(oSay)
              Endif
              (cAlias)->( dbSkip() )
       EndDo
+
+      
       (cAlias)->( dbCloseArea() )
        oReport := ReportDef()
        oReport:PrintDialog()
@@ -261,7 +263,7 @@ Static Function ReportPrint(oReport)
         oSection1:Cell("QTDST"):SetValue((ctmp)->TMP_QTDST)
         oSection1:Cell("QTDD4"):SetValue((ctmp)->TMP_QTDD4)
         oSection1:Cell("QTDD3"):SetValue((ctmp)->TMP_QTDD3)
-        oSection1:Cell("QTDDV"):SetValue((ctmp)->TMP_QTDST - (ctmp)->TMP_QTDD3)
+        oSection1:Cell("QTDDV"):SetValue((ctmp)->TMP_QTDD3 - (ctmp)->TMP_QTDST )
         oSection1:Cell("CSTMED"):SetValue((ctmp)->TMP_CUSTM) 
         oSection1:Cell("DESC1"):SetValue((ctmp)->TMP_CDES) 
         oSection1:Cell("TIP1"):SetValue((ctmp)->TMP_CTIPO) 
