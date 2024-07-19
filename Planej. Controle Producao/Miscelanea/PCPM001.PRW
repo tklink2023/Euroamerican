@@ -23,7 +23,7 @@ USER FUNCTION PCPM001()
   // Para retornar a hora da última modificação do código fonte compilado
     Local aTime    
 
-    aFontes := GetSrcArray("*.PRW")
+    aFontes := GetSrcArray("*.PRW",3)
     aData := GetRpoLog(1)
     aRet := GetFuncArray('U_*', aType, aFile, aLine, aDate,aTime)
 
