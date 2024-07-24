@@ -78,8 +78,9 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
         MakeDir(cGuardaServ)
         FWAlertSuccess("Pasta '" + cGuardaServ + "' criada", "Pasta criada")
 	EndIf
-
-	CpyT2S(cGuardaLoc+aAnexos,cGuardaServ , .T. )
+    if len(aAnexos)>0
+		CpyT2S(cGuardaLoc+aAnexos,cGuardaServ , .T. )
+	endif	
 
 	If lRet
 		If lNovo
@@ -102,18 +103,18 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
 		oMsg:cTo      := cPara
 		oMsg:cSubject := cAssunto
 		oMsg:cBody    := cCorpo
-
-		If File(cGuardaServ+aAnexos)
-					//Anexa o arquivo na mensagem de e-Mail
-					nRet := oMsg:AttachFile(cGuardaServ+aAnexos)
-					If nRet < 0
-						cLog += "002 - Nao foi possivel anexar o arquivo '"+aAnexos+"'!" + CRLF
-					EndIf
-					//Senao, acrescenta no log
-		Else
-					cLog += "003 - Arquivo '"+aAnexos+"' nao encontrado!" + CRLF
-		EndIf
-
+        if len(aAnexos)>0
+			If File(cGuardaServ+aAnexos)
+						//Anexa o arquivo na mensagem de e-Mail
+						nRet := oMsg:AttachFile(cGuardaServ+aAnexos)
+						If nRet < 0
+							cLog += "002 - Nao foi possivel anexar o arquivo '"+aAnexos+"'!" + CRLF
+						EndIf
+						//Senao, acrescenta no log
+			Else
+						cLog += "003 - Arquivo '"+aAnexos+"' nao encontrado!" + CRLF
+			EndIf
+        endif   
 		//Cria servidor para disparo do e-Mail
 		oSrv := tMailManager():New()
 		//oSrv:SetUseTLS( .T. )

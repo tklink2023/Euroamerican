@@ -76,6 +76,7 @@ Static Function ProcRun(oSay)
 
     aAdd(aFields,{"TMP_FILIAL"		, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
     aAdd(aFields,{"TMP_LOTE"	    , GetSx3Cache("C2_NUM","X3_TIPO")		    ,tamSx3("C2_NUM")[1]	    ,tamSx3("C2_NUM")[2]})  
+    aAdd(aFields,{"TMP_OP"	        , GetSx3Cache("D3_OP","X3_TIPO")		    ,tamSx3("D3_OP")[1]	        ,tamSx3("D3_OP")[2]})  
     aAdd(aFields,{"TMP_DTEMIS"	    , GetSx3Cache("C2_EMISSAO","X3_TIPO")		,tamSx3("C2_EMISSAO")[1]	,tamSx3("C2_EMISSAO")[2]})  
     aAdd(aFields,{"TMP_DTFABR"	    , GetSx3Cache("C2_EMISSAO","X3_TIPO")		,tamSx3("C2_EMISSAO")[1]	,tamSx3("C2_EMISSAO")[2]})  
     aAdd(aFields,{"TMP_COD" 	    , GetSx3Cache("C2_PRODUTO","X3_TIPO")	    ,tamSx3("C2_PRODUTO")[1]	,tamSx3("C2_PRODUTO")[2]})
@@ -92,6 +93,7 @@ Static Function ProcRun(oSay)
     aAdd(aFields,{"TMP_QTDST" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDD4" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDD3" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
+    aAdd(aFields,{"TMP_QTDG1" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
 
     aAdd(aFields,{"TMP_CUSTM" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTD" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
@@ -128,6 +130,7 @@ Static Function ProcRun(oSay)
     cQuery +="		SD3.D3_UM		UM,"+cEof
     cQuery +="		ISNULL(D4_QTDEORI,0)  EMPENHO ,"+cEof
     cQuery +="		SD3.D3_QUANT	QTDMOV,"+cEof
+    cQuery +="		SG1.G1_QUANT	QTDSG1,"+cEof
     cQuery +="		ISNULL((G1_QUANT*C2_QUANT)/SB1.B1_QB,0) QTDESTR"+cEof
 
     cQuery +="From "+RetSqlName("SD3")+"  SD3"+cEof
@@ -163,6 +166,7 @@ Static Function ProcRun(oSay)
              IF RecLock(ctmp,.T.)
                 (ctmp)->TMP_FILIAL := (cAlias)->FILIAL
                 (ctmp)->TMP_LOTE   := (cAlias)->LOTE
+                (ctmp)->TMP_OP     := (cAlias)->OP
                 (ctmp)->TMP_COD    := (cAlias)->PRODUTO
                 (ctmp)->TMP_DESC   := (cAlias)->DESCRICAO
                 (ctmp)->TMP_TIPO   := (cAlias)->TIPO
@@ -177,6 +181,7 @@ Static Function ProcRun(oSay)
                 (ctmp)->TMP_QTDST  := (cAlias)->QTDESTR
                 (ctmp)->TMP_QTDD4  := (cAlias)->EMPENHO
                 (ctmp)->TMP_QTDD3  := (cAlias)->QTDMOV
+                (ctmp)->TMP_QTDG1  := (cAlias)->QTDSG1
                 (ctmp)->TMP_CUSTM  := ((cAlias)->CUSTM / (cAlias)->QTDMOV )
                 (ctmp)->TMP_CUSTD  := (cAlias)->CUSTD
                 (ctmp)->TMP_CUSTN  := (cAlias)->CUSTN
@@ -185,9 +190,87 @@ Static Function ProcRun(oSay)
              Endif
              (cAlias)->( dbSkip() )
       EndDo
-
-      
       (cAlias)->( dbCloseArea() )
+
+      // DIVERGENTE
+
+        cAlias        := "D-"+GetNextAlias()
+        cQuery        := ' '
+
+        cQuery :="Select SC2.C2_FILIAL                          FILIAL,"+cEof
+        cQuery +="	    SC2.C2_NUM		                        LOTE,"+cEof
+        cQuery +="		SC2.C2_NUM+SC2.C2_ITEM+SC2.C2_SEQUEN    OP,"+cEof
+        cQuery +="		SC2.C2_PRODUTO                          PRODUTO,"+cEof
+        cQuery +="		SC2.C2_LOCAL	                        LOCAL,"+cEof
+        cQuery +="		SB1.B1_DESC		                        DESCRICAO,"+cEof
+        cQuery +="		SB1.B1_TIPO		                        TIPO,"+cEof
+        cQuery +="		SB1.B1_REVATU                           REVISAO,"+cEof
+        cQuery +="		SC2.C2_QUANT	                        PREVISTO,"+cEof        
+        cQuery +="		SC2.C2_QUJE		                        REALIZADO,"+cEof
+        cQuery +="		SC2.C2_PERDA                            PERDA,"+cEof
+        cQuery +="		SC2.C2_EMISSAO	                        EMISSAO,"+cEof
+        cQuery +="		SC2.C2_DATRF	                        FABRICACAO,"+cEof
+        cQuery +="		SG1.G1_COMP                             COMPONENTE,"+cEof
+         cQuery +="	    XB1.B1_DESC		                        DESCCOMP,"+cEof
+        cQuery +="		XB1.B1_TIPO		                        TIPOCOMP,"+cEof
+        cQuery +="		0				                        CUSTM,"+cEof
+        cQuery +="		XB1.B1_CUSTD	                        CUSTD,"+cEof
+        cQuery +="		XB1.B1_CUSTNET	                        CUSTN,"+cEof
+        cQuery +="		XB1.B1_QB		                        QUEBRA,"+cEof
+        cQuery +="		SC2.C2_LOCAL                            LOCCOMP,"+cEof
+        cQuery +="		XB1.B1_UM                               UM,"+cEof
+        cQuery +="		0				                        EMPENHO,"+cEof
+        cQuery +="		0                                       QTDMOV,"+cEof
+        cQuery +="		SG1.G1_QUANT	                        QTDSG1,"+cEof
+        cQuery +="		ISNULL((G1_QUANT*C2_QUANT)/SB1.B1_QB,0) QTDESTR"+cEof
+
+        cQuery +="From "+RetSqlName("SC2")+" SC2"+cEof
+        cQuery +="LEFT JOIN "+RetSqlName("SG1")+" SG1 ON SG1.D_E_L_E_T_ = ' ' AND G1_FILIAL = C2_FILIAL AND G1_COD = C2_PRODUTO "+cEof
+        cQuery +="	 AND G1_REVFIM = (SELECT MAX(G1_REVFIM) FROM "+RetSqlName("SG1")+" WHERE D_E_L_E_T_ = ' ' AND G1_FILIAL = C2_FILIAL AND G1_COD = C2_PRODUTO )"+cEof
+        cQuery +="INNER JOIN "+RetSqlName("SB1")+" SB1 ON SB1.D_E_L_E_T_ = ' 'AND SB1.B1_COD = C2_PRODUTO "+cEof
+        cQuery +="INNER JOIN "+RetSqlName("SB1")+" XB1 ON SB1.D_E_L_E_T_ = ' 'AND XB1.B1_COD = G1_COMP"+cEof
+        cQuery +="Where SC2.D_E_L_E_T_ = ' '"+cEof
+        cQuery +="AND C2_FILIAL = '"+xFilial("SC2")+"'"+cEof
+        cQuery +="AND C2_NUM+C2_ITEM+C2_SEQUEN BETWEEN '"+cMvPar01+"' AND '"+cMvPar02+"' "+cEof
+        cQuery +="AND C2_EMISSAO BETWEEN '"+dtos(cMvPar03)+"'  AND '"+dtos(cMvPar04)+"' "+cEof
+        cQuery +="AND G1_COMP NOT IN (SELECT D4_COD FROM "+RetSqlName("SD4")+" SD4 WHERE SD4.D_E_L_E_T_ = ' ' AND D4_FILIAL = C2_FILIAL AND D4_OP = C2_NUM+C2_ITEM+C2_SEQUEN )"+cEof
+        cQuery +="ORDER BY C2_NUM,C2_PRODUTO,G1_COMP"+cEof
+        If  Select(cAlias) > 0
+                DbSelectArea(cAlias)
+                DbCloseArea()
+        Endif
+        DBUseArea(.T., "TOPCONN", TCGenQry(NIL,NIL,cQuery), cAlias , .F., .T. )
+
+        While !(cAlias)->(EoF())
+             IF RecLock(ctmp,.T.)
+                (ctmp)->TMP_FILIAL := (cAlias)->FILIAL
+                (ctmp)->TMP_LOTE   := (cAlias)->LOTE
+                (ctmp)->TMP_OP     := (cAlias)->OP
+                (ctmp)->TMP_COD    := (cAlias)->PRODUTO
+                (ctmp)->TMP_DESC   := (cAlias)->DESCRICAO
+                (ctmp)->TMP_TIPO   := (cAlias)->TIPO
+                (ctmp)->TMP_DTEMIS := stod((cAlias)->EMISSAO)
+                (ctmp)->TMP_DTFABR := stod((cAlias)->FABRICACAO)
+                (ctmp)->TMP_QTDPR  := (cAlias)->PREVISTO
+                (ctmp)->TMP_QTDRA  := (cAlias)->REALIZADO
+                (ctmp)->TMP_QTDPD  := (cAlias)->REALIZADO -(cAlias)->PREVISTO   //(cAlias)->PERDA
+                (ctmp)->TMP_COMP   := (cAlias)->COMPONENTE
+                (ctmp)->TMP_CDES   := (cAlias)->DESCCOMP
+                (ctmp)->TMP_CTIPO  := (cAlias)->TIPOCOMP
+                (ctmp)->TMP_QTDST  := (cAlias)->QTDESTR
+                (ctmp)->TMP_QTDD4  := (cAlias)->EMPENHO
+                (ctmp)->TMP_QTDD3  := (cAlias)->QTDMOV
+                (ctmp)->TMP_QTDG1  := (cAlias)->QTDSG1
+                (ctmp)->TMP_CUSTM  := ((cAlias)->CUSTM / (cAlias)->QTDMOV )
+                (ctmp)->TMP_CUSTD  := (cAlias)->CUSTD
+                (ctmp)->TMP_CUSTN  := (cAlias)->CUSTN
+                (ctmp)->TMP_REVISA := (cAlias)->REVISAO
+                (ctmp)->( MsUnlock() )
+             Endif
+             (cAlias)->( dbSkip() )
+      EndDo
+         (cAlias)->( dbCloseArea() )
+
        oReport := ReportDef()
        oReport:PrintDialog()
 
@@ -225,6 +308,7 @@ Static Function ReportDef()
     TRCell():New(oSection1,'COMPONENTE'		,'cQry01','Prod.Estrutura' 		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
     TRCell():New(oSection1,'DESC1'  		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
 	TRCell():New(oSection1,'TIP1'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)
+    TRCell():New(oSection1,'QTDG1'			,'cQry01','Qtde.Estrutura'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'QTDST'			,'cQry01','Qtde.Prevista'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'QTDD4'			,'cQry01','Qtde Empenhado' 	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,)
 	TRCell():New(oSection1,'QTDD3'			,'cQry01','Qtde Movimentos' 	   	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
@@ -260,6 +344,7 @@ Static Function ReportPrint(oReport)
         oSection1:Cell("REVISAO"):SetValue((ctmp)->TMP_REVISA)
 
         oSection1:Cell("COMPONENTE"):SetValue((ctmp)->TMP_COMP)
+        oSection1:Cell("QTDG1"):SetValue((ctmp)->TMP_QTDG1)
         oSection1:Cell("QTDST"):SetValue((ctmp)->TMP_QTDST)
         oSection1:Cell("QTDD4"):SetValue((ctmp)->TMP_QTDD4)
         oSection1:Cell("QTDD3"):SetValue((ctmp)->TMP_QTDD3)
@@ -281,3 +366,6 @@ Static Function ReportPrint(oReport)
 
 Return NIL 
 
+Static Function VerificaMov()
+
+Return
