@@ -12,7 +12,7 @@ description Ponto de Entrada que vai enviar uma notificação para o Departamento 
 @since 24/07/2024
 @return variant, return_description
 /*/              
-user Function MS520VLD()
+user Function M521DNFS()
     Local cArea     := FwGetArea()
     Local aDados    as Array
     Local aPedidos  := ParamIxb[1]

@@ -89,22 +89,18 @@ Static Function ProcRun(oSay)
     aAdd(aFields,{"TMP_CDES" 	    , GetSx3Cache("B1_DESC","X3_TIPO")	        ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
     aAdd(aFields,{"TMP_CTIPO" 	    , GetSx3Cache("B1_TIPO","X3_TIPO")	        ,tamSx3("B1_TIPO")[1]	    ,tamSx3("B1_TIPO")[2]})
     aAdd(aFields,{"TMP_STRUT" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
-
     aAdd(aFields,{"TMP_QTDST" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDD4" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})  
     aAdd(aFields,{"TMP_QTDD3" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
     aAdd(aFields,{"TMP_QTDG1" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
-
     aAdd(aFields,{"TMP_CUSTM" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTD" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTN" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})  
-
     aAdd(aFields,{"TMP_REVISA" 	    , GetSx3Cache("B1_REVATU","X3_TIPO")	    ,tamSx3("B1_REVATU")[1]	    ,tamSx3("B1_REVATU")[2]})    
 
     oTable:SetFields( aFields )
 	oTable:AddIndex("ind1",{"TMP_FILIAL","TMP_LOTE","TMP_COD","TMP_COMP"} )
  	oTable:Create()
-
 
     cQuery :="Select  SD3.D3_FILIAL	FILIAL,"+cEof
     cQuery +="		SD3.D3_DOC		LOTE,"+cEof
@@ -132,16 +128,13 @@ Static Function ProcRun(oSay)
     cQuery +="		SD3.D3_QUANT	QTDMOV,"+cEof
     cQuery +="		SG1.G1_QUANT	QTDSG1,"+cEof
     cQuery +="		ISNULL((G1_QUANT*C2_QUANT)/SB1.B1_QB,0) QTDESTR"+cEof
-
     cQuery +="From "+RetSqlName("SD3")+"  SD3"+cEof
-
     cQuery +="INNER JOIN "+RetSqlName("SC2")+" SC2 ON SC2.D_E_L_E_T_ = ' ' AND C2_FILIAL = D3_FILIAL AND C2_NUM+C2_ITEM+C2_SEQUEN = D3_OP "+cEof
     cQuery +="INNER JOIN "+RetSqlName("SB1")+" SB1 ON SB1.D_E_L_E_T_ = ' ' AND SB1.B1_COD = C2_PRODUTO"+cEof
     cQuery +="INNER JOIN "+RetSqlName("SB1")+" XB1 ON XB1.D_E_L_E_T_ = ' ' AND XB1.B1_COD = SD3.D3_COD AND XB1.B1_TIPO <> 'MO'"+cEof
     cQuery +="LEFT JOIN  "+RetSqlName("SD4")+"  SD4 ON SD4.D_E_L_E_T_ = ' ' AND D4_OP = D3_OP AND D4_COD = D3_COD AND  D4_TRT = D3_TRT"+cEof
     cQuery +="LEFT JOIN  "+RetSqlName("SG1")+" SG1 ON SG1.D_E_L_E_T_ = ' ' AND G1_FILIAL = D3_FILIAL AND G1_COD = C2_PRODUTO AND G1_COMP = D3_COD AND G1_TRT = D3_TRT"+cEof
     cQuery +="		AND G1_REVFIM = (SELECT MAX(G1_REVFIM) FROM "+RetSqlName("SG1")+" WHERE D_E_L_E_T_ = ' ' AND G1_FILIAL = D3_FILIAL AND G1_COD = C2_PRODUTO AND G1_COMP = D3_COD AND G1_TRT = D3_TRT)"+cEof
-
     cQuery +="Where SD3.D_E_L_E_T_ = ' '"+cEof
     cQuery +="AND D3_FILIAL =  '"+xFilial("SC2")+"'"+cEof
     cQuery +="AND D3_OP BETWEEN '"+cMvPar01+"' AND '"+cMvPar02+"' "+cEof
