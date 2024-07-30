@@ -1992,12 +1992,17 @@ For nZ := 1 To nLenDet
 	// Coleta Código ONU para impressão na Mensagem Complementar na NF
 	IF !Empty(cCodOnu)
 		IF Ascan(aMsgONU,  {|x| Alltrim(x[1]) == Alltrim(cCodOnu)}) == 0
-			Aadd(aMsgONU, {cCodOnu, noAcento( '  ' + cCodOnu + '   ' )})
+			Do While !Empty(cCodOnu)
+				Aadd(aMsgONU, {SubStr(cCodOnu, 1, MAXMENLIN), noAcento(' '+SubStr(cCodOnu, 1, MAXMENLIN) + ' ')})
+				cCodOnu := Alltrim(SubStr(cCodOnu, MAXMENLIN + 1))				
+			Enddo
 		Endif
 	Endif
+	cCodOnu := cAuxOnu
 	//----------------------------------------------------
 	// [Termino ] - Personalização EuroAmerican
 	//----------------------------------------------------	
+
 	//Tratativa para que COD Onu seja impresso antes de produto.
 	lInfAdProd := (ValAtrib("oNf:_infnfe:_det[nPrivate]:_Infadprod:TEXT") <> "U" .Or. ValAtrib("oNf:_infnfe:_det:_Infadprod:TEXT") <> "U") .And. ( lImpAnfav .Or. lImpInfAd )
 	If lInfAdProd
@@ -2019,6 +2024,7 @@ For nZ := 1 To nLenDet
 				"-";
 			})
 		EndIf
+
 		While !Empty(cCodonu)
 			aadd(aItens,{;
 				"",;
@@ -2036,6 +2042,7 @@ For nZ := 1 To nLenDet
 				"",;
 				"";
 			})
+
 			If lUf_MG
 				aadd(aItensAux,{;
 					"",;
@@ -2056,9 +2063,11 @@ For nZ := 1 To nLenDet
 					0;
 				})
 			Endif
+
 			cCodOnu := SubStr(cCodOnu,(nMaxDes + 1))
 		EndDo
 	EndIf
+
 	// Tratamento para quebrar os digitos dos valores
 	aAux := {}
 	AADD(aAux, AllTrim(TransForm(nQtd,TM(nQtd,15,4))))
@@ -3663,14 +3672,15 @@ nLenMensagens:= Len(aMensagem)
 nLin:= 741
 nMensagem := 0
 
-
 //--------------------------------------------------
 // [Inicio] Personalização EuroAmerican 
 //--------------------------------------------------
 // Impressão em Negrito
-cEntr := "ENTREGA: " + cEntr
-oDanfe:Say(nLin,nAuxH, cEntr , OFONT12N:oFont)
-nLin := nLin + 15
+
+//Em 10/09/2024 geronimo comentou as linhas abaixo a pedido do Sr. Araujo da expediçao, pois os caminhoes estavam indo erroneamente para o endereço abaixo.
+//cEntr := "ENTREGA: " + cEntr
+//oDanfe:Say(nLin,nAuxH, cEntr , OFONT12N:oFont)
+//nLin := nLin + 15
 
 For nX := 1 To Min(nLenMensagens, MAXMSG)
 	If "Pedido de Venda: " $ aMensagem[nX][1]  
@@ -6419,8 +6429,9 @@ If mv_par04 == 2  //Dados para NF Saida
 	If !Empty(SC5->C5_CMUNREC)
 		cEntr := AllTrim(SC5->C5_ENDREC) + "-" +  AllTrim(SC5->C5_BAIREC) + "-" + AllTrim(SC5->C5_MUNREC) + "-" + SC5->C5_ESTREC
 	EndIf*/
-	cEntr := AllTrim(SA1->A1_ENDENT) + "-" +  AllTrim(SA1->A1_BAIRROE) + "-" + AllTrim(SA1->A1_MUNE) + "-" + SA1->A1_ESTE
-
+	
+	// Em 10/09/2024 geronimo comentou a linha abaixo a pedido do Sr. Araujo da expediçao, pois os caminhoes estavam indo erroneamente para o endereço abaixo.
+	//cEntr := AllTrim(SA1->A1_ENDENT) + "-" +  AllTrim(SA1->A1_BAIRROE) + "-" + AllTrim(SA1->A1_MUNE) + "-" + SA1->A1_ESTE
 	
 	dbSelectArea("SD2")
 	dbSetOrder(3)
@@ -6430,7 +6441,7 @@ If mv_par04 == 2  //Dados para NF Saida
 	cMenP := ""
 	
 	//Verifica Natureza e CFOP utilizada no Pedido
-	While !EOF("SD2") .And. AllTrim(SD2->D2_DOC + SD2->D2_SERIE) == AllTrim(cNFis + cSeri)
+	While ! SD2->( EOF()) .And. AllTrim(SD2->D2_DOC + SD2->D2_SERIE) == AllTrim(cNFis + cSeri)
 
 		If !(SD2->D2_TES $ cTpes)                 
 

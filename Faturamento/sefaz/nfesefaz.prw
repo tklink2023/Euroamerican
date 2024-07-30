@@ -3216,7 +3216,21 @@ If cTipo == "1"
 						retornar o array de exportind de acordo com a quantidade de cada item da SD2, para não ocorrer a rejeição 
 						346 Somatório das quantidades informadas na Exportação Indireta não correspondem a quantidade do item.*/
 
-						aadd(aExp,{})
+
+						//=====================================================================================================================
+						// Analista..: Paulo Rogério -  28/06/2024 
+						// Ocorrencia: Nota fiscal de exportação não esta gerando as Tags de Exportação no XML e
+						//             como consequencia está causando a rejeição 355.
+						// Solução...: Substituir a instrução aadd(aExp,{}) por aExp := {}, quando a nota fiscal for referente a exportação.
+						//=====================================================================================================================
+						//  ** SOLUÇÃO PALIATIVA E DEVE SER REMOVIDA QUANDO ESTE FONTE FOR ATUALIZADO NO FUTURO, EM QQ DATA APÓS 28/06/2024 **
+						//=====================================================================================================================
+						IF SF2->F2_EST == "EX"
+							aExp := {} 
+						Else
+							aadd(aExp,{}) 
+						Endif
+
 						DbSelectArea("CDL")
 						DbSetOrder(1)
 						if DbSeek(xFilial("CDL")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA)
@@ -5983,8 +5997,21 @@ Else
 				nasegunda posição a tag (o campo) e na terceira posição o conteúdo retornado do processo, 
 					podendo ser um outro array com a mesma estrutura caso o ID possua abaixo de sua estrutura outros IDs.						 				
 				*/
-				aadd(aExp,{})
-				
+
+				//=====================================================================================================================
+				// Analista..: Paulo Rogério -  28/06/2024 
+				// Ocorrencia: Nota fiscal de exportação não esta gerando as Tags de Exportação no XML e
+				//             como consequencia está causando a rejeição 355.
+				// Solução...: Substituir a instrução aadd(aExp,{}) por aExp := {}, quando a nota fiscal for referente a exportação.
+				//=====================================================================================================================
+				//  ** SOLUÇÃO PALIATIVA E DEVE SER REMOVIDA QUANDO ESTE FONTE FOR ATUALIZADO NO FUTURO, EM QQ DATA APÓS 28/06/2024 **
+				//=====================================================================================================================
+				IF SF1->F1_EST == "EX"
+					aExp := {} 
+				Else
+					aadd(aExp,{}) 
+				Endif
+
 				DbSelectArea("CDL")
 				CDL->(DbSetOrder(1))
 				If !Empty((cAliasSD1)->D1_NFORI) .and. ((cAliasSD2)->D2_DOC == (cAliasSD1)->D1_NFORI) .and. ((cAliasSD2)->D2_SERIE == (cAliasSD1)->D1_SERIORI) .and.;
@@ -7814,6 +7841,9 @@ endIF
 //cEan		:= IIF(!Empty(aProd[46]),iif( aProd[46] == "000000000000000","",aProd[46]), aProd[03])
 cEan		:= IIF(!Empty(aProd[46]),iif(Val(aProd[46])==0              ,"",aProd[46]), aProd[03])
 
+//----------------------------------------------------
+// [Inicio] Personalização Euroamerican 
+//----------------------------------------------------
 If SF2->F2_CLIENTE $ "000002,000068,008584"	// Para a Sodimac / Dicicco sempre levar codigo EAN13 / Codigo Gtin
 	cEan	:= aProd[03]
 ElseIf SA1->A1_EST = "EX"		// Para exportação, levar sempre ""  que significa sem Gtin para a tag cEan
@@ -7821,11 +7851,14 @@ ElseIf SA1->A1_EST = "EX"		// Para exportação, levar sempre ""  que significa se
 ElseIf cFilAnt = "0901"         // Nas vendas da Phoenix sempre levar "" que significa sem Gtin para a tag cEan até que todos os seus codigos Gtins tenham sido cadastrados
 	cEan	:= "" 
 Endif
+//----------------------------------------------------
+// [Termino] Personalização Euroamerican 
+//----------------------------------------------------
 
 //Se a segunda unidade de medida estiver "B5_2CODBAR" estiver preenchido leva ele  para nfe.
 //senão verifica se a unidade comercial e diferente da tributaria para considerar o mesmo valor da cEan se for igual.
 //cEantrib	:= IIF(!Empty(aProd[45]),aProd[45], iif( aProd[08] <> aProd[11],"",cEan))
-cEantrib	:= cEan		// Geronimo 22/02/24 em acordo com a Graça do Fiscal substitui a logica para armazenar a variavel cEantrib para ela ser identica a cEan
+cEantrib	:= cEan		// [Personalização Euroamerican] Geronimo 22/02/24 em acordo com a Graça do Fiscal substitui a logica para armazenar a variavel cEantrib para ela ser identica a cEan
 
 //Validação para controle das tags que deverão ser preenchidas apenas nas operações não destinadas a consumidor final RS
 lRetEfet := (cMVEstado == "RS" .and. cIndFinal == '0') .or. cMVEstado <> "RS"

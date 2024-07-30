@@ -96,7 +96,10 @@ Static Function ProcRun(oSay)
     aAdd(aFields,{"TMP_CUSTM" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTD" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTN" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})  
-    aAdd(aFields,{"TMP_REVISA" 	    , GetSx3Cache("B1_REVATU","X3_TIPO")	    ,tamSx3("B1_REVATU")[1]	    ,tamSx3("B1_REVATU")[2]})    
+
+    aAdd(aFields,{"TMP_REVISA" 	    , GetSx3Cache("B1_REVATU","X3_TIPO")	    ,tamSx3("B1_REVATU")[1]	    ,tamSx3("B1_REVATU")[2]}) 
+    aAdd(aFields,{"TMP_REVOP" 	    , GetSx3Cache("B1_REVATU","X3_TIPO")	    ,tamSx3("B1_REVATU")[1]	    ,tamSx3("B1_REVATU")[2]})    
+    aAdd(aFields,{"TMP_QTDG5" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
 
     oTable:SetFields( aFields )
 	oTable:AddIndex("ind1",{"TMP_FILIAL","TMP_LOTE","TMP_COD","TMP_COMP"} )
@@ -109,7 +112,8 @@ Static Function ProcRun(oSay)
     cQuery +="		SC2.C2_LOCAL	LOCAL,"+cEof
     cQuery +="		SB1.B1_DESC		DESCRICAO,"+cEof
     cQuery +="		SB1.B1_TIPO		TIPO,"+cEof
-    cQuery +="		SB1.B1_REVATU   REVISAO,"+cEof
+    cQuery +="		SC2.C2_REVISAO	REV_OP,"+cEof
+    cQuery +="		SB1.B1_REVATU   REV_PROD,"+cEof
     cQuery +="		SC2.C2_QUANT	PREVISTO,"+cEof
     cQuery +="		SC2.C2_QUJE		REALIZADO,"+cEof
     cQuery +="		SC2.C2_PERDA    PERDA,"+cEof
@@ -178,7 +182,9 @@ Static Function ProcRun(oSay)
                 (ctmp)->TMP_CUSTM  := ((cAlias)->CUSTM / (cAlias)->QTDMOV )
                 (ctmp)->TMP_CUSTD  := (cAlias)->CUSTD
                 (ctmp)->TMP_CUSTN  := (cAlias)->CUSTN
-                (ctmp)->TMP_REVISA := (cAlias)->REVISAO
+                (ctmp)->TMP_REVISA := (cAlias)->REV_PROD
+                (ctmp)->TMP_REVOP  := (cAlias)->REV_OP  
+                (ctmp)->TMP_QTDG5  := 0
                 (ctmp)->( MsUnlock() )
              Endif
              (cAlias)->( dbSkip() )
@@ -197,7 +203,8 @@ Static Function ProcRun(oSay)
         cQuery +="		SC2.C2_LOCAL	                        LOCAL,"+cEof
         cQuery +="		SB1.B1_DESC		                        DESCRICAO,"+cEof
         cQuery +="		SB1.B1_TIPO		                        TIPO,"+cEof
-        cQuery +="		SB1.B1_REVATU                           REVISAO,"+cEof
+        cQuery +="		SC2.C2_REVISAO	                        REV_OP,"+cEof
+        cQuery +="		SB1.B1_REVATU                           REV_PROD,"+cEof
         cQuery +="		SC2.C2_QUANT	                        PREVISTO,"+cEof        
         cQuery +="		SC2.C2_QUJE		                        REALIZADO,"+cEof
         cQuery +="		SC2.C2_PERDA                            PERDA,"+cEof
@@ -257,13 +264,48 @@ Static Function ProcRun(oSay)
                 (ctmp)->TMP_CUSTM  := ((cAlias)->CUSTM / (cAlias)->QTDMOV )
                 (ctmp)->TMP_CUSTD  := (cAlias)->CUSTD
                 (ctmp)->TMP_CUSTN  := (cAlias)->CUSTN
-                (ctmp)->TMP_REVISA := (cAlias)->REVISAO
+                (ctmp)->TMP_REVISA := (cAlias)->REV_PROD
+                (ctmp)->TMP_REVOP  := (cAlias)->REV_OP  
+                (ctmp)->TMP_QTDG5  := 0
+
                 (ctmp)->( MsUnlock() )
              Endif
              (cAlias)->( dbSkip() )
       EndDo
-         (cAlias)->( dbCloseArea() )
+      (cAlias)->( dbCloseArea() )
 
+      // Revisao
+
+        cAlias        := "R-"+GetNextAlias()
+        cQuery        := ' '
+
+        cQuery :="Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_PRODUTO,C2_REVISAO,G5_DATAREV,G1_COMP, G1_QUANT"+cEof
+        cQuery +="from "+RetSqlName("SC2")+" SC2"+cEof
+        cQuery +="INNER JOIN "+RetSqlName("SG5")+" SG5 ON SG5.D_E_L_E_T_ = ' ' AND G5_FILIAL = C2_FILIAL AND G5_PRODUTO = C2_PRODUTO AND G5_REVISAO = C2_REVISAO"+cEof
+        cQuery +="LEFT JOIN  "+RetSqlName("SG1")+" SG1 ON SG1.D_E_L_E_T_ = ' ' AND G1_FILIAL = C2_FILIAL AND G1_COD = C2_PRODUTO AND G1_INI >= G5_DATAREV AND G1_REVINI = C2_REVISAO"+cEof
+        cQuery +="Where SC2.D_E_L_E_T_ = ' '"+cEof
+        cQuery +="AND C2_FILIAL = '"+xFilial("SC2")+"'"+cEof
+        cQuery +="AND C2_NUM+C2_ITEM+C2_SEQUEN BETWEEN '"+cMvPar01+"' AND '"+cMvPar02+"' "+cEof
+        If  Select(cAlias) > 0
+                DbSelectArea(cAlias)
+                DbCloseArea()
+        Endif
+        DBUseArea(.T., "TOPCONN", TCGenQry(NIL,NIL,cQuery), cAlias , .F., .T. )
+
+        While !(cAlias)->(EoF())
+            DbSelectArea(ctmp)
+            (ctmp)->( DbSetOrder(1) )
+            if (ctmp)->( DbSeek( (cAlias)->C2_FILIAL+(cAlias)->C2_NUM+(cAlias)->C2_PRODUTO+(cAlias)->G1_COMP,.T.  ) )
+               IF RecLock(ctmp,.F.)
+
+                  (ctmp)->TMP_QTDG5  := (cAlias)->G1_QUANT
+
+                (ctmp)->( MsUnlock() )
+               Endif
+            Endif
+            (cAlias)->( dbSkip() )
+        EndDo
+         (cAlias)->( dbCloseArea() )
        oReport := ReportDef()
        oReport:PrintDialog()
 
@@ -294,13 +336,18 @@ Static Function ReportDef()
     TRCell():New(oSection1,'PRODUTO'		,'cQry01','Produto'     		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
 	TRCell():New(oSection1,'DESCRICAO'		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
 	TRCell():New(oSection1,'TIPO'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)    
+    TRCell():New(oSection1,'REVOP'	    	,'cQry01','Rev.OP'    		   	    ,PesqPict('SB1',"B1_REVATU")    ,TamSX3("B1_REVATU") [1]+1,,) 	
+    TRCell():New(oSection1,'REVISAO'		,'cQry01','Rev.Prod'   		   	    ,PesqPict('SB1',"B1_REVATU")    ,TamSX3("B1_REVATU") [1]+1,,) 	
 	TRCell():New(oSection1,'PRODUZIR'		,'cQry01','Produzir'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'UTILIZA'		,'cQry01','Produzido'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
 	TRCell():New(oSection1,'PERDA'			,'cQry01','Perda/Ganho' 	   	    ,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 	
-    TRCell():New(oSection1,'REVISAO'		,'cQry01','Revisao'    		   	    ,PesqPict('SB1',"B1_REVATU")    ,TamSX3("B1_REVATU") [1]+1,,) 	    	
+        	
     TRCell():New(oSection1,'COMPONENTE'		,'cQry01','Prod.Estrutura' 		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
     TRCell():New(oSection1,'DESC1'  		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
 	TRCell():New(oSection1,'TIP1'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)
+
+    TRCell():New(oSection1,'QTDG5'			,'cQry01','Qtde.Estr.OP'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
+    
     TRCell():New(oSection1,'QTDG1'			,'cQry01','Qtde.Estrutura'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'QTDST'			,'cQry01','Qtde.Prevista'	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'QTDD4'			,'cQry01','Qtde Empenhado' 	    	,PesqPict('SC2',"C2_QUJE")		,TamSX3("C2_QUJE") [1]+1,,)
@@ -334,9 +381,12 @@ Static Function ReportPrint(oReport)
         oSection1:Cell("PRODUZIR"):SetValue((ctmp)->TMP_QTDPR)
         oSection1:Cell("UTILIZA"):SetValue((ctmp)->TMP_QTDRA)
         oSection1:Cell("PERDA"):SetValue((ctmp)->TMP_QTDPD)
+
         oSection1:Cell("REVISAO"):SetValue((ctmp)->TMP_REVISA)
+        oSection1:Cell("REVOP"):SetValue((ctmp)->TMP_REVOP)
 
         oSection1:Cell("COMPONENTE"):SetValue((ctmp)->TMP_COMP)
+        oSection1:Cell("QTDG5"):SetValue((ctmp)->TMP_QTDG5)
         oSection1:Cell("QTDG1"):SetValue((ctmp)->TMP_QTDG1)
         oSection1:Cell("QTDST"):SetValue((ctmp)->TMP_QTDST)
         oSection1:Cell("QTDD4"):SetValue((ctmp)->TMP_QTDD4)
@@ -347,6 +397,8 @@ Static Function ReportPrint(oReport)
         oSection1:Cell("TIP1"):SetValue((ctmp)->TMP_CTIPO) 
         oSection1:Cell("CSTSTD"):SetValue((ctmp)->TMP_CUSTD) 
         oSection1:Cell("CSTNET"):SetValue((ctmp)->TMP_CUSTN) 
+
+
 
 	    oSection1:PrintLine()
 	    oReport:IncMeter()
