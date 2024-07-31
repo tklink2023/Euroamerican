@@ -4935,6 +4935,7 @@ Static Function FAccess()
 	Local cArea	:= FwGetArea()
 	Local cAlias        := "Y-"+GetNextAlias()
     Local cQuery        := ' '
+	Local cNomeUser     := UsrRetName(RetCodUsr())
 
 	cUsrOpc 	:= ''
 	ESPARFAT1	:= ''
@@ -4948,7 +4949,9 @@ Static Function FAccess()
 	cQuery :="select * "+ENTER
 	cQuery +="from "+RetSqlName("SZ3")+" "+ENTER
 	cQuery +="WHERE D_E_L_E_T_ = ' ' "+ENTER
+	cQuery +="AND Z3_FILIAL =  '"+xFilial("SZ3")+"'"+ENTER
 	cQuery +="AND Z3_MSBLQL <> '1' "+ENTER
+	cQuery +="AND Z3_KEYUSR = '"+cNomeUser+"' "+ENTER
 
     If  Select(cAlias) > 0
                 DbSelectArea(cAlias)
@@ -5016,13 +5019,16 @@ Static Function FSeachOpc()
 	Local cArea	:= FwGetArea()
 	Local cAlias        := "Y-"+GetNextAlias()
     Local cQuery        := ' '
+	Local cNomeUser     := UsrRetName(RetCodUsr())
 
 	cUsrOpc 	:= ''
     
 	cQuery :="select * "+ENTER
 	cQuery +="from "+RetSqlName("SZ3")+" "+ENTER
 	cQuery +="WHERE D_E_L_E_T_ = ' ' "+ENTER
+	cQuery +="AND Z3_FILIAL =  '"+xFilial("SZ3")+"'"+ENTER
 	cQuery +="AND Z3_MSBLQL <> '1' "+ENTER
+	cQuery +="AND Z3_KEYUSR = '"+cNomeUser+"' "+ENTER
 
     If  Select(cAlias) > 0
                 DbSelectArea(cAlias)
