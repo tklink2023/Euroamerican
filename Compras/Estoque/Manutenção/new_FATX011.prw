@@ -43,7 +43,29 @@ Private cAlias		:= "SZF"
 Private cCadastro	:= "Montagem de Carga e Descarga"
 Private aRotina		:= MenuDef()
 Private aCores		:= CorDef()
+
+Private ESPARFAT1   := ""
+Private ESPARFAT2   := ""
+Private ESPARFAT4   := ""
+Private ESPARFAT5   := ""
+Private ESPARFAT6   := ""
+Private cConteudo 	:= ""
 Private _cPORTASUP	:= GETMV("MV_XPORTSP",, ",antonio.cabral,Administrador" )
+Private lUsrOpc		:= .F.
+Private lUsrOpc09	:= .F.
+Private lUsrOpc10	:= .F.
+Private lUsrOpc11	:= .F.
+
+Private __cExpedicao := ''
+Private __cUser      := ''
+
+FAccess()
+
+lUsrOpc			:= Upper(AllTrim(cUserName)) $ Upper(ESPARFAT1)
+lUsrOpc09		:= Upper(AllTrim(cUserName)) $ Upper(ESPARFAT2)
+lUsrOpc10		:= Upper(AllTrim(cUserName)) $ Upper(ESPARFAT4)
+lUsrOpc11		:= Upper(AllTrim(cUserName)) $ Upper(ESPARFAT5)
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Monta mBrowse                                              ³
@@ -88,7 +110,10 @@ Return( Nil )
 Static Function MenuDef()
 Local aMenuDef		:= {}
 Local aRotina2		:= {}
-Local cUsrOpc 		:= Alltrim(SuperGetMV("ES_PARFAT1",.T.,""))
+
+Private cUsrOpc 	:= ""
+
+cUsrOpc := FSeachOpc()
 //-----------------------------------------------------------------------------------
 
 aAdd( aMenuDef, {"Pesquisar"			,"AxPesqui"		, 0, 01, 0})
@@ -99,7 +124,7 @@ aAdd( aMenuDef, {"Conhecimento"	,"MsDocument" ,0,4})
 
 //-----------------------------------------------------------------------------------
 
-If Upper(RTrim(cUserName)) $ Upper(RTrim(cUsrOpc))
+If Upper(alltrim(cUserName)) $ Upper(AllTrim(cUsrOpc))
 	aAdd(aMenuDef, {"Desconto Admin"	,"U_FATX011Q", 0, 00, 0})
 EndIf
 
@@ -216,17 +241,9 @@ Local aInfo  	 	  	:= {}
 Local aObjects	 		:= {}
 Local aPos      	 	:= {}
 
-local lUsrOpc			:= Upper(AllTrim(cUserName)) $ Upper(Alltrim(SuperGetMV("ES_PARFAT2",.T.,"")))
-local lUsrOpc09			:= Upper(AllTrim(cUserName)) $ Upper(Alltrim(SuperGetMV("ES_PARFAT4",.T.,"")))
-local lUsrOpc10			:= Upper(AllTrim(cUserName)) $ Upper(Alltrim(SuperGetMV("ES_PARFAT5",.T.,"")))
-local lUsrOpc11			:= Upper(AllTrim(cUserName)) $ Upper(Alltrim(SuperGetMV("ES_PARFAT6",.T.,"")))
 
 Local cQry				:= ""
 Local cMsg				:= ""
-
-Local aDadosSX5 := FWGetSX5("OM") 
-Local cConteudo := ""
-Local I
 
 Private lPORTASUP			:= AllTrim(cUserName)        $ _cPORTASUP
 Private aPosHeader 		:= {}
@@ -249,12 +266,6 @@ Private aLotes			:= {}
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 nOpcUsr := aRotina[nOpc][4]
 
-if Len(aDadosSX5) > 0
-   For I:=1 to len(aDadosSX5)
-          cConteudo := cConteudo + aDadosSX5[I][4]+"#" 
-   Next
-Endif
-
 Do Case
 
 	Case nOpcUsr == 6 //-> Cancelamento
@@ -273,23 +284,18 @@ EndCase
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Do Case
 		Case ( nOpcUsr >= 3 .And. nOpcUsr <= 8 ) .And. .Not. lUsrOpc  .and. !( lPORTASUP .and. nOpcUsr == 4 )
-			_cUsrSemAc := Getmv("ES_PARFAT2")
-  			Help( ,, "FATX011 Gerenciam.Carga",, OemToAnsi("Opcao nao disponivel para o seu usuario. Este acesso é liberado através do parametro ES_PARFAT2 para: ") + ENTER + subs(_cUsrSemAc,1,40) + ENTER +subs(_cUsrSemAc,41,40) + ENTER +subs(_cUsrSemAc,81,40) + ENTER +subs(_cUsrSemAc,121,40)  + ENTER +subs(_cUsrSemAc,161,40)  + ENTER +subs(_cUsrSemAc,201,40)  , 1, 0 )
+			Help( ,, "FATX011 Gerenciam.Carga",, OemToAnsi("Opcao nao disponivel para o seu usuario. Peça para verificar a suas permissões ")  , 1, 0 )
 			Restarea( aArea )
 			Return
 
 		Case nOpcUsr == 9 .And. .Not. lUsrOpc09
-			//MsgStop("Opcao nao disponivel para o seu usuario. Este acesso é liberado através do parametro ES_PARFAT4 para: " + Getmv("ES_PARFAT4") )
-			_cUsrSemAc := Getmv("ES_PARFAT4")
-  			Help( ,, "FATX011 Gerenciam.Carga",, OemToAnsi("Opcao nao disponivel para o seu usuario. Este acesso é liberado através do parametro ES_PARFAT4 para: ") + ENTER + subs(_cUsrSemAc,1,40) + ENTER +subs(_cUsrSemAc,41,40) + ENTER +subs(_cUsrSemAc,81,40) + ENTER +subs(_cUsrSemAc,121,40)  + ENTER +subs(_cUsrSemAc,161,40)  + ENTER +subs(_cUsrSemAc,201,40)  , 1, 0 )
+			Help( ,, "FATX011 Gerenciam.Carga",, OemToAnsi("Opcao nao disponivel para o seu usuario. Peça para verificar a suas permissões ")  , 1, 0 )
+
 			Restarea( aArea )
 			Return
 
 		Case nOpcUsr == 10 .And. .Not. lUsrOpc10
-			//MsgStop("Opcao nao disponivel para o seu usuario. Este acesso é liberado através do parametro ES_PARFAT5 para: " + Getmv("ES_PARFAT5") )
-			_cUsrSemAc := Getmv("ES_PARFAT5")
- 	   		//Help( ,, "FATX011 Gerenciam.Carga",, OemToAnsi("Opcao nao disponivel para o seu usuario. Este acesso é liberado através do parametro ES_PARFAT5 para: ") + ENTER + _cUsrSemAc  , 1, 0 )
-  			Help( ,, "FATX011 Gerenciam.Carga",, OemToAnsi("Opcao nao disponivel para o seu usuario. Este acesso é liberado através do parametro ES_PARFAT5 para: ") + ENTER + subs(_cUsrSemAc,1,40) + ENTER +subs(_cUsrSemAc,41,40) + ENTER +subs(_cUsrSemAc,81,40) + ENTER +subs(_cUsrSemAc,121,40)  + ENTER +subs(_cUsrSemAc,161,40)  + ENTER +subs(_cUsrSemAc,201,40)  , 1, 0 )
+  			Help( ,, "FATX011 Gerenciam.Carga",,OemToAnsi("Opcao nao disponivel para o seu usuario. Peça para verificar a suas permissões ")  , 1, 0 )
 			Restarea( aArea )
 			Return
 EndCase
@@ -482,7 +488,7 @@ Local aCpoMsGET := {"NOUSER"}
 Local aAltMsGET := {}
 
 //Local aAltMsGET := {"ZF_VEICULO","ZF_FRETEP","ZF_OBSERV"}
-Local __cExpedicao := GETMV("MV_XEXPEDI",,'000578;000000')
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Monta campos visuais e editaveis do MSMGET             ³
@@ -553,7 +559,7 @@ Local bGdDelOk		:= {||fGdDelOk()}
 Local aCposAlter    := {}
 Local aCposEntRet   := {"ZG_DTENTR","ZG_RETORNO","ZG_MOTRETO","ZG_OBSRETO"}
 
-Local __cUser       := GETMV("MV_XUSER",,'000647;001109;000000')// aletrado por fabio batista
+
 
 If lPORTASUP			// O Supervisor da Portaria tem acesso a alterar também todos 
 	aCposEntRet   := {}	// os campos relacionados ao retorno da NF. Criado esta regra em 19/03/2024 por Geronimo a pedido de Antonio Peçanha Cabral
@@ -2867,15 +2873,7 @@ Local cMsg		:= ""
 Local aIndApv	:= fIndAprov()
 Local nFrete	:= aIndApv[2]
 Local lFrete	:= ( aIndApv[2] > 05 .And. At( "IT06", SZF->ZF_LOG ) == 0 ) // Regra - Aproveitamento de frete maior que 5%
-Local aDadosSX5 := FWGetSX5("OM")
-Local cConteudo := ""
-Local I
 
-if Len(aDadosSX5) > 0
-   For I:=1 to len(aDadosSX5)
-          cConteudo := cConteudo + aDadosSX5[I][4]+"#" 
-   Next
-Endif
 BEGIN SEQUENCE
 
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -3194,11 +3192,11 @@ Local aAreaSZF   := SZF->( GetArea() )
 Local aIndApv    := {}
 Local nFrete     := 0
 
-Local cUserDIR1  := GETMV("ES_PARFAT8") // Paulo Lenzi 13/08/2024 //"ADMINISTRADOR,CAROLINE.MONEA,THIAGO.MONEA,ROBSON.MORAES,ANTONIO.BARBOSA,CARLOS.ARAUJO"		//Retirado Alexandre.Martins em 23/03/18 U_IsGroup("Administradores#DIR-X00")
-Local cUserDIR2  :=  GETMV("ES_PARFAT8") // Paulo Lenzi 13/08/2024 //"JEAN.BLASQUES,LUIS.HENRIQUE,AURIEL.FANCHINI,JORGE.RAIMUNDO,SAMUEL.OLIVEIRA,IGOR.SILVA,LEONARDO.JESUS" 	// Geronimo em 24/07/23 de acordo com o chamado 000674 e solicitação de Samuel.Oliveira e carlos.araujo, concedi a estes usuários, também o direito aprovação de frete acima de 5%.
+Local cUserDIR1  := "ADMINISTRADOR,CAROLINE.MONEA,THIAGO.MONEA,ROBSON.MORAES,ANTONIO.BARBOSA,CARLOS.ARAUJO"		//Retirado Alexandre.Martins em 23/03/18 U_IsGroup("Administradores#DIR-X00")
+Local cUserDIR2  := "JEAN.BLASQUES,LUIS.HENRIQUE,AURIEL.FANCHINI,JORGE.RAIMUNDO,SAMUEL.OLIVEIRA,IGOR.SILVA,LEONARDO.JESUS" 	// Geronimo em 24/07/23 de acordo com o chamado 000674 e solicitação de Samuel.Oliveira e carlos.araujo, concedi a estes usuários, também o direito aprovação de frete acima de 5%.
 
 Local lUserDIR   := Upper(AllTrim(cUserName)) $ cUserDIR1
-Local lUserCON   := Upper(AllTrim(cUsername)) $ GETMV("ES_PARFATA") // Paulo Lenzi 13/08/2024 "ADMINISTRADOR,CAROLINE.MONEA,THIAGO.MONEA,LUIZ.SILVA"
+Local lUserCON   := Upper(AllTrim(cUsername)) $ "ADMINISTRADOR,CAROLINE.MONEA,THIAGO.MONEA,LUIZ.SILVA"
 
 Local cMsg		 := ""
 
@@ -3304,16 +3302,7 @@ Return
 User Function FATX011D()
 
 Local aArea		:= GetArea()
-Local aDadosSX5 := FWGetSX5("OM")
 Local lUsrDoc	//:= Upper(AllTrim(cUserName)) $ "ADMINISTRADOR#CAROLINE.MONEA#THIAGO.MONEA#CARLOS.ARAUJO#REGIANE.TAQUETTE#JOSE.FERNANDES#ELIAS.NOVAIS#JESSICA.FREITAS#HELLEN.VALADAO#ANTONIO.MARCOS"	//U_IsGroup("Administradores#EXP-X00#VEN-D06#VEN-D07#VEN-D08")
-Local cConteudo := ""
-Local I
-
-if Len(aDadosSX5) > 0
-   For I:=1 to len(aDadosSX5)
-          cConteudo := cConteudo + aDadosSX5[I][4]+"#" 
-   Next
-Endif
 
 lUsrDoc	:= Upper(AllTrim(cUserName)) $ Alltrim(cConteudo)	//U_IsGroup("Administradores#EXP-X00#VEN-D06#VEN-D07#VEN-D08")
 
@@ -4940,3 +4929,128 @@ cBody := _cHtml
 	u_FSENVMAIL(cAssunto, cBody, cEmail,cAttach,,,,,,,,,)
  
 Return
+
+
+Static Function FAccess()
+	Local cArea	:= FwGetArea()
+	Local cAlias        := "Y-"+GetNextAlias()
+    Local cQuery        := ' '
+	Local cNomeUser     := UsrRetName(RetCodUsr())
+
+	cUsrOpc 	:= ''
+	ESPARFAT1	:= ''
+	ESPARFAT2	:= ''
+	ESPARFAT4	:= ''
+	ESPARFAT5	:= ''
+	__cExpedicao:=''
+	__cUser 	:= ''
+	cConteudo   := ''
+    
+	cQuery :="select * "+ENTER
+	cQuery +="from "+RetSqlName("SZ3")+" "+ENTER
+	cQuery +="WHERE D_E_L_E_T_ = ' ' "+ENTER
+	cQuery +="AND Z3_FILIAL =  '"+xFilial("SZ3")+"'"+ENTER
+	cQuery +="AND Z3_MSBLQL <> '1' "+ENTER
+	cQuery +="AND Z3_KEYUSR = '"+cNomeUser+"' "+ENTER
+
+    If  Select(cAlias) > 0
+                DbSelectArea(cAlias)
+                DbCloseArea()
+     Endif
+
+     DBUseArea(.T., "TOPCONN", TCGenQry(NIL,NIL,cQuery), cAlias , .F., .T. )
+
+     if (cAlias)->(Eof())
+        (cAlias)->( dbcloseArea() )
+		Return
+     ENDIF
+
+      While !(cAlias)->(EoF())
+
+	        // Permite Opção de Desconto Administrativo
+            IF (cAlias)->Z3_PAR_A = '1'
+                 cUsrOpc:= cUsrOpc + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF
+	        // Permite Manutencao dos cadastro de carga
+            IF (cAlias)->Z3_PAR_B = '1'
+                ESPARFAT1 :=  ESPARFAT1 + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF
+			// Permite Entrega e Retorno
+            IF (cAlias)->Z3_PAR_C = '1'
+				 ESPARFAT2 :=  ESPARFAT2 + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF
+            // Validar 
+      		IF (cAlias)->Z3_PAR_D = '1'
+				 ESPARFAT4 :=  ESPARFAT4 + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF			
+            // Bloqueio de novas cargas acima 10 dias
+      		IF (cAlias)->Z3_PAR_E = '1'
+				 ESPARFAT5 :=  ESPARFAT5 + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF	
+			// Expedicao
+      		IF (cAlias)->Z3_PAR_F = '1'
+				__cExpedicao := __cExpedicao + Alltrim((cAlias)->Z3_CODIGO) + ";"
+			ENDIF
+			IF (cAlias)->Z3_PAR_G = '1'
+				__cUser:= __cUser + Alltrim((cAlias)->Z3_CODIGO) + ";"
+			ENDIF			
+
+			IF (cAlias)->Z3_PAR_I = '1'
+				cConteudo:= cConteudo + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF			
+
+			IF (cAlias)->Z3_PAR_J = '1'
+				cConteudo:= cConteudo + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF	
+
+			IF (cAlias)->Z3_PAR_H = '1'
+				cConteudo:= cConteudo + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF	
+
+            (cAlias)->( dbskip() )  
+
+	  EndDo
+      (cAlias)->( dbcloseArea() )
+	FwRestArea(cArea)
+Return
+
+
+Static Function FSeachOpc()
+	Local cArea	:= FwGetArea()
+	Local cAlias        := "Y-"+GetNextAlias()
+    Local cQuery        := ' '
+	Local cNomeUser     := UsrRetName(RetCodUsr())
+
+	cUsrOpc 	:= ''
+    
+	cQuery :="select * "+ENTER
+	cQuery +="from "+RetSqlName("SZ3")+" "+ENTER
+	cQuery +="WHERE D_E_L_E_T_ = ' ' "+ENTER
+	cQuery +="AND Z3_FILIAL =  '"+xFilial("SZ3")+"'"+ENTER
+	cQuery +="AND Z3_MSBLQL <> '1' "+ENTER
+	cQuery +="AND Z3_KEYUSR = '"+cNomeUser+"' "+ENTER
+
+    If  Select(cAlias) > 0
+                DbSelectArea(cAlias)
+                DbCloseArea()
+     Endif
+
+     DBUseArea(.T., "TOPCONN", TCGenQry(NIL,NIL,cQuery), cAlias , .F., .T. )
+
+     if (cAlias)->(Eof())
+        (cAlias)->( dbcloseArea() )
+		Return
+     ENDIF
+
+      While !(cAlias)->(EoF())
+
+	        // Permite Opção de Desconto Administrativo
+            IF (cAlias)->Z3_PAR_A = '1'
+                 cUsrOpc:= cUsrOpc + Alltrim((cAlias)->Z3_KEYUSR) + ";"
+			ENDIF
+            (cAlias)->( dbskip() )  
+
+	  EndDo
+      (cAlias)->( dbcloseArea() )
+	FwRestArea(cArea)
+Return(cUsrOpc)

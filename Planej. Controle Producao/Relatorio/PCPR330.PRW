@@ -96,7 +96,7 @@ Static Function ProcRun(oSay)
     aAdd(aFields,{"TMP_CUSTM" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTD" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})      
     aAdd(aFields,{"TMP_CUSTN" 	    , GetSx3Cache("B1_CUSTD","X3_TIPO")	        ,tamSx3("B1_CUSTD")[1]	    ,tamSx3("B1_CUSTD")[2]})  
-
+    aAdd(aFields,{"TMP_SEQ" 	    , GetSx3Cache("G1_TRT","X3_TIPO")	        ,tamSx3("G1_TRT")[1]	    ,tamSx3("G1_TRT")[2]})  
     aAdd(aFields,{"TMP_REVISA" 	    , GetSx3Cache("B1_REVATU","X3_TIPO")	    ,tamSx3("B1_REVATU")[1]	    ,tamSx3("B1_REVATU")[2]}) 
     aAdd(aFields,{"TMP_REVOP" 	    , GetSx3Cache("B1_REVATU","X3_TIPO")	    ,tamSx3("B1_REVATU")[1]	    ,tamSx3("B1_REVATU")[2]})    
     aAdd(aFields,{"TMP_QTDG5" 	    , GetSx3Cache("C2_QUANT","X3_TIPO")	        ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
@@ -119,6 +119,7 @@ Static Function ProcRun(oSay)
     cQuery +="		SC2.C2_PERDA    PERDA,"+cEof
     cQuery +="		SC2.C2_EMISSAO	EMISSAO,"+cEof
     cQuery +="		SC2.C2_DATRF	FABRICACAO,"+cEof
+    cQuery +="		SD3.D3_TRT		SEQ,"+cEof
     cQuery +="		SD3.D3_COD		COMPONENTE,"+cEof
     cQuery +="	    XB1.B1_DESC		DESCCOMP,"+cEof
     cQuery +="		XB1.B1_TIPO		TIPOCOMP,"+cEof
@@ -184,6 +185,7 @@ Static Function ProcRun(oSay)
                 (ctmp)->TMP_CUSTN  := (cAlias)->CUSTN
                 (ctmp)->TMP_REVISA := (cAlias)->REV_PROD
                 (ctmp)->TMP_REVOP  := (cAlias)->REV_OP  
+                (ctmp)->TMP_SEQ    := (cAlias)->SEQ  
                 (ctmp)->TMP_QTDG5  := 0
                 (ctmp)->( MsUnlock() )
              Endif
@@ -341,7 +343,8 @@ Static Function ReportDef()
 	TRCell():New(oSection1,'PRODUZIR'		,'cQry01','Produzir'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
     TRCell():New(oSection1,'UTILIZA'		,'cQry01','Produzido'     		   	,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 
 	TRCell():New(oSection1,'PERDA'			,'cQry01','Perda/Ganho' 	   	    ,PesqPict('SC2',"C2_QUJE")	    ,TamSX3("C2_QUJE") [1]+1,,) 	
-        	
+
+    TRCell():New(oSection1,'SEQ'    		,'cQry01','Seq.' 		   	        ,PesqPict('SD3',"D3_TRT")	    ,TamSX3("D3_TRT") [1]+1,,)     	
     TRCell():New(oSection1,'COMPONENTE'		,'cQry01','Prod.Estrutura' 		   	,PesqPict('SC2',"C2_PRODUTO")	,TamSX3("C2_PRODUTO") [1]+1,,) 
     TRCell():New(oSection1,'DESC1'  		,'cQry01','Descricao'     		   	,PesqPict('SB1',"B1_DESC")	    ,TamSX3("B1_DESC") [1]+1,,)
 	TRCell():New(oSection1,'TIP1'		    ,'cQry01','Tipo'     		     	,PesqPict('SB1',"B1_TIPO")	    ,TamSX3("B1_TIPO") [1]+1,,)
@@ -385,6 +388,7 @@ Static Function ReportPrint(oReport)
         oSection1:Cell("REVISAO"):SetValue((ctmp)->TMP_REVISA)
         oSection1:Cell("REVOP"):SetValue((ctmp)->TMP_REVOP)
 
+        oSection1:Cell("SEQ"):SetValue((ctmp)->TMP_SEQ)
         oSection1:Cell("COMPONENTE"):SetValue((ctmp)->TMP_COMP)
         oSection1:Cell("QTDG5"):SetValue((ctmp)->TMP_QTDG5)
         oSection1:Cell("QTDG1"):SetValue((ctmp)->TMP_QTDG1)

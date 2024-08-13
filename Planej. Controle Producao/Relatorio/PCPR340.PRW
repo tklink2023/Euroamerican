@@ -60,6 +60,7 @@ Static Function ReportDef()
     oReport:lParamPage := .T.
 
     oSection1 := TRSection():New(oReport,"",{"cQry01"},aOrdem)
+
     TRCell():New(oSection1,'FILIAL'			,'cQry01','Filial'     		    	,PesqPict('SC2',"C2_FILIAL")	,TamSX3("C2_FILIAL") [1]+1,,) 
     TRCell():New(oSection1,'CODIGO'			,'cQry01','Codigo'     				,PesqPict('SB1',"B1_COD")		,TamSX3("B1_COD") [1]+1,,) 
     TRCell():New(oSection1,'Descpro'		,'cQry01','Descricao'  				,PesqPict('SB1',"B1_DESC")		,TamSX3("B1_DESC") [1]+1,,) 
@@ -67,8 +68,9 @@ Static Function ReportDef()
     TRCell():New(oSection1,'LOCAL'	       	,'cQry01','Local'      				,PesqPict('SB1',"B1_LOCPAD")	,TamSX3("B1_LOCPAD") [1]+1,,) 
     TRCell():New(oSection1,'TIPO'		   	,'cQry01','Tipo'     				,PesqPict('SB1',"B1_TIPO")		,TamSX3("B1_TIPO") [1]+1,,) 
     TRCell():New(oSection1,'REVISA'		   	,'cQry01','Revisao'    				,PesqPict('SG5',"G5_REVISAO")	,TamSX3("G5_REVISAO") [1]+1,,) 
-    TRCell():New(oSection1,'CODUSR'		   	,'cQry01','ID' 	                    ,	 							, 							,,) 
-    TRCell():New(oSection1,'KEYUSR'		   	,'cQry01','Usuario'	                ,	 							, 							,,) 
+    TRCell():New(oSection1,'SITUA'		   	,'cQry01','Situação'                ,PesqPict('SA1',"A1_NREDUZ")    ,TamSX3("A1_NREDUZ") [1]+1,,)
+    TRCell():New(oSection1,'CODUSR'		   	,'cQry01','ID' 	                    ,PesqPict('SC5',"C5_NUM")	    ,TamSX3("C5_NUM") [1]+1,,) 
+    TRCell():New(oSection1,'KEYUSR'		   	,'cQry01','Usuario'	                ,PesqPict('SA1',"A1_NOME")	    ,TamSX3("A1_NOME") [1]+1,,) 
     TRCell():New(oSection1,'DATA'	    	,'cQry01','Data'     				,PesqPict('SG5',"G5_DATAREV")	,TamSX3("G5_DATAREV") [1]+1,,) 
 
 Return(oReport)
@@ -78,7 +80,7 @@ Static Function ReportPrint(oReport)
     Local cQuery    := ' '
     Private oSection1 := oReport:Section(1)
 
-   cQuery :="Select G5_FILIAL, G5_PRODUTO, B1_DESC, B1_UM, B1_TIPO,B1_LOCPAD, G5_REVISAO, G5_USER, USR_NOME, G5_DATAREV "+cEof
+   cQuery :="Select G5_FILIAL, G5_PRODUTO, B1_DESC, B1_UM, B1_TIPO,B1_LOCPAD, G5_REVISAO, G5_USER, USR_NOME, G5_DATAREV,G5_MSBLQL  "+cEof
    cQuery +="from  "+RetSqlName("SG5")+" SG5 "+cEof
    cQuery +="INNER JOIN  "+RetSqlName("SB1")+" SB1 ON B1_COD = G5_PRODUTO AND SB1.D_E_L_E_T_ = ' ' "+cEof
    cQuery +="INNER JOIN SYS_USR ON USR_ID = G5_USER "+cEof
@@ -93,9 +95,7 @@ Static Function ReportPrint(oReport)
     Endif
 
     DBUseArea(.T., "TOPCONN", TCGenQry(NIL,NIL,cQuery), "cQry01" , .F., .T. )
-    TCSetField("cQry01", "G5_REVISAO", "D")
-   
-    
+    TCSetField("cQry01", "G5_DATAREV", "D")    
     oReport:SetMeter(("cQry01")->(LastRec()))
     oSection1:Init()
 
@@ -103,16 +103,19 @@ Static Function ReportPrint(oReport)
     ("cQry01")->( dbGotop() )
     While !oReport:Cancel() .And. !("cQry01")->(Eof())   
         oReport:IncMeter()
-        oSection1:Cell("FILIAL"):SetValue(("cQry01")->G5_FILIAL)
+        oSection1:Cell("FILIAL"):SetValue(("cQry01")->G5_FILIAL )
         oSection1:Cell("CODIGO"):SetValue(("cQry01")->G5_PRODUTO)	
-        oSection1:Cell("Descpro"):SetValue(("cQry01")->B1_DESC)	
-        oSection1:Cell("TIPO"):SetValue(("cQry01")->B1_TIPO)		
-        oSection1:Cell("LOCAL"):SetValue(("cQry01")->B1_LOCPAD)		
-        oSection1:Cell("UM"):SetValue(("cQry01")->B1_UM)	
+        oSection1:Cell("Descpro"):SetValue(("cQry01")->B1_DESC  )	
+        oSection1:Cell("TIPO"):SetValue(("cQry01")->B1_TIPO     )		
+        oSection1:Cell("LOCAL"):SetValue(("cQry01")->B1_LOCPAD  )		
+        oSection1:Cell("UM"):SetValue(("cQry01")->B1_UM         )	
         oSection1:Cell("REVISA"):SetValue(("cQry01")->G5_REVISAO)	
-        oSection1:Cell("CODUSR"):SetValue(("cQry01")->G5_USER)	
-        oSection1:Cell("KEYUSR"):SetValue(("cQry01")->USR_NOME)	
-        oSection1:Cell("DATA"):SetValue(("cQry01")->G5_DATAREV)	    
+
+        oSection1:Cell("SITUA"):SetValue(IIF(("cQry01")->G5_MSBLQL=="1","Bloqueado","" ) )
+        
+        oSection1:Cell("CODUSR"):SetValue(("cQry01")->G5_USER   )	
+        oSection1:Cell("KEYUSR"):SetValue(("cQry01")->USR_NOME  )	
+        oSection1:Cell("DATA"):SetValue(("cQry01")->G5_DATAREV  )	    
 	    oSection1:PrintLine()
 	    oReport:IncMeter()
         dbSelectArea("cQry01")

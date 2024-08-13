@@ -13,7 +13,7 @@ static lNT23004		:= nil
 ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
 ±±³Descri‡…o ³Rdmake de- exemplo para geracao da Nota Fiscal Eletronica do ³±±
 ±±³          ³SEFAZ - Versao T01.00 / 2.00                                ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄFÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
 ±±³Retorno   ³String da Nota Fiscal Eletronica                            ³±±
 ±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
 ±±³Parametros³ExpC1: Tipo da NF                                           ³±±
@@ -7844,7 +7844,7 @@ cEan		:= IIF(!Empty(aProd[46]),iif(Val(aProd[46])==0              ,"",aProd[46])
 //----------------------------------------------------
 // [Inicio] Personalização Euroamerican 
 //----------------------------------------------------
-If SF2->F2_CLIENTE $ "000002,000068,008584"	// Para a Sodimac / Dicicco sempre levar codigo EAN13 / Codigo Gtin
+If SF2->F2_CLIENTE $ "000002,000068,008584,013656"	// Para a Sodimac / Dicicco / Leroy (Paulo Lenzi - 31.07.2024) sempre levar codigo EAN13 / Codigo Gtin
 	cEan	:= aProd[03]
 ElseIf SA1->A1_EST = "EX"		// Para exportação, levar sempre ""  que significa sem Gtin para a tag cEan
 	cEan	:= "" 
