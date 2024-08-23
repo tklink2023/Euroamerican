@@ -16,14 +16,14 @@ user Function M521DNFS()
     Local cArea     := FwGetArea()
     Local aDados    as Array
     Local aPedidos  := ParamIxb[1]
-    Local nHoras    := SubtHoras(SF2->F2_DAUTNFE, SF2->F2_HAUTNFE,dDataBase, substr(Time(),1,2)+":"+substr(Time(),4,2) )
-    Local nSpedExc  := GetNewPar("MV_SPEDEXC",24)
+    //Local nHoras    := SubtHoras(SF2->F2_DAUTNFE, SF2->F2_HAUTNFE,dDataBase, substr(Time(),1,2)+":"+substr(Time(),4,2) )
+    //Local nSpedExc  := GetNewPar("MV_SPEDEXC",24)
    
-    If nHoras > nSpedExc
-       FWAlertError("Não foi possível excluir a(s) nota(s), pois o prazo em horas para o cancelamento da(s) NF-e ?de: "+nSpedExc+ " horas", "Aviso ")
-       FwRestArea(cArea)
-       Return(.F.)
-    endif
+    //If nHoras > nSpedExc
+    //   FWAlertError("Não foi possível excluir a(s) nota(s), pois o prazo em horas para o cancelamento da(s) NF-e ?de: "+nValtoChar(nSpedExc)+ " horas", "Aviso ")
+    //   FwRestArea(cArea)
+    //   Return(.F.)
+    //endif
    
     if ExistBlock("CompoemNF")
        aDados:= {SF2->F2_DOC,SF2->F2_SERIE,SF2->F2_CLIENTE,SF2->F2_LOJA, SF2->F2_EMISSAO,SF2->F2_TIPO,aPedidos}
