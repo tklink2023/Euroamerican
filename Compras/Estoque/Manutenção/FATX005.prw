@@ -529,7 +529,7 @@ EndIf
 IF nOpc = 3
    IF ( Upper(Alltrim(cUserName)) == Upper(Alltrim(cUsrIncRNC))  )
 
-         M->UI_DTHRAVA := DDATABASE
+         M->UI_DTHRAVA :=  DtoC(dDataBase)  + " " + Substr(Time(),1,5)	
 		 M->UI_USRACAO := cUsername
 		 M->UI_USRAVAL := CUSERNAME
 		 M->UI_USRAUDI := CUSERNAME
@@ -829,6 +829,12 @@ BEGIN SEQUENCE
 				(cAlias)->UI_LOG		:= "FECHADO ( COMERCIAL ) por " + Upper(AllTrim(cUsuario)) + " em " + DtoC(dDataBase) + " " + Time() + ENTER
 
 			EndIf
+
+			IF nOpc = 3
+   				IF ( Upper(Alltrim(cUserName)) == Upper(Alltrim(cUsrIncRNC))  )
+                    (cAlias)->UI_STATUS		:= "5"
+                Endif
+			Endif	
 			
 		(cAlias)->( MsUnlock() )
 				
