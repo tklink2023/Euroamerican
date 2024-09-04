@@ -34,8 +34,7 @@ Static Function MenuDef()
     ADD OPTION aRotina TITLE "Abrir Contole" ACTION "U_PCP060C()" OPERATION 3 ACCESS 0 // Abrir o controle de tempo
     ADD OPTION aRotina TITLE "Alterar" ACTION "VIEWDEF.PCPM060" OPERATION 4 ACCESS 0
     ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM060" OPERATION 5 ACCESS 0
-    //ADD OPTION aRotina TITLE "Copiar" ACTION "VIEWDEF.PCPM060" OPERATION 9 ACCESS 0
-
+ 
 Return aRotina
 
 
@@ -293,16 +292,21 @@ Return
 
 Static Function ApontHoras()
     Local cArea := FwGetArea()
-    Local aLinhas := FWSaveRows()
-    Local nI := 0
-    For nI := 1 To oGrid:Length()
-        oGrid:GoLine(nI)
-        If(!oGrid:IsDeleted())
-            //nValTot := oHead:GetValue('ZZ2_VALOR')
-            //nRet    += oModel:GetValue('MD_ZZ3DETAIL','ZZ3_TOTAL')
-        Endif
-    Next nI
-    FWRestRows(aLinhas)
+    //Local cCSS       := "QPushButton { background-color: #f4f4f4}"
+    Local oModel     := FwModelActive()
+    Local oView      := FWViewActive()
+    Local oModelGrid := Nil
+    Local nLinha
+
+    oModelGrid:= oModel:getModel("SZ8DETAIL")
+
+        For nLinha := 1 To oModelGrid:Length()
+
+            oModelGrid:GoLine(1)
+
+        Next nLinha
+
+    oView:refresh("SZ8DETAIL")
 
     FwRestArea(cArea)
 Return
