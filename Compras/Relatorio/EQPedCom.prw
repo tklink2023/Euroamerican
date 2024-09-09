@@ -200,7 +200,11 @@ oPrn:Preview( )
 if oPrn:GetViewPDF()
 		If File( AllTrim( cPathDest ) + AllTrim( cRelName ) )
 			PCEmail()
+		else
+			MsgAlert("Não foi Salvo o arquivo PDF na pasta, não será enviado como anexo","Atencao")
 		EndIf
+else
+	MsgAlert("Não foi Salvo o arquivo PDF na pasta, não será enviado como anexo","Atencao")		
 endif
 
 Return
@@ -675,22 +679,14 @@ Return
 Static Function PCEmail()
 
 Local aAreaSC7  := SC7->( GetArea() )
-//Local cSrvMail  := AllTrim(GetMV("MV_RELSERV"))
-//Local cUserAut  := AllTrim(GetMV("MV_RELACNT")) 
-//Local cPassAut  := AllTrim(GetMV("MV_RELPSW")) 
-//Local lOK       := .T.
 Local aCabec	:= {}
 Local aColunas	:= {}
 Local cMensagem	:= "Abrir anexo."
 Local cNomEmp   := IIf( Left(cFilAnt,2) == "01", "QUALYCRIL", IIf( Left(cFilAnt,2) == "02", "EUROAMERICAN", IIf( Left(cFilAnt,2) == "03", "QUALYVINIL", "QUALYCRIL")))
 Local cAssunto	:= cNomEmp + " - Pedido de Compras: " + AllTrim( cNumPC ) + " Aprovado"
-//Local cDe		:= cUserAut
 Local cPara		:= GetMv( "MV_BE_PCEM",, "fabio@xisinformatica.com.br;rodrigo.ferreira@euroamerican.com.br" )
-//Local cCc		:= ""
-//Local cCco		:= ""
 Local cSubject  := cAssunto
 Local cBody		:= cMensagem
-//Local cAnexo    := cPathDest + cRelName
 Local cEmailUsr := IIF(UsrExist(SC7->C7_USER),Alltrim(UsrRetMail(SC7->C7_USER)),cPara) // Alterado por Paulo Lenzi 17/04/2024
 
 IF lRh

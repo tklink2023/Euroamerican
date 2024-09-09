@@ -19,6 +19,9 @@ User Function PCPM060()
     oBrowse := FWMBrowse():New()
     oBrowse:SetAlias(cAliasSZ7)
     oBrowse:SetDescription(cTitulo)
+    //oBrowse:setInsert( .F. ) 
+    //oBrowse:Setdelete(.F.,{ || Alert("Nao pode deletar") } ) 
+    //oBrowse:SetChange({ || Alert("Linha acima com campos obrigatorios") })
 
     oBrowse:DisableDetails()
     oBrowse:Activate()
@@ -70,13 +73,13 @@ Static Function ModelDef()
 	oModel:SetRelation('SZ8DETAIL', aSZ8Rel, SZ8->(IndexKey(1))) 
     oModel:SetRelation('SZ9DETAIL', aSZ9Rel, SZ9->(IndexKey(1))) 
 
-    oModel:GetModel( "SZ8DETAIL" ):SetUniqueLine( { "Z8_OP" } )
+    oModel:GetModel( "SZ8DETAIL" ):SetUniqueLine( { "Z8_OP","Z8_OPERAC","Z8_RECUR","Z8_FERRAM" } )
     oModel:GetModel( 'SZ8DETAIL' ):SetNoInsertLine( .T. )
 	oModel:GetModel( 'SZ8DETAIL' ):SetNoUpdateLine( .F. )
 	oModel:GetModel( 'SZ8DETAIL' ):SetNoDeleteLine( .T. )
     oModel:GetModel( 'SZ8DETAIL' ):CanUpdateLine(.T.)
 
-    oModel:GetModel( "SZ9DETAIL" ):SetUniqueLine( { "Z9_OP" } )
+    oModel:GetModel( "SZ9DETAIL" ):SetUniqueLine( { "Z9_OP","Z9_OPERAC","Z9_RECURS","Z9_FERRAM" } )
     oModel:GetModel( 'SZ9DETAIL' ):SetNoInsertLine( .T. )
 	oModel:GetModel( 'SZ9DETAIL' ):SetNoUpdateLine( .F. )
 	oModel:GetModel( 'SZ9DETAIL' ):SetNoDeleteLine( .T. )
@@ -122,7 +125,7 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
 
-    oView:addUserButton("Apontamento Horas",                 "MAGIC_BMP", {|| ApontHoras() }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
+    //oView:addUserButton("Apontamento Horas",                 "MAGIC_BMP", {|| ApontHoras() }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
 Return oView
 
 
@@ -145,7 +148,7 @@ User Function PCP060C()
 	DEFINE MSDIALOG oDlgForm TITLE "Informe o numero da OP" FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
 		//Grupo Fórmula com o Get
 		@ 003, 003  GROUP oGrpForm TO 30, (nJanLarg/2)-1        PROMPT "Numero OP: " OF oDlgForm COLOR 0, 16777215 PIXEL
-			@ 010, 006  MSGET oGetForm VAR cGetForm SIZE (nJanLarg/2)-9, 013 OF oDlgForm COLORS 0, 16777215 PIXEL
+		@ 010, 006  MSGET oGetForm VAR cGetForm SIZE (nJanLarg/2)-9, 013 OF oDlgForm COLORS 0, 16777215 PIXEL
 		
 		//Grupo Ações com o Botão
 		@ (nJanAltu/2)-30, 003 GROUP oGrpAco TO (nJanAltu/2)-3, (nJanLarg/2)-1 PROMPT "Ações: " OF oDlgForm COLOR 0, 16777215 PIXEL
@@ -212,7 +215,7 @@ Return
 
 
 
-Static Function fAutoriza()
+User Function fAutoriza()
     Local aArea := GetArea()
     Local oGrpLog
     Local oBtnConf
@@ -254,6 +257,7 @@ Static Function fAutoriza()
     If lRetorno
         cUsrLog := Alltrim(cGetUsr)
         cPswLog := Alltrim(cGetPsw)
+        ApontHoras()
     EndIf
       
     RestArea(aArea)
@@ -296,13 +300,36 @@ Static Function ApontHoras()
     Local oModel     := FwModelActive()
     Local oView      := FWViewActive()
     Local oModelGrid := Nil
+    Local nItens     := 0
+    Local cDataFim := cDataini := cToD(" /  /  ")
+    Local nOperac
     Local nLinha
 
     oModelGrid:= oModel:getModel("SZ8DETAIL")
+        nItens     := oModelGrid:Length()
 
         For nLinha := 1 To oModelGrid:Length()
+            
+            nOperac     := oModelGrid:ADATAMODEL[nLinha][1][1][4]
+            cDataini    := oModelGrid:ADATAMODEL[nLinha][1][1][7]
+            cDataFim    := oModelGrid:ADATAMODEL[1][nLinha][1][10]
 
-            oModelGrid:GoLine(1)
+            IF  cDataini = cToD("  /  /  ")
+                  oModelGrid:ADATAMODEL[nLinha][1][1][7] := Date()
+                  oModelGrid:ADATAMODEL[nLinha][1][1][8] := Time()
+                  oModelGrid:ADATAMODEL[nLinha][1][1][9] := cUserName
+            ENDIF
+
+            IF cDataini <> cTod(" /  /  ") .and.  cDataFim = cToD("  /  /  ")
+                  oModelGrid:ADATAMODEL[nLinha][1][1][10] := Date()
+                  oModelGrid:ADATAMODEL[nLinha][1][1][11] := Time()
+                  oModelGrid:ADATAMODEL[nLinha][1][1][12] := cUserName
+            ENDIF
+            
+            if nLinha = nItens
+               MsgAlert( "Fechou a OP ")
+            endif
+            oModelGrid:GoLine(nLinha)
 
         Next nLinha
 
