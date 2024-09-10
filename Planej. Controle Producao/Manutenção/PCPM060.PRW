@@ -19,10 +19,7 @@ User Function PCPM060()
     oBrowse := FWMBrowse():New()
     oBrowse:SetAlias(cAliasSZ7)
     oBrowse:SetDescription(cTitulo)
-    //oBrowse:setInsert( .F. ) 
-    //oBrowse:Setdelete(.F.,{ || Alert("Nao pode deletar") } ) 
-    //oBrowse:SetChange({ || Alert("Linha acima com campos obrigatorios") })
-
+    oBrowse:GetTimer()
     oBrowse:DisableDetails()
     oBrowse:Activate()
 
@@ -125,9 +122,36 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
 
-    //oView:addUserButton("Apontamento Horas",                 "MAGIC_BMP", {|| ApontHoras() }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
+    oView:addUserButton("Apontamento Horas","MAGIC_BMP", {|| U_PCPM061(oModel,SZ7->Z7_OP,SZ7->Z7_PRODUTO) }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
+    //oView:SetViewProperty("VIEW_SZ8","CHANGELINE",{{ || U_fLineSZ8(oView, cIdView) }})
+ 
 Return oView
 
+/*
+User Function fLineSZ8(oView, cIdView)
+
+Local lRet      := .T.
+Local oModel    := FWModelActive()
+Local cFilZC6   := xFilial("SZ8")
+Local cId       := oModel:GetValue("SZ8DETAIL","ZC5_ID")
+Local cTabela   := oModel:GetValue("SZ8DETAIL","ZC5_TABELA")
+Local oModelZC6    := oModel:GetModel("ZC6DETAIL")
+Local nI        := 0
+
+For nI := 1 To oModelZC6:Length()
+
+    oModelZC6:AddLine() // inclui uma linha
+
+    oModelZC6:LoadValue("ZC6_FILIAL",cFilZC6)
+    oModelZC6:LoadValue("ZC6_ID",cId)
+    oModelZC6:LoadValue("ZC6_TABELA",cTabela)
+
+Next
+
+oView:Refresh(cIdView) // atualiza a view
+
+Return lRet
+*/
 
 User Function PCP060C()
     Local cArea := FwGetArea()
@@ -152,7 +176,7 @@ User Function PCP060C()
 		
 		//Grupo Ações com o Botão
 		@ (nJanAltu/2)-30, 003 GROUP oGrpAco TO (nJanAltu/2)-3, (nJanLarg/2)-1 PROMPT "Ações: " OF oDlgForm COLOR 0, 16777215 PIXEL
-			@ (nJanAltu/2)-24, nJanMeio - (nTamBtn/2) BUTTON oBtnExec PROMPT "Executar" SIZE nTamBtn, 018 OF oDlgForm ACTION(fExecuta()) PIXEL
+		@ (nJanAltu/2)-24, nJanMeio - (nTamBtn/2) BUTTON oBtnExec PROMPT "Executar" SIZE nTamBtn, 018 OF oDlgForm ACTION(fExecuta()) PIXEL
 		
 	//Ativando a janela
 	ACTIVATE MSDIALOG oDlgForm CENTERED
@@ -213,127 +237,3 @@ Static Function fExecuta()
     FwRestArea(cArea)
 Return
 
-
-
-User Function fAutoriza()
-    Local aArea := GetArea()
-    Local oGrpLog
-    Local oBtnConf
-    Private lRetorno := .F.
-    Private oDlgPvt
-    //Says e Gets
-    Private oSayUsr
-    Private oGetUsr, cGetUsr := Space(25)
-    Private oSayPsw
-    Private oGetPsw, cGetPsw := Space(20)
-    Private oGetErr, cGetErr := ""
-    //Dimensões da janela
-    Private nJanLarg := 200
-    Private nJanAltu := 200
-      
-    //Criando a janela
-    DEFINE MSDIALOG oDlgPvt TITLE "Login" FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
-        //Grupo de Login
-        @ 003, 001     GROUP oGrpLog TO (nJanAltu/2)-1, (nJanLarg/2)-3         PROMPT "Login: "     OF oDlgPvt COLOR 0, 16777215 PIXEL
-            //Label e Get de Usuário
-            @ 013, 006   SAY   oSayUsr PROMPT "Usuário:"        SIZE 030, 007 OF oDlgPvt                    PIXEL
-            @ 020, 006   MSGET oGetUsr VAR    cGetUsr           SIZE (nJanLarg/2)-12, 007 OF oDlgPvt COLORS 0, 16777215 PIXEL
-          
-            //Label e Get da Senha
-            @ 033, 006   SAY   oSayPsw PROMPT "Senha:"          SIZE 030, 007 OF oDlgPvt                    PIXEL
-            @ 040, 006   MSGET oGetPsw VAR    cGetPsw           SIZE (nJanLarg/2)-12, 007 OF oDlgPvt COLORS 0, 16777215 PIXEL PASSWORD
-          
-            //Get de Log, pois se for Say, não da para definir a cor
-            @ 060, 006   MSGET oGetErr VAR    cGetErr        SIZE (nJanLarg/2)-12, 007 OF oDlgPvt COLORS 0, 16777215 NO BORDER PIXEL
-            oGetErr:lActive := .F.
-            oGetErr:setCSS("QLineEdit{color:#FF0000; background-color:#FEFEFE;}")
-          
-            //Botões
-            @ (nJanAltu/2)-18, 006 BUTTON oBtnConf PROMPT "Confirmar"             SIZE (nJanLarg/2)-12, 015 OF oDlgPvt ACTION (fVldUsr()) PIXEL
-            oBtnConf:SetCss("QPushButton:pressed { background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #dadbde, stop: 1 #f6f7fa); }")
-    ACTIVATE MSDIALOG oDlgPvt CENTERED
-      
-    //Se a rotina foi confirmada e deu certo, atualiza o usuário e a senha
-    If lRetorno
-        cUsrLog := Alltrim(cGetUsr)
-        cPswLog := Alltrim(cGetPsw)
-        ApontHoras()
-    EndIf
-      
-    RestArea(aArea)
-Return lRetorno
-  
-/*---------------------------------------------------------------------*
- | Func:  fVldUsr                                                      |
- | Autor: Daniel Atilio                                                |
- | Data:  17/09/2015                                                   |
- | Desc:  Função para validar se o usuário existe                      |
- *---------------------------------------------------------------------*/
-  
-Static Function fVldUsr()
-    Local cUsrAux := Alltrim(cGetUsr)
-    Local cPswAux := Alltrim(cGetPsw)
-    Local cCodAux := ""
-      
-    //Pega o código do usuário
-    RPCClearEnv()
-    If RpcSetEnv("10", "0803", cUsrAux, cPswAux)
-        cCodAux := RetCodUsr()
-        lRetorno := .T.
-       
-     //Senão atualiza o erro e retorna para a rotina
-     Else
-         cGetErr := "Usuário e/ou senha inválidos!"
-         oGetErr:Refresh()
-    EndIf
-      
-    //Se o retorno for válido, fecha a janela
-    If lRetorno
-        oDlgPvt:End()
-    EndIf
-Return
-
-
-Static Function ApontHoras()
-    Local cArea := FwGetArea()
-    //Local cCSS       := "QPushButton { background-color: #f4f4f4}"
-    Local oModel     := FwModelActive()
-    Local oView      := FWViewActive()
-    Local oModelGrid := Nil
-    Local nItens     := 0
-    Local cDataFim := cDataini := cToD(" /  /  ")
-    Local nOperac
-    Local nLinha
-
-    oModelGrid:= oModel:getModel("SZ8DETAIL")
-        nItens     := oModelGrid:Length()
-
-        For nLinha := 1 To oModelGrid:Length()
-            
-            nOperac     := oModelGrid:ADATAMODEL[nLinha][1][1][4]
-            cDataini    := oModelGrid:ADATAMODEL[nLinha][1][1][7]
-            cDataFim    := oModelGrid:ADATAMODEL[1][nLinha][1][10]
-
-            IF  cDataini = cToD("  /  /  ")
-                  oModelGrid:ADATAMODEL[nLinha][1][1][7] := Date()
-                  oModelGrid:ADATAMODEL[nLinha][1][1][8] := Time()
-                  oModelGrid:ADATAMODEL[nLinha][1][1][9] := cUserName
-            ENDIF
-
-            IF cDataini <> cTod(" /  /  ") .and.  cDataFim = cToD("  /  /  ")
-                  oModelGrid:ADATAMODEL[nLinha][1][1][10] := Date()
-                  oModelGrid:ADATAMODEL[nLinha][1][1][11] := Time()
-                  oModelGrid:ADATAMODEL[nLinha][1][1][12] := cUserName
-            ENDIF
-            
-            if nLinha = nItens
-               MsgAlert( "Fechou a OP ")
-            endif
-            oModelGrid:GoLine(nLinha)
-
-        Next nLinha
-
-    oView:refresh("SZ8DETAIL")
-
-    FwRestArea(cArea)
-Return
