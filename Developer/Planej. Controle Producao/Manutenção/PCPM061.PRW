@@ -1,10 +1,9 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
 
-User Function PCPM061(oModel,cOp,cProduto)
+User Function PCPM061(cOp,cProduto)
     Local cArea 	 := FwGetArea()
     Local cAlias 	 := GetNextAlias()
-	Local oView      := FWViewActive()
 	
  	BeginSQL Alias cAlias
         Select Z8_OP,Z8_PRODUTO,Z8_OPERAC,Z8_RECUR,Z8_DATAINI,Z8_DATAFIM,H1_DESCRI
@@ -25,12 +24,12 @@ User Function PCPM061(oModel,cOp,cProduto)
 
     While (cAlias)->(!EOF())
 	      IF Empty((cAlias)->Z8_DATAINI) .and. Empty((cAlias)->Z8_DATAFIM) 
-			 TelaApo((cAlias)->Z8_OP,(cAlias)->Z8_PRODUTO,(cAlias)->Z8_OPERAC,(cAlias)->Z8_RECUR,(cAlias)->H1_DESCRI,"I",oModel)
+			 TelaApo((cAlias)->Z8_OP,(cAlias)->Z8_PRODUTO,(cAlias)->Z8_OPERAC,(cAlias)->Z8_RECUR,(cAlias)->H1_DESCRI,"I")
  			 exit
 		  endif 
 
 	      IF !Empty((cAlias)->Z8_DATAINI) .and. Empty((cAlias)->Z8_DATAFIM) 
-			 TelaApo((cAlias)->Z8_OP,(cAlias)->Z8_PRODUTO,(cAlias)->Z8_OPERAC,(cAlias)->Z8_RECUR,(cAlias)->H1_DESCRI,"F",oModel)
+			 TelaApo((cAlias)->Z8_OP,(cAlias)->Z8_PRODUTO,(cAlias)->Z8_OPERAC,(cAlias)->Z8_RECUR,(cAlias)->H1_DESCRI,"F")
  			 exit			 
 		  endif 
           (cAlias)->(dbSkip() )
@@ -39,11 +38,10 @@ User Function PCPM061(oModel,cOp,cProduto)
     (cAlias)->(DbCloseArea())
 
     FwRestArea(cArea)
-	oView:Refresh('VIEW_SZ8')
-	GETDREFRESH()
+	SysRefresh()
 Return
 
-Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo,oModel)
+Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
     Local cArea := FwGetArea()
 	Local nJanAltu  := GETMV("ES_ALTJAN")
 	Local nJanLarg  := GETMV("ES_LARGJAN")
@@ -56,7 +54,7 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo,oModel)
 	Local lHtml := .T.
 	Local bGrava  as block
 
- 	bGrava  := {|| Iif(MsgYesNo('Grava Revisões?','Atualizar'),(FGrava(cOp,cProd,cOper,cRecurso,cTipo,oModel),oDlg:End()),NIL)} 
+ 	bGrava  := {|| FGrava(cOp,cProd,cOper,cRecurso,cTipo),oDlg:End() } 
 
  	DEFINE MSDIALOG oDlg TITLE "Apontamento" STYLE DS_MODALFRAME  FROM 000, 000  TO nJanAltu, nJanLarg  OF oMainWnd PIXEL
     oDlg:lEscClose := .T.
@@ -87,7 +85,7 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo,oModel)
     FwRestArea(cArea)
 Return
 
-Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo,oModel)
+Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo)
 	Local cArea := FwGetArea()
 	dbSelectArea("SZ8")
 	SZ8->( dbSetOrder(1) )

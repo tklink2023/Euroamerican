@@ -21,6 +21,8 @@ User Function PCPM060()
     oBrowse:SetDescription(cTitulo)
     oBrowse:GetTimer()
     oBrowse:DisableDetails()
+    oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_OP,SZ7->Z7_PRODUTO)  },,2,,.F.)
+    oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_OP,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:Activate()
 
     FWRestArea(aArea)
@@ -32,8 +34,8 @@ Static Function MenuDef()
     //Adicionando opcoes do menu
     ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.PCPM060" OPERATION 1 ACCESS 0
     ADD OPTION aRotina TITLE "Abrir Contole" ACTION "U_PCP060C()" OPERATION 3 ACCESS 0 // Abrir o controle de tempo
-    ADD OPTION aRotina TITLE "Alterar" ACTION "VIEWDEF.PCPM060" OPERATION 4 ACCESS 0
-    ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM060" OPERATION 5 ACCESS 0
+    //ADD OPTION aRotina TITLE "Alterar" ACTION "VIEWDEF.PCPM060" OPERATION 4 ACCESS 0
+    //ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM060" OPERATION 5 ACCESS 0
  
 Return aRotina
 
@@ -122,7 +124,7 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
 
-    oView:addUserButton("Apontamento Horas","MAGIC_BMP", {|| U_PCPM061(oModel,SZ7->Z7_OP,SZ7->Z7_PRODUTO) }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
+    //oView:addUserButton("Apontamento Horas","MAGIC_BMP", {|| U_PCPM061(oModel,SZ7->Z7_OP,SZ7->Z7_PRODUTO) }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
     //oView:SetViewProperty("VIEW_SZ8","CHANGELINE",{{ || U_fLineSZ8(oView, cIdView) }})
  
 Return oView
