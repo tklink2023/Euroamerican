@@ -7,11 +7,17 @@ Static cAliasSZ7 := "SZ7"
 Static cAliasSZ8 := "SZ8"
 Static cAliasSZ9 := "SZ9"
 
-
+/*/{Protheus.doc} PCPM060
+description Programa que controla o tempo de produtção 
+@type function User
+@version 1.0
+@author Paulo Lenzi
+@since 13/09/2024
+@return variant, return_description
+/*/
 User Function PCPM060()
     Local aArea   := FWGetArea()
     Local oBrowse
-
     Private aRotina := {}
 
     aRotina := MenuDef()
@@ -21,6 +27,10 @@ User Function PCPM060()
     oBrowse:SetDescription(cTitulo)
     oBrowse:GetTimer()
     oBrowse:DisableDetails()
+    oBrowse:AddLegend("SZ7->Z7_STATUS == 'A'", 'GREEN',   'Aberto Apontamento',     '1')
+    oBrowse:AddLegend("SZ7->Z7_STATUS == 'B'", 'YELLOW',   'Sendo Apontado',        '1')
+    oBrowse:AddLegend("SZ7->Z7_STATUS == 'C'", 'RED',     'Encerrado Apontado',     '1')
+    
     oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_OP,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_OP,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:Activate()
@@ -28,34 +38,43 @@ User Function PCPM060()
     FWRestArea(aArea)
 Return Nil
 
+/*/{Protheus.doc} MenuDef
+description Rotina para tratar as opções do programa
+@type function Static
+@version 1.0
+@author Paulo Lenzi
+@since 13/09/2024
+@return variant, return_description
+/*/
 Static Function MenuDef()
     Local aRotina := {}
-
     //Adicionando opcoes do menu
     ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.PCPM060" OPERATION 1 ACCESS 0
     ADD OPTION aRotina TITLE "Abrir Contole" ACTION "U_PCP060C()" OPERATION 3 ACCESS 0 // Abrir o controle de tempo
     //ADD OPTION aRotina TITLE "Alterar" ACTION "VIEWDEF.PCPM060" OPERATION 4 ACCESS 0
     //ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM060" OPERATION 5 ACCESS 0
- 
 Return aRotina
 
-
+/*/{Protheus.doc} ModelDef
+description Rotina de preparação dos campos a serem apresentados no programa
+@type function Static
+@version 1.0
+@author Paulo Lenzi
+@since 13/09/2024
+@return variant, return_description
+/*/
 Static Function ModelDef()
     Local oStrSZ7 := FWFormStruct(1, cAliasSZ7)
     Local oStrSZ8 := FWFormStruct(1, cAliasSZ8)
     Local oStrSZ9 := FWFormStruct(1, cAliasSZ9)
-
    	Local aSZ8Rel		:= {}
     Local aSZ9Rel		:= {}
-
     Local oModel
     Local bPre := Nil
     Local bPos := Nil
     Local bCancel := Nil
-
     //Cria o modelo de dados para cadastro
     oModel := MPFormModel():New("TLPCPM060", bPre, bPos, /*bCommit*/, bCancel)
-
     oModel:AddFields("SZ7MASTER", /*cOwner*/, oStrSZ7)
     oModel:AddGrid("SZ8DETAIL","SZ7MASTER",oStrSZ8,,,,,)  
     oModel:AddGrid("SZ9DETAIL","SZ7MASTER",oStrSZ9,,,,,)  
@@ -68,17 +87,16 @@ Static Function ModelDef()
 	aAdd(aSZ9Rel, {'Z9_OP',	'Z7_OP'}) 
     aAdd(aSZ9Rel, {'Z9_PRODUTO',	'Z7_PRODUTO'}) 
 
-
 	oModel:SetRelation('SZ8DETAIL', aSZ8Rel, SZ8->(IndexKey(1))) 
     oModel:SetRelation('SZ9DETAIL', aSZ9Rel, SZ9->(IndexKey(1))) 
 
-    oModel:GetModel( "SZ8DETAIL" ):SetUniqueLine( { "Z8_OP","Z8_OPERAC","Z8_RECUR","Z8_FERRAM" } )
+    oModel:GetModel( "SZ8DETAIL" ):SetUniqueLine( { "Z8_OP","Z8_PRODUTO","Z8_OPERAC","Z8_RECUR","Z8_FERRAM" } )
     oModel:GetModel( 'SZ8DETAIL' ):SetNoInsertLine( .T. )
 	oModel:GetModel( 'SZ8DETAIL' ):SetNoUpdateLine( .F. )
 	oModel:GetModel( 'SZ8DETAIL' ):SetNoDeleteLine( .T. )
     oModel:GetModel( 'SZ8DETAIL' ):CanUpdateLine(.T.)
 
-    oModel:GetModel( "SZ9DETAIL" ):SetUniqueLine( { "Z9_OP","Z9_OPERAC","Z9_RECURS","Z9_FERRAM" } )
+    oModel:GetModel( "SZ9DETAIL" ):SetUniqueLine( { "Z9_OP","Z9_PRODUTO","Z9_OPERAC" } )
     oModel:GetModel( 'SZ9DETAIL' ):SetNoInsertLine( .T. )
 	oModel:GetModel( 'SZ9DETAIL' ):SetNoUpdateLine( .F. )
 	oModel:GetModel( 'SZ9DETAIL' ):SetNoDeleteLine( .T. )
@@ -90,16 +108,21 @@ Static Function ModelDef()
 	oModel:GetModel('SZ7MASTER'):SetDescription(cTitulo)
 	oModel:GetModel('SZ8DETAIL'):SetDescription('Operações')
     oModel:GetModel('SZ9DETAIL'):SetDescription('Paradas')
-
  
 Return oModel
-
+/*/{Protheus.doc} ViewDef
+description Rotina que apresenta os dados em tela
+@type function Static
+@version 1.0
+@author Paulo Lenzi
+@since 13/09/2024
+@return variant, return_description
+/*/
 Static Function ViewDef()
     Local oModel := FWLoadModel("PCPM060")
     Local oStrSZ7 := FWFormStruct(2, cAliasSZ7)
     Local oStrSZ8 := FWFormStruct(2, cAliasSZ8)
     Local oStrSZ9 := FWFormStruct(2, cAliasSZ9)
-
     Local oView
 
     oStrSZ8:RemoveField( 'Z8_OP' )
@@ -123,11 +146,12 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ7" , "VwSZ7" )
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
-
+    // Opções para ser acrescentadas 
     //oView:addUserButton("Apontamento Horas","MAGIC_BMP", {|| U_PCPM061(oModel,SZ7->Z7_OP,SZ7->Z7_PRODUTO) }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
     //oView:SetViewProperty("VIEW_SZ8","CHANGELINE",{{ || U_fLineSZ8(oView, cIdView) }})
  
 Return oView
+
 
 /*
 User Function fLineSZ8(oView, cIdView)
@@ -154,7 +178,14 @@ oView:Refresh(cIdView) // atualiza a view
 
 Return lRet
 */
-
+/*/{Protheus.doc} PCP060C
+description rotina que trata do imput dos dados da Ordem de Produção
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 13/09/2024
+@return variant, return_description
+/*/
 User Function PCP060C()
     Local cArea := FwGetArea()
 
@@ -174,11 +205,11 @@ User Function PCP060C()
 	DEFINE MSDIALOG oDlgForm TITLE "Informe o numero da OP" FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
 		//Grupo Fórmula com o Get
 		@ 003, 003  GROUP oGrpForm TO 30, (nJanLarg/2)-1        PROMPT "Numero OP: " OF oDlgForm COLOR 0, 16777215 PIXEL
-		@ 010, 006  MSGET oGetForm VAR cGetForm SIZE (nJanLarg/2)-9, 013 OF oDlgForm COLORS 0, 16777215 PIXEL
+		@ 010, 006  MSGET oGetForm VAR cGetForm SIZE (nJanLarg/2)-9, 013 F3 "SC2" OF oDlgForm COLORS 0, 16777215 PIXEL
 		
 		//Grupo Ações com o Botão
 		@ (nJanAltu/2)-30, 003 GROUP oGrpAco TO (nJanAltu/2)-3, (nJanLarg/2)-1 PROMPT "Ações: " OF oDlgForm COLOR 0, 16777215 PIXEL
-		@ (nJanAltu/2)-24, nJanMeio - (nTamBtn/2) BUTTON oBtnExec PROMPT "Executar" SIZE nTamBtn, 018 OF oDlgForm ACTION(fExecuta()) PIXEL
+		@ (nJanAltu/2)-24, nJanMeio - (nTamBtn/2) BUTTON oBtnExec PROMPT "Executar" SIZE nTamBtn, 018 OF oDlgForm ACTION(fExecuta(),oDlgForm:End()) PIXEL
 		
 	//Ativando a janela
 	ACTIVATE MSDIALOG oDlgForm CENTERED
@@ -186,13 +217,20 @@ User Function PCP060C()
     FwRestArea(cArea)
 Return
 
-
+/*/{Protheus.doc} fExecuta
+description Rotina a importação das informações referente a ordem de Produção
+@type function Static
+@version 1.0
+@author Paulo Lenzi
+@since 13/09/2024
+@return variant, return_description
+/*/
 Static Function fExecuta()
 	Local cArea  := FwGetArea()
     Local cAlias := GetNextAlias()
 
     BeginSQL Alias cAlias
-        Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_EMISSAO,C2_PRODUTO,C2_QUANT,C2_QUJE,C2_DATPRF,C2_DATRF, G2_OPERAC, G2_RECURSO, G2_DESCRI
+        Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_EMISSAO,C2_DATPRI,C2_DATPRF,C2_PRIOR,C2_DATRF,C2_PRODUTO,C2_QUANT,C2_QUJE, G2_OPERAC, G2_RECURSO, G2_DESCRI
         FROM %Table:SC2% SC2
         INNER JOIN %Table:SG2% SG2 ON G2_FILIAL = C2_FILIAL AND G2_PRODUTO = C2_PRODUTO AND SG2.D_E_L_E_T_ = ' '
         WHERE SC2.%NotDel%
@@ -204,6 +242,11 @@ Static Function fExecuta()
             FwRestArea(cArea)
 	        RETURN
     Endif    
+    TCSetField(cAlias, "C2_EMISSAO", "D")
+    TCSetField(cAlias, "C2_DATPRF", "D")
+    TCSetField(cAlias, "C2_DATRF", "D")
+    TCSetField(cAlias, "C2_DATPRI", "D")
+
 
     While (cAlias)->(!EOF())
            dbSelectArea("SZ7")
@@ -215,6 +258,12 @@ Static Function fExecuta()
                       SZ7->Z7_OP        :=  (cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN
                       SZ7->Z7_PRODUTO   :=  (cAlias)->C2_PRODUTO
                       SZ7->Z7_QTPROD    :=  (cAlias)->C2_QUANT
+                      SZ7->Z7_EMISSAO   :=  (cAlias)->C2_EMISSAO
+                      SZ7->Z7_DATPRI    :=  (cAlias)->C2_DATPRI
+                      SZ7->Z7_DATPRF    :=  (cAlias)->C2_DATPRF
+                      SZ7->Z7_CPRIOR    :=  (cAlias)->C2_PRIOR
+                      SZ7->Z7_DATRF     :=  (cAlias)->C2_DATRF
+                      SZ7->Z7_STATUS    :=  "A"
                       SZ7->( MsUnlock() )
                    ENDIF
            ENDIF
@@ -239,3 +288,6 @@ Static Function fExecuta()
     FwRestArea(cArea)
 Return
 
+//========================================================================================================================================================================//
+// FIM DA PROGRAMAÇÃO DO FONTE PCPM060
+//========================================================================================================================================================================//

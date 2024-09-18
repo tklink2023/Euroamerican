@@ -1,9 +1,19 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
-
+/*/{Protheus.doc} PCPM061
+description Rotina que aponta as horas das operações atraves do programa PCPM060
+@type function User
+@version 1.0
+@author Paulo Lenzi
+@since 13/09/2024
+@param cOp, character, param_description
+@param cProduto, character, param_description
+@return variant, return_description
+/*/
 User Function PCPM061(cOp,cProduto)
     Local cArea 	 := FwGetArea()
     Local cAlias 	 := GetNextAlias()
+	Local lRet       := .F.
 	
  	BeginSQL Alias cAlias
         Select Z8_OP,Z8_PRODUTO,Z8_OPERAC,Z8_RECUR,Z8_DATAINI,Z8_DATAFIM,H1_DESCRI
@@ -17,7 +27,7 @@ User Function PCPM061(cOp,cProduto)
     EndSQL
 
     if (cAlias)->( Eof())
-            MsgAlert("OP Encerrada","ATENÇÃO")
+            MsgAlert("OP Nao Encontrado","ATENÇÃO")
             FwRestArea(cArea)
 	        RETURN
     Endif        
@@ -25,20 +35,25 @@ User Function PCPM061(cOp,cProduto)
     While (cAlias)->(!EOF())
 	      IF Empty((cAlias)->Z8_DATAINI) .and. Empty((cAlias)->Z8_DATAFIM) 
 			 TelaApo((cAlias)->Z8_OP,(cAlias)->Z8_PRODUTO,(cAlias)->Z8_OPERAC,(cAlias)->Z8_RECUR,(cAlias)->H1_DESCRI,"I")
+			 lRet := .F.
  			 exit
 		  endif 
 
 	      IF !Empty((cAlias)->Z8_DATAINI) .and. Empty((cAlias)->Z8_DATAFIM) 
 			 TelaApo((cAlias)->Z8_OP,(cAlias)->Z8_PRODUTO,(cAlias)->Z8_OPERAC,(cAlias)->Z8_RECUR,(cAlias)->H1_DESCRI,"F")
+			 lRet := .F.
  			 exit			 
 		  endif 
           (cAlias)->(dbSkip() )
-
+          lRet :=.T.
     EndDo
     (cAlias)->(DbCloseArea())
+    if lRet
+		PCP60FECHA(cOp,cProduto)
+	endif	
+    
+	FwRestArea(cArea)
 
-    FwRestArea(cArea)
-	SysRefresh()
 Return
 
 Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
@@ -97,11 +112,33 @@ Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo)
 		  else
 		     SZ8->Z8_DATAFIM := dDataBase
 			 SZ8->Z8_HORAFIM := Subs(Time(),1,5)
-			 SZ8->Z8_TOTAL   := AtTotHora(SZ8->Z8_DATAINI, SZ8->Z8_HORAINI, SZ8->Z8_DATAFIM, SZ8->Z8_HORAFIM)
+			 cResult := AtTotHora( SZ8->Z8_DATAINI, SZ8->Z8_HORAINI, SZ8->Z8_DATAFIM, SZ8->Z8_HORAFIM)
+			 SZ8->Z8_GASTO   := SomaHoras(cValtoChar(val(Alltrim(substring(cResult,1,at("D",cResult)-1)))*24),Alltrim(substring(cResult,at("D",cResult)+1,20)))
 	      endif								
 	   Endif
       SZ8->( MsUnlock() )
 	ENDIF
+	dbSelectArea("SZ7")
+	SZ7->( dbSetOrder(1) )
+	IF SZ7->( dbSeek( xFilial("SZ7")+cOp+cProd,.T. ))
+		IF RecLock("SZ7",.F.)
+		   SZ7->Z7_STATUS := "B"
+		   SZ7->( MsUnlock() )
+		ENDIF
+	Endif
+    FwRestArea(cArea)
+Return
 
+Static Function PCP60FECHA(cOp,cProduto)
+	Local cArea := FwGetArea()
+
+	dbSelectArea("SZ7")
+	SZ7->( dbSetOrder(1) )
+	IF SZ7->( dbSeek( xFilial("SZ7")+cOp+cProduto,.T. ))
+		IF RecLock("SZ7",.F.)
+		   SZ7->Z7_STATUS := "C"
+		   SZ7->( MsUnlock() )
+		ENDIF
+	Endif
     FwRestArea(cArea)
 Return

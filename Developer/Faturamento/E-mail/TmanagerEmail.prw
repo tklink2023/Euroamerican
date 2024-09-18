@@ -78,6 +78,12 @@ User Function TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lMostraLog, lUsaTL
         MakeDir(cGuardaServ)
         FWAlertSuccess("Pasta '" + cGuardaServ + "' criada", "Pasta criada")
 	EndIf
+
+	If !ExistDir(cGuardaLoc)
+        MakeDir(cGuardaLoc)
+        FWAlertSuccess("Pasta '" + cGuardaLoc + "' criada", "Pasta criada")
+	EndIf
+	
     if len(aAnexos)>0
 		CpyT2S(cGuardaLoc+aAnexos,cGuardaServ , .T. )
 	endif	
