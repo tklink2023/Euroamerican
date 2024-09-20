@@ -30,6 +30,10 @@
 		},
 		{
 			"label": "SIGAEST"
+		},
+		{
+			"args": [],
+			"label": "U_SCHLCOMP"
 		}
 	],
 	"lastProgramExecuted": "SIGAESP",
