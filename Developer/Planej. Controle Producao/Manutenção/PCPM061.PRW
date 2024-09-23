@@ -1,5 +1,6 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
+
 /*/{Protheus.doc} PCPM061
 description Rotina que aponta as horas das operações atraves do programa PCPM060
 @type function User
@@ -48,6 +49,7 @@ User Function PCPM061(cOp,cProduto)
           lRet :=.T.
     EndDo
     (cAlias)->(DbCloseArea())
+
     if lRet
 		PCP60FECHA(cOp,cProduto)
 	endif	
@@ -56,6 +58,20 @@ User Function PCPM061(cOp,cProduto)
 
 Return
 
+/*/{Protheus.doc} TelaApo
+description Tela de Apontamento de horas de produção
+@type function Static
+@version 1.0
+@author Paulo Lenzi
+@since 23/09/2024
+@param cOp, character, param_description
+@param cProd, character, param_description
+@param cOper, character, param_description
+@param cRecurso, character, param_description
+@param cDescr, character, param_description
+@param cTipo, character, param_description
+@return variant, return_description
+/*/
 Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
     Local cArea := FwGetArea()
 	Local nJanAltu  := GETMV("ES_ALTJAN")
@@ -68,6 +84,13 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
 	Local cTextHtml := ""
 	Local lHtml := .T.
 	Local bGrava  as block
+	Local lSit  
+
+	lSit := PCP061VALID(cOp,cProd,cOper) 
+	if !lSit
+       MsgAlert("Apontamento de parada não encerrada","ATENÇAO")
+	   Return
+	Endif
 
  	bGrava  := {|| FGrava(cOp,cProd,cOper,cRecurso,cTipo),oDlg:End() } 
 
@@ -94,14 +117,27 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
 
 	oFont := TFont():New('Courier new',,-18,.T.)
     oSay := TSay():New(01,10,{||cTextHtml},oDlg,,oFont,,,,.T.,,,400,300,,,,,,lHtml)
-
     oBtOK := TButton():New((nJanAltu/2)-24, nJanMeio - (nTamBtn/2),"Confirma",oDlg,bGrava,045,012,,oFont,,.T.)
 	ACTIVATE MSDIALOG oDlg CENTERED
     FwRestArea(cArea)
 Return
 
+/*/{Protheus.doc} Fgrava
+description Rotina que grava os apontamentos de horas trabalhadas
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 20/09/2024
+@param cOp, character, param_description
+@param cProd, character, param_description
+@param cOper, character, param_description
+@param cRecurso, character, param_description
+@param cTipo, character, param_description
+@return variant, return_description
+/*/
 Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo)
 	Local cArea := FwGetArea()
+	Default cSepar := ":"
 	dbSelectArea("SZ8")
 	SZ8->( dbSetOrder(1) )
 	IF SZ8->( dbSeek( xFilial("SZ8")+cOp+cProd+cOper+cRecurso,.T. ))
@@ -112,8 +148,19 @@ Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo)
 		  else
 		     SZ8->Z8_DATAFIM := dDataBase
 			 SZ8->Z8_HORAFIM := Subs(Time(),1,5)
-			 cResult := AtTotHora( SZ8->Z8_DATAINI, SZ8->Z8_HORAINI, SZ8->Z8_DATAFIM, SZ8->Z8_HORAFIM)
-			 SZ8->Z8_GASTO   := SomaHoras(cValtoChar(val(Alltrim(substring(cResult,1,at("D",cResult)-1)))*24),Alltrim(substring(cResult,at("D",cResult)+1,20)))
+			 IF SZ8->Z8_DATAINI = SZ8->Z8_DATAFIM
+			 	IF SZ8->Z8_HORAINI = SZ8->Z8_HORAFIM
+                    SZ8->Z8_GASTO   := "00:00"
+				else
+                	cResult := AtTotHora( SZ8->Z8_DATAINI, SZ8->Z8_HORAINI, SZ8->Z8_DATAFIM, SZ8->Z8_HORAFIM)
+					cDias   := StrZero(Val(Substring(cResult,1,at("D",cResult)-1)),2)
+					cHoras  := StrZero(Val(Substring(cResult,1,at(":",cResult)-1)),2)
+					cMin    := strZero(Val(Substring(cResult,at(":",cResult)+1,10)),2)
+					cTotal  := cDias+" Dias - Horas "+cHoras+":"+cMin
+			 		SZ8->Z8_GASTO   := cTotal
+                ENDIF
+			 ENDIF
+		
 	      endif								
 	   Endif
       SZ8->( MsUnlock() )
@@ -129,6 +176,16 @@ Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo)
     FwRestArea(cArea)
 Return
 
+/*/{Protheus.doc} PCP60FECHA
+description 
+@type function Grava o Status na cabeçalho d
+@version 1.0
+@author Paulo Lenzi
+@since 20/09/2024
+@param cOp, character, param_description
+@param cProduto, character, param_description
+@return variant, return_description
+/*/
 Static Function PCP60FECHA(cOp,cProduto)
 	Local cArea := FwGetArea()
 
@@ -142,3 +199,32 @@ Static Function PCP60FECHA(cOp,cProduto)
 	Endif
     FwRestArea(cArea)
 Return
+
+/*/{Protheus.doc} PCP061VALID
+description Valida se há apontamento de horas paradas
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 20/09/2024
+@param cOp, character, param_description
+@param cProd, character, param_description
+@param cOper, character, param_description
+@return variant, return_description
+/*/
+Static Function PCP061VALID(cOp,cProd,cOper) 
+	Local cArea := FwGetArea()
+	Local lRet := .T.
+    dbSelectArea("SZ9")
+	SZ9->( DbSetOrder(1))
+	if SZ9->( DbSeek( xFilial("SZ9")+cOp+cProd+cOper,.T. ))
+       if Empty(SZ9->Z9_DATAFIM)
+          lRet := .F.
+	   Endif
+	endif
+	FwRestArea(cArea)
+Return(lRet)
+
+//========================================================================================================================================================================//
+// FIM DA PROGRAMAÇÃO DO FONTE PCPM060
+//========================================================================================================================================================================//
+

@@ -110,6 +110,7 @@ Static Function ModelDef()
     oModel:GetModel('SZ9DETAIL'):SetDescription('Paradas')
  
 Return oModel
+
 /*/{Protheus.doc} ViewDef
 description Rotina que apresenta os dados em tela
 @type function Static
@@ -148,36 +149,9 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
     // Opções para ser acrescentadas 
     //oView:addUserButton("Apontamento Horas","MAGIC_BMP", {|| U_PCPM061(oModel,SZ7->Z7_OP,SZ7->Z7_PRODUTO) }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
-    //oView:SetViewProperty("VIEW_SZ8","CHANGELINE",{{ || U_fLineSZ8(oView, cIdView) }})
  
 Return oView
 
-
-/*
-User Function fLineSZ8(oView, cIdView)
-
-Local lRet      := .T.
-Local oModel    := FWModelActive()
-Local cFilZC6   := xFilial("SZ8")
-Local cId       := oModel:GetValue("SZ8DETAIL","ZC5_ID")
-Local cTabela   := oModel:GetValue("SZ8DETAIL","ZC5_TABELA")
-Local oModelZC6    := oModel:GetModel("ZC6DETAIL")
-Local nI        := 0
-
-For nI := 1 To oModelZC6:Length()
-
-    oModelZC6:AddLine() // inclui uma linha
-
-    oModelZC6:LoadValue("ZC6_FILIAL",cFilZC6)
-    oModelZC6:LoadValue("ZC6_ID",cId)
-    oModelZC6:LoadValue("ZC6_TABELA",cTabela)
-
-Next
-
-oView:Refresh(cIdView) // atualiza a view
-
-Return lRet
-*/
 /*/{Protheus.doc} PCP060C
 description rotina que trata do imput dos dados da Ordem de Produção
 @type function

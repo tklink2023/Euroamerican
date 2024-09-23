@@ -1,6 +1,16 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
 
+/*/{Protheus.doc} PCPM062
+description Rotina de apontamento de paradas
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 23/09/2024
+@param cOp, character, param_description
+@param cProduto, character, param_description
+@return variant, return_description
+/*/
 User Function PCPM062(cOp,cProduto)
     Local cArea     := FwGetArea()
     Local lRet     := "I"
@@ -31,15 +41,22 @@ User Function PCPM062(cOp,cProduto)
 				'<label>Produto: '+cProduto+' </label><br/>'
 	oFont  := TFont():New('Courier new',,-18,.T.)
     oSay   := TSay():New(01,10,{||cTextHtml},oDlg,,oFont,,,,.T.,,,200,300,,,,,,lHtml)
-
     oSay   := TSay():New(70, 10, {|| "Escolha a Operação "}, oDlg,,oFont,,,,.T.,,,200,300,,,,,,.F.)
-    oCombo := TComboBox():New(70,150,{|u|if(PCount()>0,cCombo := u, cCombo)},aItems,50,20,oDlg,,{|| lRet:=PCP60PARA(cOp,cProduto,cCombo) },,,,.T.,,,,,,,,,'cCombo')
-     
+    oCombo := TComboBox():New(70,150,{|u|if(PCount()>0,cCombo := u, cCombo)},aItems,50,20,oDlg,,{|| lRet:=PCP60PARA(cOp,cProduto,cCombo) },,,,.T.,,,,,,,,,'cCombo')    
 	ACTIVATE MSDIALOG oDlg CENTERED
     FwRestArea(cArea)
 Return
 
-
+/*/{Protheus.doc} PCP60BOX
+description Rotina que buscas as Operações da OP
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 23/09/2024
+@param cOp, character, param_description
+@param cProduto, character, param_description
+@return variant, return_description
+/*/
 Static Function PCP60BOX(cOp,cProduto)
     Local cArea := FwGetArea()
     Local cAlias 	 := GetNextAlias()
@@ -71,6 +88,17 @@ Static Function PCP60BOX(cOp,cProduto)
     FwRestArea(cArea)
 Return(aItens)
 
+/*/{Protheus.doc} PCP60PARA
+description Rotina de parada de recurso
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 23/09/2024
+@param cOp, character, param_description
+@param cProduto, character, param_description
+@param cOperac, character, param_description
+@return variant, return_description
+/*/
 Static Function PCP60PARA(cOp,cProduto,cOperac)
     Local cArea     := FwGetArea()
     Local cAlias 	:= GetNextAlias()
@@ -78,6 +106,12 @@ Static Function PCP60PARA(cOp,cProduto,cOperac)
     Local cTextRet  := ""
     Local cMotivo   := ""
     
+    lSit := PCP062VALID(cOp,cProduto,cOperac) 
+	if !lSit
+	   Return
+	Endif
+
+
 	BeginSQL Alias cAlias
         Select Z9_OP,Z9_PRODUTO,Z9_OPERAC,Z9_DATAINI,Z9_DATAFIM
         FROM %Table:SZ9% SZ9
@@ -142,7 +176,7 @@ Static Function PCP60PARA(cOp,cProduto,cOperac)
                     '</table>'
 
         oSay   := TSay():New(090,10,{||cTextRet},oDlg,,oFont,,,,.T.,,,400,300,,,,,,lHtml)
-        IF lTipo := "I"
+        IF lTipo = "I"
             oTMultiget :=TMultiget():Create(oDlg ,{|u|if(Pcount()>0,cMotivo:=u,cMotivo)},120 ,01,nJanLarg-50,100,oFont,,,,,.T.,,,,,,,,,,,.T.,'MOTIVO',1,oFont,)
         ENDIF    
         oBtOK := TButton():New((nJanAltu/2)-24, nJanMeio - (nTamBtn/2),"Confirma",oDlg,{|| U_FGrvSZ9(cOp,cProduto,cOperac,lTipo,cMotivo),oDlg:End() },045,012,,oFont,,.T.)
@@ -168,9 +202,53 @@ User Function FGrvSZ9(cOp,cProd,cOperac,lTipo,cMotivo)
        IF Reclock("SZ9",.F.) 
                 SZ9->Z9_DATAFIM := dDataBase
 			    SZ9->Z9_HORAFIM := Subs(Time(),1,5)           
+
+   	            cResult := AtTotHora( SZ9->Z9_DATAINI, SZ9->Z9_HORAINI, SZ9->Z9_DATAFIM, SZ9->Z9_HORAFIM)
+				cDias   := StrZero(Val(Substring(cResult,1,at("D",cResult)-1)),2)
+				cHoras  := StrZero(Val(Substring(cResult,1,at(":",cResult)-1)),2)
+				cMin    := strZero(Val(Substring(cResult,at(":",cResult)+1,10)),2)
+				cTotal  := cDias+" Dias - Horas "+cHoras+":"+cMin
+		 		SZ9->Z9_GASTO   := cTotal
+                
                 SZ9->( MsUnlock() )   
       Endif   
 
     Endif
     FwRestArea(cArea)
 Return
+
+/*/{Protheus.doc} PCP062VALID
+description Validacao das Operações
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 23/09/2024
+@param cOp, character, param_description
+@param cProd, character, param_description
+@param cOper, character, param_description
+@return variant, return_description
+/*/
+Static Function PCP062VALID(cOp,cProd,cOper) 
+	Local cArea := FwGetArea()
+	Local lRet := .T.
+
+    dbSelectArea("SZ8")
+	SZ8->( DbSetOrder(1))
+	if SZ8->( DbSeek( xFilial("SZ8")+cOp+cProd+cOper,.T. ))
+        if Empty(SZ8->Z8_DATAINI)
+           MsgAlert("Apontamento de Hora não Inicializado","ATENÇÃO")
+           lRet := .F.
+        Endif
+
+       if !Empty(SZ8->Z8_DATAFIM)
+          MsgAlert("Apontamento de Hora Finalizado","ATENÇÃO")
+          lRet := .F.
+	   Endif
+	endif
+	FwRestArea(cArea)
+
+Return(lRet)
+
+//========================================================================================================================================================================//
+// FIM DA PROGRAMAÇÃO DO FONTE PCPM060
+//========================================================================================================================================================================//
