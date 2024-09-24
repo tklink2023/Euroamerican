@@ -49,10 +49,6 @@ User Function PCPM061(cOp,cProduto)
           lRet :=.T.
     EndDo
     (cAlias)->(DbCloseArea())
-
-    if lRet
-		PCP60FECHA(cOp,cProduto)
-	endif	
     
 	FwRestArea(cArea)
 
@@ -137,7 +133,7 @@ description Rotina que grava os apontamentos de horas trabalhadas
 /*/
 Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo)
 	Local cArea := FwGetArea()
-	Default cSepar := ":"
+
 	dbSelectArea("SZ8")
 	SZ8->( dbSetOrder(1) )
 	IF SZ8->( dbSeek( xFilial("SZ8")+cOp+cProd+cOper+cRecurso,.T. ))
@@ -147,56 +143,18 @@ Static Function Fgrava(cOp,cProd,cOper,cRecurso,cTipo)
 			 SZ8->Z8_HORAINI := Subs(Time(),1,5)
 		  else
 		     SZ8->Z8_DATAFIM := dDataBase
-			 SZ8->Z8_HORAFIM := Subs(Time(),1,5)
-			 IF SZ8->Z8_DATAINI = SZ8->Z8_DATAFIM
-			 	IF SZ8->Z8_HORAINI = SZ8->Z8_HORAFIM
-                    SZ8->Z8_GASTO   := "00:00"
-				else
-                	cResult := AtTotHora( SZ8->Z8_DATAINI, SZ8->Z8_HORAINI, SZ8->Z8_DATAFIM, SZ8->Z8_HORAFIM)
-					cDias   := StrZero(Val(Substring(cResult,1,at("D",cResult)-1)),2)
-					cHoras  := StrZero(Val(Substring(cResult,1,at(":",cResult)-1)),2)
-					cMin    := strZero(Val(Substring(cResult,at(":",cResult)+1,10)),2)
-					cTotal  := cDias+" Dias - Horas "+cHoras+":"+cMin
-			 		SZ8->Z8_GASTO   := cTotal
-                ENDIF
-			 ENDIF
-		
+			 SZ8->Z8_HORAFIM := Subs(Time(),1,5)		
 	      endif								
 	   Endif
-      SZ8->( MsUnlock() )
+
+	   SZ8->( MsUnlock() )
+
+       if ExistBlock("CalcHoras")
+          aDados:= {SZ8->Z8_DATAINI,SZ8->Z8_HORAINI,SZ8->Z8_DATAFIM,SZ8->Z8_HORAFIM,cOp,cProd,cOper,cTipo,"SZ8"}
+          ExecBlock("CalcHoras",.F.,.F.,aDados)   
+       Endif
+
 	ENDIF
-	dbSelectArea("SZ7")
-	SZ7->( dbSetOrder(1) )
-	IF SZ7->( dbSeek( xFilial("SZ7")+cOp+cProd,.T. ))
-		IF RecLock("SZ7",.F.)
-		   SZ7->Z7_STATUS := "B"
-		   SZ7->( MsUnlock() )
-		ENDIF
-	Endif
-    FwRestArea(cArea)
-Return
-
-/*/{Protheus.doc} PCP60FECHA
-description 
-@type function Grava o Status na cabeçalho d
-@version 1.0
-@author Paulo Lenzi
-@since 20/09/2024
-@param cOp, character, param_description
-@param cProduto, character, param_description
-@return variant, return_description
-/*/
-Static Function PCP60FECHA(cOp,cProduto)
-	Local cArea := FwGetArea()
-
-	dbSelectArea("SZ7")
-	SZ7->( dbSetOrder(1) )
-	IF SZ7->( dbSeek( xFilial("SZ7")+cOp+cProduto,.T. ))
-		IF RecLock("SZ7",.F.)
-		   SZ7->Z7_STATUS := "C"
-		   SZ7->( MsUnlock() )
-		ENDIF
-	Endif
     FwRestArea(cArea)
 Return
 

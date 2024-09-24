@@ -201,19 +201,15 @@ User Function FGrvSZ9(cOp,cProd,cOperac,lTipo,cMotivo)
     else
        IF Reclock("SZ9",.F.) 
                 SZ9->Z9_DATAFIM := dDataBase
-			    SZ9->Z9_HORAFIM := Subs(Time(),1,5)           
-
-   	            cResult := AtTotHora( SZ9->Z9_DATAINI, SZ9->Z9_HORAINI, SZ9->Z9_DATAFIM, SZ9->Z9_HORAFIM)
-				cDias   := StrZero(Val(Substring(cResult,1,at("D",cResult)-1)),2)
-				cHoras  := StrZero(Val(Substring(cResult,1,at(":",cResult)-1)),2)
-				cMin    := strZero(Val(Substring(cResult,at(":",cResult)+1,10)),2)
-				cTotal  := cDias+" Dias - Horas "+cHoras+":"+cMin
-		 		SZ9->Z9_GASTO   := cTotal
-                
+			    SZ9->Z9_HORAFIM := Subs(Time(),1,5)                       
                 SZ9->( MsUnlock() )   
       Endif   
 
     Endif
+    if ExistBlock("CalcHoras")
+          aDados:= {SZ9->Z9_DATAINI,SZ9->Z9_HORAINI,SZ9->Z9_DATAFIM,SZ9->Z9_HORAFIM,cOp,cProd,cOperac,lTipo,"SZ9"}
+          ExecBlock("CalcHoras",.F.,.F.,aDados)   
+       Endif
     FwRestArea(cArea)
 Return
 

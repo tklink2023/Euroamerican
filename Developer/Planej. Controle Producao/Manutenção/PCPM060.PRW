@@ -51,8 +51,6 @@ Static Function MenuDef()
     //Adicionando opcoes do menu
     ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.PCPM060" OPERATION 1 ACCESS 0
     ADD OPTION aRotina TITLE "Abrir Contole" ACTION "U_PCP060C()" OPERATION 3 ACCESS 0 // Abrir o controle de tempo
-    //ADD OPTION aRotina TITLE "Alterar" ACTION "VIEWDEF.PCPM060" OPERATION 4 ACCESS 0
-    //ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM060" OPERATION 5 ACCESS 0
 Return aRotina
 
 /*/{Protheus.doc} ModelDef
@@ -148,7 +146,7 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
     // Opções para ser acrescentadas 
-    //oView:addUserButton("Apontamento Horas","MAGIC_BMP", {|| U_PCPM061(oModel,SZ7->Z7_OP,SZ7->Z7_PRODUTO) }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
+    oView:addUserButton("Ficha de Apontamento","MAGIC_BMP", {||  }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
  
 Return oView
 
@@ -262,6 +260,108 @@ Static Function fExecuta()
     FwRestArea(cArea)
 Return
 
+
+User Function CalcHoras()
+    Local cArea         := FwGetArea()
+    Local dDataInicio   := PARAMIXB[1]
+    Local hHoraInicio   := PARAMIXB[2]
+    Local dDataFinal    := PARAMIXB[3]
+    Local hHoraFinal    := PARAMIXB[4]
+    Local cOrdemProd    := PARAMIXB[5]
+    Local cProduto      := PARAMIXB[6]
+    Local cOperacao     := PARAMIXB[7]
+    Local cTipo         := PARAMIXB[8]
+    Local cAlias        := PARAMIXB[9]
+    Local cResult       := ""
+    Local cHoras        := 0
+    Local cMinutos      := 0
+    Local cGasto        := 0
+    Local nCalcHoras    := 0 
+    Local lSit          := PCP60POS(cOrdemProd,cProduto)
+
+    if cTipo = "F"  // Esse Tipo Refere-se ao lançamento Final do registro
+       if dDataInicio = dDataFinal  // Quando das data de inicio e fim são igual o tratamento será dado apenas nas horas
+          nCalcHoras := SubHoras( hHoraFinal,hHoraInicio )
+       else
+          cResult := AtTotHora( dDataInicio,hHoraInicio,dDataFinal, hHoraFinal )
+
+          if Val(Substring(cResult,1,at("D",cResult)-1)) > 0   // confere se tem valor em dias
+             cHoras := Val(Substring(cResult,1,at("D",cResult)-1)) * 24
+          Endif
+
+          if val(Substring(cResult,at("D",cResult)+1,at(":",cResult)-at("D",cResult)-1)) > 0  // confere se tem valor em horas
+             cHoras := cHoras + hrs2min(val(Substring(cResult,at("D",cResult)+1,at(":",cResult)-at("D",cResult)-1))) 
+          endif
+
+          if Val(Substring(cResult,at(":",cResult)+1,10)) > 0 // confere se tem valor em minutos
+             cMinutos := Val(Substring(cResult,at(":",cResult)+1,10))  +   Hrs2Min(cHoras)
+          endif   
+         
+       endif
+
+      cGasto := IIF(nCalcHoras > 0 , nCalcHoras,Min2Hrs(cMinutos))
+
+      dbSelectArea("SZ7")
+      SZ7->( dbSetOrder(1) )
+      IF SZ7->( dbSeek( xFilial("SZ7")+cOrdemProd+cProduto,.T.) )
+         IF RECLOCK("SZ7",.F.)
+            SZ7->Z7_STATUS := IIF(lSit,"C","B")
+            SZ7->Z7_GASTO := cValtoChar(val(SZ7->Z7_GASTO)+cGasto)
+            SZ7->( MsUnlock() )
+         ENDIF
+      ENDIF
+
+      IF cAlias = "SZ8"
+            dbSelectArea("SZ8")
+            SZ8->( dbSetOrder(1) )
+            IF SZ8->( dbSeek( xFilial("SZ8")+cOrdemProd+cProduto+cOperacao,.T.) )
+                IF RECLOCK("SZ8",.F.)
+                    SZ8->Z8_GASTO := cValtoChar(cGasto)
+                    SZ8->( MsUnlock() )
+                ENDIF
+            ENDIF
+
+      else
+            dbSelectArea("SZ9")
+            SZ9->( dbSetOrder(1) )
+            IF SZ9->( dbSeek( xFilial("SZ9")+cOrdemProd+cProduto+cOperacao,.T.) )
+                IF RECLOCK("SZ9",.F.)
+                    SZ9->Z9_GASTO := cValtoChar(cGasto)
+                    SZ9->( MsUnlock() )
+                ENDIF
+            ENDIF
+        
+      ENDIF  
+
+    Endif
+
+
+    FwRestArea(cArea)
+Return
+
+Static Function PCP60POS(cOp,cProduto)
+    Local cArea := FwGetArea()
+    Local cAlias:= GetNextAlias()
+    Local lRet  := .F.
+
+    BeginSQL Alias cAlias
+        Select Z8_DATAFIM
+        FROM %Table:SZ8% SZ8
+        WHERE SZ8.%NotDel%
+        and Z8_FILIAL =  %xFilial:SZ8%
+        AND Z8_OP = %Exp:cOp%
+		AND Z8_PRODUTO = %Exp:cProduto%
+        AND Z8_DATAFIM = ' '
+		ORDER BY Z8_OPERAC
+    EndSQL
+
+    if (cAlias)->( Eof())
+            lRet := .T.
+            FwRestArea(cArea)
+	        RETURN(lRet)
+    Endif        
+    
+Return(lRet)
 //========================================================================================================================================================================//
 // FIM DA PROGRAMAÇÃO DO FONTE PCPM060
 //========================================================================================================================================================================//
