@@ -31,8 +31,8 @@ User Function PCPM060()
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'B'", 'YELLOW',   'Sendo Apontado',        '1')
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'C'", 'RED',     'Encerrado Apontado',     '1')
     
-    oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_OP,SZ7->Z7_PRODUTO)  },,2,,.F.)
-    oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_OP,SZ7->Z7_PRODUTO)  },,2,,.F.)
+    oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
+    oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:Activate()
 
     FWRestArea(aArea)
@@ -227,7 +227,9 @@ Static Function fExecuta()
            IF SZ7->( !dbSeek( (cAlias)->C2_FILIAL+(cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN+(cAlias)->C2_PRODUTO,.T. ) ) 
                    IF RecLock("SZ7",.T.)
                       SZ7->Z7_FILIAL    :=  (cAlias)->C2_FILIAL
-                      SZ7->Z7_OP        :=  (cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN
+                      SZ7->Z7_NUM       :=  (cAlias)->C2_NUM
+                      SZ7->Z7_ITEM      :=  (cAlias)->C2_ITEM
+                      SZ7->Z7_SEQUEN    :=  (cAlias)->C2_SEQUEN                      
                       SZ7->Z7_PRODUTO   :=  (cAlias)->C2_PRODUTO
                       SZ7->Z7_QTPROD    :=  (cAlias)->C2_QUANT
                       SZ7->Z7_EMISSAO   :=  (cAlias)->C2_EMISSAO
@@ -236,6 +238,7 @@ Static Function fExecuta()
                       SZ7->Z7_CPRIOR    :=  (cAlias)->C2_PRIOR
                       SZ7->Z7_DATRF     :=  (cAlias)->C2_DATRF
                       SZ7->Z7_STATUS    :=  "A"
+                      SZ7->Z7_OP        := (cAlias)->C2_NUM + (cAlias)->C2_ITEM + (cAlias)->C2_SEQUEN
                       SZ7->( MsUnlock() )
                    ENDIF
            ENDIF
