@@ -81,6 +81,29 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
 	Local lHtml := .T.
 	Local bGrava  as block
 	Local lSit  
+	lOCAL cDescPro := Posicione("SB1",1,xFilial("SB1")+cProd,"B1_DESC")
+	Local aDados   := {}
+	Local ab
+	Local cBody    := ""
+
+    aDados   := U_PCP60STATUS(cOp,cProd)
+
+	If Len(aDados) > 0
+			For ab:= 1 to Len(aDados)
+				       	cStatus := IIF( !Empty(aDados[ab][3]) .and. !Empty(aDados[ab][4]),"Ok"," ")
+						if alltrim(aDados[ab][1]) = alltrim(cOper)
+							cbody+= '<tr><td>'+Alltrim(aDados[ab][1])+'</td><td>'+Alltrim(aDados[ab][2])+'</td><td style="text-align: center;" bgcolor="#b5e6e1"> Aqui </td></tr>'					
+						else
+							if !Empty(cStatus)
+							    cbody+= '<tr><td>'+Alltrim(aDados[ab][1])+'</td><td>'+Alltrim(aDados[ab][2])+'</td><td style="text-align: center;" bgcolor="#9edb1a">'+cStatus+'</td></tr>'
+							else
+								cbody+= '<tr><td>'+Alltrim(aDados[ab][1])+'</td><td>'+Alltrim(aDados[ab][2])+'</td><td style="text-align: center;">'+cStatus+'</td></tr>'
+							endif	
+						endif	
+   			next	
+
+   Endif
+
 
 	lSit := PCP061VALID(cOp,cProd,cOper) 
 	if !lSit
@@ -92,12 +115,30 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
 
  	DEFINE MSDIALOG oDlg TITLE "Apontamento" STYLE DS_MODALFRAME  FROM 000, 000  TO nJanAltu, nJanLarg  OF oMainWnd PIXEL
     oDlg:lEscClose := .T.
-	cTextHtml :='<hr size="1">'+;
+		cTextHtml :='<hr size="1">'+;
 				'<font size="5" color="black">APONTAMENTO DA ORDEM</font><br/><br/>'+;
-				'<label>Numero : '+cOp+'</label><br/>'+;
-				'<label>Produto: '+cProd+' </label><br/>'+;
-				'<label>Operacao:'+cOper+' </label><br/>'+;
-				'<label>Desc: '+Alltrim(cDescr)+' </label><br/><br/>'+;
+				'<label style="font-size: 20px">Numero OP : '+cOp+'</label><br/>'+;
+				'<table border="1" cellpadding="1" cellspacing="0">'+;
+				'<tbody style="font-size: 12px";>'+;
+				'<tr>'+;
+				'<td width="100" bgcolor="#FFFF87">Produto</td>'+;
+				'<td width="300" bgcolor="#FFFF87">Descricao</td>'+;
+				'</tr>'+;
+				'<tr>'+;
+				'<td>'+cProd+'</td>'+;
+				'<td>'+aLLTRIM(cDescPro)+'</td'+;
+				'</tr>'+;
+				'</tbody>'+;
+				'</table>'+;
+				'<table border="0" cellpadding="1" cellspacing="0">'+;
+	 			'<tbody style="font-size: 12px";>'+;
+				'<tr>'+;
+				'<td width="100" bgcolor="#FFFF87">Operacao</td>'+;
+				'<td width="250" bgcolor="#FFFF87">Descricao</td>'+;
+				'<td width="050" bgcolor="#FFFF87">Situacao</td>'+;
+				'</tr>'+cbody+;
+	 			'</tbody>'+;	
+				'</table>'+;	
 				'<table border="1" cellpadding="1" cellspacing="0">'+;
 				'<tr>'+;
 				'<td width="100" bgcolor="#FFFF87">Tipo</td>'+;
@@ -105,9 +146,9 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
 				'<td width="100" bgcolor="#FFFF87">Hora</td>'+;
 				'</tr>'+;
 				'<tr>'+;
-				'<td>'+IIF(cTipo='I','Incluir','Encerrar')+'</td>'+;
-				'<td>'+dToc(dDatabase)+'</td>'+;
-				'<td>'+Subs(Time(),1,5)+'</td>'+;
+				'<td style="text-align: center;">'+IIF(cTipo='I','Incluir','Encerrar')+'</td>'+;
+				'<td style="text-align: center;">'+dToc(dDatabase)+'</td>'+;
+				'<td style="text-align: center;">'+Subs(Time(),1,5)+'</td>'+;
 				'</tr>'+;
 				'</table>'
 
@@ -181,6 +222,7 @@ Static Function PCP061VALID(cOp,cProd,cOper)
 	endif
 	FwRestArea(cArea)
 Return(lRet)
+
 
 //========================================================================================================================================================================//
 // FIM DA PROGRAMAÇÃO DO FONTE PCPM060

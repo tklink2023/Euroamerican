@@ -10,9 +10,10 @@ User Function PCPM063()
   Local cAlias := GetNextAlias()
 
    BeginSQL Alias cAlias
-        Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_EMISSAO,C2_DATPRI,C2_DATPRF,C2_PRIOR,C2_DATRF,C2_PRODUTO,C2_QUANT,C2_QUJE, G2_OPERAC, G2_RECURSO, G2_DESCRI
+        Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_EMISSAO,C2_DATPRI,C2_DATPRF,C2_PRIOR,C2_DATRF,C2_PRODUTO,C2_QUANT,C2_QUJE, G2_OPERAC, G2_RECURSO, G2_DESCRI,H1_DESCRI
         FROM %Table:SC2% SC2
         INNER JOIN %Table:SG2% SG2 ON G2_FILIAL = C2_FILIAL AND G2_PRODUTO = C2_PRODUTO AND SG2.D_E_L_E_T_ = ' '
+        INNER JOIN %Table:SH1% SH1 ON H1_CODIGO = G2_RECURSO AND SH1.%NotDel%
         WHERE SC2.%NotDel%
         and C2_FILIAL = %xFilial:SC2%
         AND C2_NUM    = %Exp:cNumLote%
@@ -49,6 +50,7 @@ User Function PCPM063()
                       SZ7->Z7_CPRIOR    :=  (cAlias)->C2_PRIOR
                       SZ7->Z7_DATRF     :=  (cAlias)->C2_DATRF
                       SZ7->Z7_STATUS    :=  "A"
+                      SZ7->Z7_PARADA    :=   "2"
                       SZ7->Z7_OP        := (cAlias)->C2_NUM + (cAlias)->C2_ITEM + (cAlias)->C2_SEQUEN
                       SZ7->( MsUnlock() )
                    ENDIF
@@ -63,6 +65,7 @@ User Function PCPM063()
                       SZ8->Z8_PRODUTO   :=  (cAlias)->C2_PRODUTO
                       SZ8->Z8_OPERAC    :=  (cAlias)->G2_OPERAC
                       SZ8->Z8_RECUR     :=  (cAlias)->G2_RECURSO
+                      SZ8->Z8_DESCR     :=  (cAlias)->H1_DESCRI
                       SZ7->( MsUnlock() )
                    ENDIF
            ENDIF
@@ -72,3 +75,35 @@ User Function PCPM063()
     (cAlias)->(DbCloseArea())
     FwRestArea(cArea)
 Return
+
+User Function PCP60STATUS(cOp,cProduto)
+    Local cArea   := FwGetArea()
+    Local cAlias  := GetNextAlias()
+    Local aLinha  := {}
+
+    BeginSQL Alias cAlias
+        Select Z8_OPERAC,H1_DESCRI,Z8_DATAINI,Z8_DATAFIM
+        FROM %Table:SZ8% SZ8
+        INNER JOIN %Table:SH1% SH1 ON H1_CODIGO = Z8_RECUR AND SH1.%NotDel%
+        WHERE SZ8.%NotDel%
+        and Z8_FILIAL =  %xFilial:SZ8%
+        AND Z8_OP = %Exp:cOp%
+	AND Z8_PRODUTO = %Exp:cProduto%
+	ORDER BY Z8_OPERAC
+    EndSQL
+
+    if (cAlias)->( Eof())
+        FwRestArea(cArea)
+	RETURN(aLinha)
+    Endif        
+ 
+    aLinha  := {}
+
+    While (cAlias)->(!EOF())
+          aAdd(aLinha,{(calias)->Z8_OPERAC,(calias)->H1_DESCRI,(calias)->Z8_DATAINI,(calias)->Z8_DATAFIM})
+          (cAlias)->(dbSkip() )
+    EndDo
+    (cAlias)->(DbCloseArea())
+
+    FwRestArea(cArea)
+Return(aLinha)

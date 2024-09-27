@@ -26,6 +26,7 @@ User Function PCPM062(cOp,cProduto)
     Private oTMultiget  as Object
 
     Private bGrava  as block
+    Private cBody   := ""
 
     Private nJanAltu  := GETMV("ES_ALTJAN")
 	Private nJanLarg  := GETMV("ES_LARGJAN")
@@ -206,10 +207,17 @@ User Function FGrvSZ9(cOp,cProd,cOperac,lTipo,cMotivo)
       Endif   
 
     Endif
+    
+    if ExistBlock("PCPM064")
+          aDados:= {cOp,cProd,cOperac,lTipo,cMotivo}
+          ExecBlock("PCPM064",.F.,.F.,aDados)   
+    Endif
+
     if ExistBlock("CalcHoras")
           aDados:= {SZ9->Z9_DATAINI,SZ9->Z9_HORAINI,SZ9->Z9_DATAFIM,SZ9->Z9_HORAFIM,cOp,cProd,cOperac,lTipo,"SZ9"}
           ExecBlock("CalcHoras",.F.,.F.,aDados)   
-       Endif
+    Endif
+ 
     FwRestArea(cArea)
 Return
 

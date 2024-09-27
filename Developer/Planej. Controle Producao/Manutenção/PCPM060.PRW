@@ -27,12 +27,14 @@ User Function PCPM060()
     oBrowse:SetDescription(cTitulo)
     oBrowse:GetTimer()
     oBrowse:DisableDetails()
-    oBrowse:AddLegend("SZ7->Z7_STATUS == 'A'", 'GREEN',   'Aberto Apontamento',     '1')
-    oBrowse:AddLegend("SZ7->Z7_STATUS == 'B'", 'YELLOW',   'Sendo Apontado',        '1')
-    oBrowse:AddLegend("SZ7->Z7_STATUS == 'C'", 'RED',     'Encerrado Apontado',     '1')
+    oBrowse:AddLegend("SZ7->Z7_STATUS == 'A' .AND. SZ7->Z7_PARADA == '2' ", 'GREEN',   'Aberto Apontamento',     '1')
+    oBrowse:AddLegend("SZ7->Z7_STATUS == 'B' .AND. SZ7->Z7_PARADA == '2' ", 'YELLOW',   'Sendo Apontado',        '1')
+    oBrowse:AddLegend("SZ7->Z7_STATUS == 'B' .AND. SZ7->Z7_PARADA == '1' ", 'BLACK',    'Apontamento Parado',    '1')
+    oBrowse:AddLegend("SZ7->Z7_STATUS == 'C' .AND. SZ7->Z7_PARADA == '2' ", 'RED',     'Encerrado Apontado',     '1')
     
     oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
+    oBrowse:AddButton("Impressao"  ,{|| U_PCPR064(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:Activate()
 
     FWRestArea(aArea)
@@ -48,9 +50,15 @@ description Rotina para tratar as opções do programa
 /*/
 Static Function MenuDef()
     Local aRotina := {}
+    Local cAutoriz:= GetMv("ES_P60MENU")
+
     //Adicionando opcoes do menu
     ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.PCPM060" OPERATION 1 ACCESS 0
     ADD OPTION aRotina TITLE "Abrir Contole" ACTION "U_PCP060C()" OPERATION 3 ACCESS 0 // Abrir o controle de tempo
+    if cUserName $ cAutoriz
+        ADD OPTION aRotina TITLE "Alterar" ACTION "VIEWDEF.PCPM060" OPERATION 4 ACCESS 0
+        ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM060" OPERATION 5 ACCESS 0
+    Endif
 Return aRotina
 
 /*/{Protheus.doc} ModelDef
@@ -138,16 +146,16 @@ Static Function ViewDef()
     oView:AddGrid("VIEW_SZ8",oStrSZ8,"SZ8DETAIL")
     oView:AddGrid("VIEW_SZ9",oStrSZ9,"SZ9DETAIL")
 
-    oView:CreateHorizontalBox( "VwSZ7" , 20 )
+    oView:CreateHorizontalBox( "VwSZ7" , 30 )
     oView:CreateHorizontalBox( "VwSZ8" , 40 )
-    oView:CreateHorizontalBox( "VwSZ9" , 40 )
+    oView:CreateHorizontalBox( "VwSZ9" , 30 )
 
     oView:SetOwnerView( "VIEW_SZ7" , "VwSZ7" )
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
     // Opções para ser acrescentadas 
-    oView:addUserButton("Ficha de Apontamento","MAGIC_BMP", {||  }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
- 
+    //oView:addUserButton("Ficha de Apontamento","MAGIC_BMP", {||  }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
+    //oView:addUserButton("Motivo","MAGIC_BMP", {||  }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/) 
 Return oView
 
 /*/{Protheus.doc} PCP060C
@@ -199,66 +207,14 @@ description Rotina a importação das informações referente a ordem de Produção
 /*/
 Static Function fExecuta()
 	Local cArea  := FwGetArea()
-    Local cAlias := GetNextAlias()
+    Local cNumop := Substring(cGetForm,1,6)
+    Local cItem  := Substring(cGetForm,7,2)
+    Local cSequen:= Substring(cGetForm,9,3)
 
-    BeginSQL Alias cAlias
-        Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_EMISSAO,C2_DATPRI,C2_DATPRF,C2_PRIOR,C2_DATRF,C2_PRODUTO,C2_QUANT,C2_QUJE, G2_OPERAC, G2_RECURSO, G2_DESCRI
-        FROM %Table:SC2% SC2
-        INNER JOIN %Table:SG2% SG2 ON G2_FILIAL = C2_FILIAL AND G2_PRODUTO = C2_PRODUTO AND SG2.D_E_L_E_T_ = ' '
-        WHERE SC2.%NotDel%
-        and C2_FILIAL =  %xFilial:SC2%
-        AND C2_NUM+C2_ITEM+C2_SEQUEN = %Exp:cGetForm%
-    EndSQL
-    if (cAlias)->( Eof())
-            MsgAlert("Não tem Ordem de Producao","ATENÇÃO")
-            FwRestArea(cArea)
-	        RETURN
-    Endif    
-    TCSetField(cAlias, "C2_EMISSAO", "D")
-    TCSetField(cAlias, "C2_DATPRF", "D")
-    TCSetField(cAlias, "C2_DATRF", "D")
-    TCSetField(cAlias, "C2_DATPRI", "D")
-
-
-    While (cAlias)->(!EOF())
-           dbSelectArea("SZ7")
-
-           SZ7->( dbSetOrder(1) )
-           IF SZ7->( !dbSeek( (cAlias)->C2_FILIAL+(cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN+(cAlias)->C2_PRODUTO,.T. ) ) 
-                   IF RecLock("SZ7",.T.)
-                      SZ7->Z7_FILIAL    :=  (cAlias)->C2_FILIAL
-                      SZ7->Z7_NUM       :=  (cAlias)->C2_NUM
-                      SZ7->Z7_ITEM      :=  (cAlias)->C2_ITEM
-                      SZ7->Z7_SEQUEN    :=  (cAlias)->C2_SEQUEN                      
-                      SZ7->Z7_PRODUTO   :=  (cAlias)->C2_PRODUTO
-                      SZ7->Z7_QTPROD    :=  (cAlias)->C2_QUANT
-                      SZ7->Z7_EMISSAO   :=  (cAlias)->C2_EMISSAO
-                      SZ7->Z7_DATPRI    :=  (cAlias)->C2_DATPRI
-                      SZ7->Z7_DATPRF    :=  (cAlias)->C2_DATPRF
-                      SZ7->Z7_CPRIOR    :=  (cAlias)->C2_PRIOR
-                      SZ7->Z7_DATRF     :=  (cAlias)->C2_DATRF
-                      SZ7->Z7_STATUS    :=  "A"
-                      SZ7->Z7_OP        := (cAlias)->C2_NUM + (cAlias)->C2_ITEM + (cAlias)->C2_SEQUEN
-                      SZ7->( MsUnlock() )
-                   ENDIF
-           ENDIF
-
-           dbSelectArea("SZ8")
-           SZ8->( dbSetOrder(1) )
-           IF SZ8->( !dbSeek( (cAlias)->C2_FILIAL+(cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN+(cAlias)->C2_PRODUTO+(cAlias)->G2_OPERAC+(cAlias)->G2_RECURSO,.T. ) ) 
-                   IF RecLock("SZ8",.T.)
-                      SZ8->Z8_FILIAL    :=  (cAlias)->C2_FILIAL
-                      SZ8->Z8_OP        :=  (cAlias)->C2_NUM+(cAlias)->C2_ITEM+(cAlias)->C2_SEQUEN
-                      SZ8->Z8_PRODUTO   :=  (cAlias)->C2_PRODUTO
-                      SZ8->Z8_OPERAC    :=  (cAlias)->G2_OPERAC
-                      SZ8->Z8_RECUR     :=  (cAlias)->G2_RECURSO
-                      SZ7->( MsUnlock() )
-                   ENDIF
-           ENDIF
-
-          (cAlias)->(dbSkip() )
-    End
-    (cAlias)->(DbCloseArea())
+    if ExistBlock("PCPM063")
+        aDados:= {cNumop,cItem, cSequen}
+        ExecBlock("PCPM063",.F.,.F.,aDados)   
+    Endif
 
     FwRestArea(cArea)
 Return
@@ -309,6 +265,9 @@ User Function CalcHoras()
       IF SZ7->( dbSeek( xFilial("SZ7")+cOrdemProd+cProduto,.T.) )
          IF RECLOCK("SZ7",.F.)
             SZ7->Z7_STATUS := IIF(lSit,"C","B")
+            SZ7->Z7_OPERAC := cOperacao
+            SZ7->Z7_SITUAC := IIF(cTipo="I","INICIO","FINAL")
+            SZ7->Z7_PARADA := IIF(cAlias="SZ9",IIF(cTipo=="I","1","2"),"2" )
             SZ7->Z7_GASTO := cValtoChar(val(SZ7->Z7_GASTO)+cGasto)
             SZ7->( MsUnlock() )
          ENDIF
