@@ -128,6 +128,53 @@ User Function PCP60STATUS(cOp,cProduto)
     FwRestArea(cArea)
 Return(aLinha)
 
+
+User Function ValidSenha()
+    Local cArea := FwGetArea()
+    Local cCodigo   := Space(6)
+	Local cwSenha    := Space(30)
+	Local lAutoriza := .T.
+	Local nOpca     := 0
+    Local oDlgSenha,oGetSenha
+    Local cUsuario := 'paulo.lenzi'
+    Local wSenha   := ''
+    Local cIdKeyUsr:= ''
+    Local aDados := {}
+    Local nOrder := 2 // pesquisar pelo nome do usuário
+	PswOrder(nOrder)
+	if PswSeek( cUsuario, .T. )    
+			cIdKeyUsr := PswID()
+            aDados    := PswRet() // Retorna vetor com informações do usuário
+	EndIf    
+   
+    cCodigo := aDados[1][2]
+    wSenha  := aDados[1][3]
+ 
+	DEFINE MSDIALOG oDlgSenha TITLE " Autorização" From 001,001 to 125,300 Pixel STYLE DS_MODALFRAME
+ 
+	oSaySenha := tSay():New(012,010,{|| "Usuário:"   },oDlgSenha,,,,,,.T.,CLR_BLACK,CLR_WHITE,50,9)
+	oGetSenha := tGet():New(010,050,{|u| if(PCount()>0,cCodigo:=u,cCodigo)}, oDlgSenha,080,9,"@A",{ ||  },,,,,,.T.,,, { || .T. } ,,,,.F.,,,'cCodigo')
+ 
+	oSaySenha := tSay():New(022,010,{|| "Digite a senha:"   },oDlgSenha,,,,,,.T.,CLR_BLACK,CLR_WHITE,50,9)
+	oGetSenha := tGet():New(020,050,{|u| if(PCount()>0,cwSenha:=u,cwSenha)}, oDlgSenha,080,9,"@A",{ ||  },,,,,,.T.,,, { || .T. } ,,,,.F.,.T.,,'cwSenha')
+ 
+	oBtnOk := tButton():New(040,035,"Ok"  , oDlgSenha, {|| nOpca := 1, ::End() },40,12,,,,.T.,,,, { ||  },,)
+	oBtnNo := tButton():New(040,080,"Cancelar"  , oDlgSenha, {|| ::End() },40,12,,,,.T.,,,, { ||  },,)
+ 
+	ACTIVATE MSDIALOG oDlgSenha CENTERED
+	
+	If nOpca == 1
+        if cwSenha <> wSenha
+           lAutoriza := .F.
+        endif
+	Endif
+ 
+	If !lAutoriza .And. nOpca == 1
+		MsgStop("Usuário e/ou senha inválidos!","SEM PERMISSÃO")
+	EndIf
+    FwRestArea(cArea)
+Return lAutoriza
+
 //========================================================================================================================================================================//
 // FIM DA PROGRAMAÇÃO DO FONTE PCPM060
 //========================================================================================================================================================================//

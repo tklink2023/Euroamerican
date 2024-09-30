@@ -53,6 +53,7 @@ Static Function MenuDef()
     Local cAutoriz:= GetMv("ES_P60MENU")
 
     //Adicionando opcoes do menu
+    ADD OPTION aRotina TITLE "Pesquisar" ACTION "PesqBrw" OPERATION 1 ACCESS 0
     ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.PCPM060" OPERATION 1 ACCESS 0
     ADD OPTION aRotina TITLE "Abrir Contole" ACTION "U_PCP060C()" OPERATION 3 ACCESS 0 // Abrir o controle de tempo
     if cUserName $ cAutoriz // Atraves de parametro ES_P60MENU determina quem tem acesso as opções abaixo

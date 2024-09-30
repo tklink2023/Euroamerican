@@ -17,6 +17,7 @@ User Function PCPM062(cOp,cProduto)
     Local aItems    := PCP60BOX(cOp,cProduto)
     Local cCombo    := aItems[1]
     Local cTextHtml := ""
+    Local lSenha    := .T.
 	
     Private oDlg      as Object
     Private oSay      as Object
@@ -33,6 +34,11 @@ User Function PCPM062(cOp,cProduto)
     Private lHtml := .T.
     Private nJanMeio  := ((nJanLarg)/2)/2
 	Private nTamBtn   := 048
+
+   // lSenha := U_ValidSenha()
+   // if !lSenha
+   //     Return
+   // endif
 
 	DEFINE MSDIALOG oDlg TITLE "Paradas" STYLE DS_MODALFRAME  FROM 000, 000  TO nJanAltu, nJanLarg  OF oMainWnd PIXEL
     oDlg:lEscClose := .T.
