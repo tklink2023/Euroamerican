@@ -102,8 +102,7 @@ Static Function TelaApo(cOp,cProd,cOper,cRecurso,cDescr,cTipo)
 						endif	
    			next	
 
-   Endif
-
+    Endif
 
 	lSit := PCP061VALID(cOp,cProd,cOper) 
 	if !lSit

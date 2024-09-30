@@ -112,7 +112,6 @@ Static Function PCP60PARA(cOp,cProduto,cOperac)
 	   Return
 	Endif
 
-
 	BeginSQL Alias cAlias
         Select Z9_OP,Z9_PRODUTO,Z9_OPERAC,Z9_DATAINI,Z9_DATAFIM
         FROM %Table:SZ9% SZ9
@@ -184,6 +183,19 @@ Static Function PCP60PARA(cOp,cProduto,cOperac)
     FwRestArea(cArea)    
 Return
 
+/*/{Protheus.doc} FGrvSZ9
+description Rotina que grava os apontamentos de paradas
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/09/2024
+@param cOp, character, param_description
+@param cProd, character, param_description
+@param cOperac, character, param_description
+@param lTipo, logical, param_description
+@param cMotivo, character, param_description
+@return variant, return_description
+/*/
 User Function FGrvSZ9(cOp,cProd,cOperac,lTipo,cMotivo)
 	Local cArea := FwGetArea()
 	dbSelectArea("SZ9")

@@ -7,6 +7,14 @@
 #Include 'Totvs.Ch'
 #Include 'Ap5Mail.Ch'
 
+/*/{Protheus.doc} PCPM064
+description Programa de disparo de e-mail para operacao de Parada e Retorno
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 27/09/2024
+@return variant, return_description
+/*/
 User Function PCPM064()
     Local cArea     := FwGetArea()
     Local cOrdem    := PARAMIXB[1]
@@ -81,3 +89,7 @@ cBody		:='<hr size="1">'+;
 
     FwRestArea(cArea)
 Return
+
+//========================================================================================================================================================================//
+// FIM DA PROGRAMAÇÃO DO FONTE PCPM060
+//========================================================================================================================================================================//

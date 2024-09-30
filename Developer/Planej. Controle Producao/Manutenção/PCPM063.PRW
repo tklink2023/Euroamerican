@@ -1,6 +1,14 @@
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
 
+/*/{Protheus.doc} PCPM063
+description Rotina de Gravação dos apontamentos de produção
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/09/2024
+@return variant, return_description
+/*/
 User Function PCPM063()
   Local cArea         := FwGetArea()
   Local cNumLote      := PARAMIXB[1]
@@ -10,10 +18,11 @@ User Function PCPM063()
   Local cAlias := GetNextAlias()
 
    BeginSQL Alias cAlias
-        Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_EMISSAO,C2_DATPRI,C2_DATPRF,C2_PRIOR,C2_DATRF,C2_PRODUTO,C2_QUANT,C2_QUJE, G2_OPERAC, G2_RECURSO, G2_DESCRI,H1_DESCRI
+        Select C2_FILIAL,C2_NUM,C2_ITEM,C2_SEQUEN,C2_EMISSAO,C2_DATPRI,C2_DATPRF,C2_PRIOR,C2_DATRF,C2_PRODUTO,B1_DESC,C2_QUANT,C2_QUJE, G2_OPERAC, G2_RECURSO, G2_DESCRI,H1_DESCRI
         FROM %Table:SC2% SC2
         INNER JOIN %Table:SG2% SG2 ON G2_FILIAL = C2_FILIAL AND G2_PRODUTO = C2_PRODUTO AND SG2.D_E_L_E_T_ = ' '
         INNER JOIN %Table:SH1% SH1 ON H1_CODIGO = G2_RECURSO AND SH1.%NotDel%
+        INNER JOIN %Table:SB1% SB1 ON B1_COD = C2_PRODUTO AND SB1.%NotDel%
         WHERE SC2.%NotDel%
         and C2_FILIAL = %xFilial:SC2%
         AND C2_NUM    = %Exp:cNumLote%
@@ -43,6 +52,7 @@ User Function PCPM063()
                       SZ7->Z7_ITEM      :=  (cAlias)->C2_ITEM
                       SZ7->Z7_SEQUEN    :=  (cAlias)->C2_SEQUEN
                       SZ7->Z7_PRODUTO   :=  (cAlias)->C2_PRODUTO
+                      SZ7->Z7_DESCR     :=  (cAlias)->B1_DESC
                       SZ7->Z7_QTPROD    :=  (cAlias)->C2_QUANT
                       SZ7->Z7_EMISSAO   :=  (cAlias)->C2_EMISSAO
                       SZ7->Z7_DATPRI    :=  (cAlias)->C2_DATPRI
@@ -76,6 +86,16 @@ User Function PCPM063()
     FwRestArea(cArea)
 Return
 
+/*/{Protheus.doc} PCP60STATUS
+description Rotina que demonstra o status dos apontamentos da produção
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/09/2024
+@param cOp, character, param_description
+@param cProduto, character, param_description
+@return variant, return_description
+/*/
 User Function PCP60STATUS(cOp,cProduto)
     Local cArea   := FwGetArea()
     Local cAlias  := GetNextAlias()
@@ -107,3 +127,8 @@ User Function PCP60STATUS(cOp,cProduto)
 
     FwRestArea(cArea)
 Return(aLinha)
+
+//========================================================================================================================================================================//
+// FIM DA PROGRAMAÇÃO DO FONTE PCPM060
+//========================================================================================================================================================================//
+

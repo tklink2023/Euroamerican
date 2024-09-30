@@ -34,7 +34,7 @@ User Function PCPM060()
     
     oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
-    oBrowse:AddButton("Impressao"  ,{|| U_PCPR064(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
+    oBrowse:AddButton("Impressao"  ,{|| U_PCPAMB(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
     oBrowse:Activate()
 
     FWRestArea(aArea)
@@ -55,7 +55,7 @@ Static Function MenuDef()
     //Adicionando opcoes do menu
     ADD OPTION aRotina TITLE "Visualizar" ACTION "VIEWDEF.PCPM060" OPERATION 1 ACCESS 0
     ADD OPTION aRotina TITLE "Abrir Contole" ACTION "U_PCP060C()" OPERATION 3 ACCESS 0 // Abrir o controle de tempo
-    if cUserName $ cAutoriz
+    if cUserName $ cAutoriz // Atraves de parametro ES_P60MENU determina quem tem acesso as opções abaixo
         ADD OPTION aRotina TITLE "Alterar" ACTION "VIEWDEF.PCPM060" OPERATION 4 ACCESS 0
         ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM060" OPERATION 5 ACCESS 0
     Endif
@@ -153,9 +153,7 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ7" , "VwSZ7" )
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
-    // Opções para ser acrescentadas 
-    //oView:addUserButton("Ficha de Apontamento","MAGIC_BMP", {||  }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/)
-    //oView:addUserButton("Motivo","MAGIC_BMP", {||  }, /*cToolTip*/, /*nShortCut*/, /*aOptions*/,                                     /*lShowBar*/) 
+ 
 Return oView
 
 /*/{Protheus.doc} PCP060C
@@ -219,7 +217,14 @@ Static Function fExecuta()
     FwRestArea(cArea)
 Return
 
-
+/*/{Protheus.doc} CalcHoras
+description Rotina que faz o tratamento de dias e horas
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/09/2024
+@return variant, return_description
+/*/
 User Function CalcHoras()
     Local cArea         := FwGetArea()
     Local dDataInicio   := PARAMIXB[1]
@@ -301,6 +306,16 @@ User Function CalcHoras()
     FwRestArea(cArea)
 Return
 
+/*/{Protheus.doc} PCP60POS
+description Rotina que tras o posicionamento da situação das operações
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/09/2024
+@param cOp, character, param_description
+@param cProduto, character, param_description
+@return variant, return_description
+/*/
 Static Function PCP60POS(cOp,cProduto)
     Local cArea := FwGetArea()
     Local cAlias:= GetNextAlias()

@@ -34,8 +34,16 @@
 		{
 			"args": [],
 			"label": "U_SCHLCOMP"
+		},
+		{
+			"args": [],
+			"label": "U_PCPR064"
+		},
+		{
+			"args": [],
+			"label": "U_PCPAMB"
 		}
 	],
-	"lastProgramExecuted": "SIGAPCP",
+	"lastProgramExecuted": "U_PCPAMB",
 	"lastProgramArguments": []
 }
