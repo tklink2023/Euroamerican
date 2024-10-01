@@ -69,7 +69,7 @@ If AllTrim( aDocto[02] ) == "PC" // Caso Pedido de Compras...
 		                     "1",;
 					         "Pedido de Compras Aprovado" )
 							 U_STATUSCOMP(nOper)	
-							 u_ENVPCAP(cNumPC)
+							 u_EqPedCom(cNumPC)
 
 				U_EQGeraWFC( "Protheus - Pedido de Compras: " + AllTrim( cNumPC ) + " Aguardando Chegada da Mercadoria",;
  					         "200200",;

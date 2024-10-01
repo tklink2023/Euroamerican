@@ -128,7 +128,14 @@ User Function PCP60STATUS(cOp,cProduto)
     FwRestArea(cArea)
 Return(aLinha)
 
-
+/*/{Protheus.doc} ValidSenha
+description Rotina para liberar os apontamentos de parada
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 01/10/2024
+@return variant, return_description
+/*/
 User Function ValidSenha()
     Local cArea := FwGetArea()
     Local cCodigo   := Space(6)

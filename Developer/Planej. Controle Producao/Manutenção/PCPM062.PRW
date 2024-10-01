@@ -17,8 +17,7 @@ User Function PCPM062(cOp,cProduto)
     Local aItems    := PCP60BOX(cOp,cProduto)
     Local cCombo    := aItems[1]
     Local cTextHtml := ""
-    Local lSenha    := .T.
-	
+   	
     Private oDlg      as Object
     Private oSay      as Object
     Private oBtOk     as Object
@@ -148,7 +147,7 @@ Static Function PCP60PARA(cOp,cProduto,cOperac)
 
                     oTMultiget :=TMultiget():Create(oDlg ,{|u|if(Pcount()>0,cMotivo:=u,cMotivo)},120 ,01,nJanLarg-50,100,oFont,,,,,.T.,,,,,,,,,,,.T.,'MOTIVO',1,oFont,)
                     oBtOK := TButton():New((nJanAltu/2)-24, nJanMeio - (nTamBtn/2),"Confirma",oDlg,{|| U_FGrvSZ9(cOp,cProduto,cOperac,lTipo,cMotivo),oDlg:End() },045,012,,oFont,,.T.)
-
+            (cAlias)->(DbCloseArea())
             FwRestArea(cArea)
 	        RETURN
     Endif        

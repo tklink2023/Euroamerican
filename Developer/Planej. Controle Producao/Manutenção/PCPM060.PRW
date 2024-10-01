@@ -27,14 +27,17 @@ User Function PCPM060()
     oBrowse:SetDescription(cTitulo)
     oBrowse:GetTimer()
     oBrowse:DisableDetails()
+    oBrowse:SetFilterDefault( " SZ7->Z7_STATUS <> 'C' " )
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'A' .AND. SZ7->Z7_PARADA == '2' ", 'GREEN',   'Aberto Apontamento',     '1')
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'B' .AND. SZ7->Z7_PARADA == '2' ", 'YELLOW',   'Sendo Apontado',        '1')
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'B' .AND. SZ7->Z7_PARADA == '1' ", 'BLACK',    'Apontamento Parado',    '1')
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'C' .AND. SZ7->Z7_PARADA == '2' ", 'RED',     'Encerrado Apontado',     '1')
     
-    oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
-    oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
-    oBrowse:AddButton("Impressao"  ,{|| U_PCPAMB(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO)  },,2,,.F.)
+    oBrowse:AddButton("Apontamento",{|| U_PCPM061(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO), oBrowse:Refresh()  },,2,,.F.)
+    oBrowse:AddButton("Paradas"    ,{|| U_PCPM062(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO), oBrowse:Refresh()  },,2,,.F.)
+    oBrowse:AddButton("Impressao"  ,{|| U_PCPAMB(SZ7->Z7_NUM+SZ7->Z7_ITEM+SZ7->Z7_SEQUEN,SZ7->Z7_PRODUTO), oBrowse:Refresh()  },,2,,.F.)
+    oBrowse:Refresh()
+
     oBrowse:Activate()
 
     FWRestArea(aArea)
@@ -154,6 +157,10 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ7" , "VwSZ7" )
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
+
+    oView:Refresh('VIEW_SZ7')
+    oView:Refresh('VIEW_SZ8')
+    oView:Refresh('VIEW_SZ9')
  
 Return oView
 
@@ -243,6 +250,7 @@ User Function CalcHoras()
     Local cGasto        := 0
     Local nCalcHoras    := 0 
     Local lSit          := PCP60POS(cOrdemProd,cProduto)
+    Local cDescOperacao := " "
 
     if cTipo = "F"  // Esse Tipo Refere-se ao lançamento Final do registro
        if dDataInicio = dDataFinal  // Quando das data de inicio e fim são igual o tratamento será dado apenas nas horas
@@ -265,19 +273,7 @@ User Function CalcHoras()
        endif
 
       cGasto := IIF(nCalcHoras > 0 , nCalcHoras,Min2Hrs(cMinutos))
-
-      dbSelectArea("SZ7")
-      SZ7->( dbSetOrder(1) )
-      IF SZ7->( dbSeek( xFilial("SZ7")+cOrdemProd+cProduto,.T.) )
-         IF RECLOCK("SZ7",.F.)
-            SZ7->Z7_STATUS := IIF(lSit,"C","B")
-            SZ7->Z7_OPERAC := cOperacao
-            SZ7->Z7_SITUAC := IIF(cTipo="I","INICIO","FINAL")
-            SZ7->Z7_PARADA := IIF(cAlias="SZ9",IIF(cTipo=="I","1","2"),"2" )
-            SZ7->Z7_GASTO := cValtoChar(val(SZ7->Z7_GASTO)+cGasto)
-            SZ7->( MsUnlock() )
-         ENDIF
-      ENDIF
+ 
 
       IF cAlias = "SZ8"
             dbSelectArea("SZ8")
@@ -302,8 +298,25 @@ User Function CalcHoras()
       ENDIF  
 
     Endif
+    IF cAlias = "SZ8"
+        cDescOperacao := Posicione("SZ8",1,xFilial("SZ8")+cOrdemProd+cProduto+cOperacao,"Z8_DESCR" )
+    ENDIF    
 
-
+    dbSelectArea("SZ7")
+    SZ7->( dbSetOrder(1) )
+    IF SZ7->( dbSeek( xFilial("SZ7")+cOrdemProd+cProduto,.T.) )
+        IF RECLOCK("SZ7",.F.)
+            SZ7->Z7_STATUS := IIF(lSit,"C","B")
+            SZ7->Z7_DATRF  := IIF(lSit,dDataBase,ctod("  /  / "))
+            SZ7->Z7_OPERAC := cOperacao
+            SZ7->Z7_DESCOPE:= cDescOperacao
+            SZ7->Z7_SITUAC := IIF(cTipo="I","INICIO","FINAL")
+            SZ7->Z7_PARADA := IIF(cAlias="SZ9",IIF(cTipo=="I","1","2"),"2" )
+            SZ7->Z7_GASTO := cValtoChar(val(SZ7->Z7_GASTO)+cGasto)
+            SZ7->( MsUnlock() )
+        ENDIF
+    ENDIF
+   
     FwRestArea(cArea)
 Return
 
@@ -336,9 +349,12 @@ Static Function PCP60POS(cOp,cProduto)
     if (cAlias)->( Eof())
             lRet := .T.
             FwRestArea(cArea)
+            (cAlias)->(DbCloseArea())
 	        RETURN(lRet)
     Endif        
-    
+   FwRestArea(cArea)
+  (cAlias)->(DbCloseArea())
+
 Return(lRet)
 //========================================================================================================================================================================//
 // FIM DA PROGRAMAÇÃO DO FONTE PCPM060

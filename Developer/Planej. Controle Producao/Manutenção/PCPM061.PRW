@@ -15,7 +15,15 @@ User Function PCPM061(cOp,cProduto)
     Local cArea 	 := FwGetArea()
     Local cAlias 	 := GetNextAlias()
 	Local lRet       := .F.
-	
+	Local cNumOpPA   := Substring(cOp,1,6)+"01001"
+    Local cProdPa    := PCP61PROD(cProduto)
+	Local lValid     := ( Posicione( "SZ7" , 1, xFilial("SZ7")+cNumOpPa+cProdPa,"Z7_STATUS") = "C" )
+    if !lValid .and. Substring(cOp,7,2)<>"01"
+	    MsgAlert("Nao Pode inicial o apontamento sem encerrar o PI desse lote") 
+        FwRestArea(cArea)
+	    RETURN
+	endif
+
  	BeginSQL Alias cAlias
         Select Z8_OP,Z8_PRODUTO,Z8_OPERAC,Z8_RECUR,Z8_DATAINI,Z8_DATAFIM,H1_DESCRI
         FROM %Table:SZ8% SZ8
@@ -223,6 +231,57 @@ Static Function PCP061VALID(cOp,cProd,cOper)
 Return(lRet)
 
 
+Static Function PCP61POS(cOp)
+    Local cArea := FwGetArea()
+    Local cAlias:= GetNextAlias()
+    Local lRet  := .F.
+
+    BeginSQL Alias cAlias
+        Select Z8_DATAFIM
+        FROM %Table:SZ8% SZ8
+        WHERE SZ8.%NotDel%
+        and Z8_FILIAL =  %xFilial:SZ8%
+        AND Z8_OP = %Exp:cOp%
+		AND Z8_PRODUTO = %Exp:cProduto%
+        AND Z8_DATAFIM = ' '
+		ORDER BY Z8_OPERAC
+    EndSQL
+
+    if (cAlias)->( Eof())
+            lRet := .T.
+            FwRestArea(cArea)
+			(cAlias)->(DbCloseArea())
+	        RETURN(lRet)
+    Endif        
+    FwRestArea(cArea)
+	(cAlias)->(DbCloseArea())    
+Return(lRet)
+
+
+Static Function PCP61PROD(cProduto)
+   Local cArea := FwGetArea()
+   Local cAlias:= GetNextAlias()
+   Local lRet  := cProduto
+
+    BeginSQL Alias cAlias
+        Select G1_COMP
+        FROM %Table:SG1% SG1
+		INNER JOIN %Table:SB1% SB1 ON B1_COD = G1_COMP AND B1_TIPO = 'PI'  AND SB1.D_E_L_E_T_ = ' '
+        WHERE SG1.%NotDel%
+        and G1_FILIAL =  %xFilial:SG1%
+		AND G1_COD = %Exp:cProduto%
+    EndSQL
+
+    if (cAlias)->( Eof())
+            FwRestArea(cArea)
+			(cAlias)->(DbCloseArea())
+	        RETURN(lRet)
+    Endif        
+
+    lRet := (cAlias)->G1_COMP
+	(cAlias)->(DbCloseArea())
+    FwRestArea(cArea)
+Return(lRet)
 //========================================================================================================================================================================//
 // FIM DA PROGRAMAÇÃO DO FONTE PCPM060
 //========================================================================================================================================================================//
