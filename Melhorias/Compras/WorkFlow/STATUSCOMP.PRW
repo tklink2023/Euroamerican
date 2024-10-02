@@ -16,7 +16,7 @@ Disparo e-mail na aprovação do PC
 */
 Static nAlt := 0
 
-User Function STATUSCOMP(nOper)
+User Function STATUSCOMP(nOper,cNRelDoc)
 
 Local aArea             := GetArea()
 Local cEmail 			:=  SuperGetMv("MV_XMAILPC",,"fabio.santos@euroamerican.com.br") // Processo recebimento...
@@ -25,6 +25,7 @@ Local cHtml             := ''
 Local cAssunto          := 'Pedido de Compra'
 Local cAttach           := ''
 Local nOper             := nOper
+Local cNRelDoc          := cNRelDoc
 Local cBody             := ''
 Local cMailAP           := '' 
 Local lRet              := .F.
@@ -270,7 +271,8 @@ Local lEnvia            := .F.
         If !lEnvia
             cEmail := UsrRetMail(SC7->C7_USER)
             //cEmail := 'FABIO.BATISTA@EUROAMERICAN.COM.BR' 
-            u_FSENVMAIL(cAssunto, cBody, cEmail,cAttach,,,,,,,,,)
+            //u_FSENVMAIL(cAssunto, cBody, cEmail,cAttach,,,,,,,,,)
+            U_TManagerEmail(cEmail, cAssunto, cBody, cNRelDoc)
         EndIf 
 
         RestArea( aArea )

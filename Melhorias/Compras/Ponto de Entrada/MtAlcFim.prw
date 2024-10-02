@@ -22,6 +22,7 @@ Local aWFIDs     := {}
 Local nPosWS     := 0
 Local nLin       := 0
 Local nPosPedido := 0
+Local cNRelDoc   := ""
 
 Private cNumPC   := ""
 Private aAreaSC7 := {}
@@ -44,7 +45,7 @@ If AllTrim( aDocto[02] ) == "PC" // Caso Pedido de Compras...
 					         "PEDIDO AGUARDANDO APROVACAO",;
 		                     "1",;
 					         "Pedido de Compras Aguardando Aprovação" )
-							U_STATUSCOMP(nOper)	
+							U_STATUSCOMP(nOper,cNRelDoc)	
 
 			Case nOper == 2 //Transferência Alçada Superior
 				U_EQGeraWFC( "Protheus - Pedido de Compras: " + AllTrim( cNumPC ) + " com alçada transferida para nível superior",;
@@ -52,7 +53,7 @@ If AllTrim( aDocto[02] ) == "PC" // Caso Pedido de Compras...
 					         "ALCADA TRANSFERIDA SUPERIOR",;
 		                     "1",;
 					         "Alçada Transferida Nível Superior" )
-							U_STATUSCOMP(nOper)	
+							U_STATUSCOMP(nOper,cNRelDoc)	
 							
 			Case nOper == 3 //Exclusão Documento
 				U_EQGeraWFC( "Protheus - Pedido de Compras: " + AllTrim( cNumPC ) + " com alçada excluída",;
@@ -60,26 +61,26 @@ If AllTrim( aDocto[02] ) == "PC" // Caso Pedido de Compras...
 					         "ALCADA DO PEDIDO EXCLUIDA",;
 		                     "1",;
 					         "Alçada do Pedido Excluída" )
-							U_STATUSCOMP(nOper)		
+							U_STATUSCOMP(nOper,cNRelDoc)		
 
 			Case nOper == 4 // Aprovação Documento
 				U_EQGeraWFC( "Protheus - Pedido de Compras: " + AllTrim( cNumPC ) + " Aprovado",;
  					         "200001",;
 					         "PEDIDO DE COMPRAS APROVADO",;
 		                     "1",;
-					         "Pedido de Compras Aprovado" )
-							 U_STATUSCOMP(nOper)	
-							 u_EqPedCom(cNumPC)
+					         "Pedido de Compras Aprovado" )					
+							  cNRelDoc:=u_EqPedCom(cNumPC)
+							  U_STATUSCOMP(nOper,cNRelDoc)	
 
 				U_EQGeraWFC( "Protheus - Pedido de Compras: " + AllTrim( cNumPC ) + " Aguardando Chegada da Mercadoria",;
  					         "200200",;
 					         "PEDIDO AGUARDANDO CHEGADA",;
 		                     "1",;
 					         "Pedido de Compras Aguardando Chegada" )
-							U_STATUSCOMP(nOper)		
+							U_STATUSCOMP(nOper,cNRelDoc)		
 								
 				// Enviar Relatório de Pedido de Compras ao Fornecedor...
-				U_EQPedCom( cNumPC )
+				//U_EQPedCom( cNumPC )
 
 			Case nOper == 5 // Estorno da Aprovação
 				U_EQGeraWFC( "Protheus - Pedido de Compras: " + AllTrim( cNumPC ) + " Com Aprovação Estornada",;
@@ -87,7 +88,7 @@ If AllTrim( aDocto[02] ) == "PC" // Caso Pedido de Compras...
 					         "APROVACAO ESTORNADA",;
 		                     "1",;
 					         "Pedido de Compras com Aprovação Estornada" )
-							U_STATUSCOMP(nOper)	
+							U_STATUSCOMP(nOper,cNRelDoc)	
 
 			Case nOper == 6 // Bloqueio da Alçada
 				U_EQGeraWFC( "Protheus - Pedido de Compras: " + AllTrim( cNumPC ) + " Com Bloqueio de Alçada",;
@@ -103,7 +104,7 @@ If AllTrim( aDocto[02] ) == "PC" // Caso Pedido de Compras...
 					         "PEDIDO REJEITADO",;
 		                     "1",;
 					         "Pedido de Compras Rejeitado pelo Aprovador" )
-							U_STATUSCOMP(nOper)	
+							U_STATUSCOMP(nOper,cNRelDoc)	
 
 		EndCase
 	EndIf

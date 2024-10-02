@@ -157,10 +157,6 @@ Static Function ViewDef()
     oView:SetOwnerView( "VIEW_SZ7" , "VwSZ7" )
     oView:SetOwnerView( "VIEW_SZ8" , "VwSZ8" )
     oView:SetOwnerView( "VIEW_SZ9" , "VwSZ9" )
-
-    oView:Refresh('VIEW_SZ7')
-    oView:Refresh('VIEW_SZ8')
-    oView:Refresh('VIEW_SZ9')
  
 Return oView
 
