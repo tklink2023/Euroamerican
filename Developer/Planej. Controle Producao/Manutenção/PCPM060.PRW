@@ -18,6 +18,8 @@ description Programa que controla o tempo de produtção
 User Function PCPM060()
     Local aArea   := FWGetArea()
     Local oBrowse
+    Local cAutoriz:= GetMv("ES_P60MENU")
+
     Private aRotina := {}
 
     aRotina := MenuDef()
@@ -27,7 +29,9 @@ User Function PCPM060()
     oBrowse:SetDescription(cTitulo)
     oBrowse:GetTimer()
     oBrowse:DisableDetails()
-    oBrowse:SetFilterDefault( " SZ7->Z7_STATUS <> 'C' " )
+    if !cUserName $ cAutoriz // Atraves de parametro ES_P60MENU determina quem tem acesso as opções abaixo
+        oBrowse:SetFilterDefault( " SZ7->Z7_STATUS <> 'C' " )
+    endif   
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'A' .AND. SZ7->Z7_PARADA == '2' ", 'GREEN',   'Aberto Apontamento',     '1')
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'B' .AND. SZ7->Z7_PARADA == '2' ", 'YELLOW',   'Sendo Apontado',        '1')
     oBrowse:AddLegend("SZ7->Z7_STATUS == 'B' .AND. SZ7->Z7_PARADA == '1' ", 'BLACK',    'Apontamento Parado',    '1')
