@@ -42,8 +42,12 @@
 		{
 			"args": [],
 			"label": "U_PCPAMB"
+		},
+		{
+			"args": [],
+			"label": "U_LAB0001"
 		}
 	],
-	"lastProgramExecuted": "SIGACOM",
+	"lastProgramExecuted": "SIGAFAT",
 	"lastProgramArguments": []
 }
