@@ -16,27 +16,18 @@ User Function GTCOM002()
     Local cLoja  := Space(02)
     Local lRet   := .T.
     Local aDadFor:= {}
-    Local nCnpj := FWFldGet("A2_CGC")
-    Local cTipo := ""
-
-    nCnpj := StrTran(nCnpj, ".", "")
-    nCnpj := StrTran(nCnpj, "/", "")
-    nCnpj := StrTran(nCnpj, "-", "")
-
-    cTipo :=  IIF((LEN(nCnpj)==14),"J", IIF((LEN(nCnpj)==11),"F","X"))
 
     IF INCLUI .AND. !ALTERA
 
-       cCodigo := IIF(cTipo = 'J', Substr(FWFldGet("A2_CGC"),1,6), IIF(cTipo = 'X',GetSX8Num("SA2","A2_COD"),Substr(FWFldGet("A2_CGC"),1,6)))
-       cLoja   := IIF(cTipo = 'J', Substr(FWFldGet("A2_CGC"),13,2),IIF(cTipo = 'X',"99",Substr(FWFldGet("A2_CGC"),10,2) ))
+       cCodigo := IIF(FWFldGet("A2_TIPO") = 'J', Substr(FWFldGet("A2_CGC"),1,6), IIF(FWFldGet("A2_TIPO") = 'X',GetSX8Num("SA2","A2_COD"),Substr(FWFldGet("A2_CGC"),1,6)))
+       cLoja   := IIF(FWFldGet("A2_TIPO") = 'J', Substr(FWFldGet("A2_CGC"),13,2),IIF(FWFldGet("A2_TIPO") = 'X',"99",Substr(FWFldGet("A2_CGC"),10,2) ))
 
        cCodigo := SearchCodigo(cCodigo)
 
        FwFldPut("A2_COD"		, cCodigo)
        FwFldPut("A2_LOJA"		, cLoja )
-       FwFldPut("A2_TIPO"       , cTipo )
 
-       IF cTipo = 'J'
+       IF FWFldGet("A2_TIPO") = 'J'
             // Busca informações da Receita Federal
             aDadFor:=U_SearchCnpj(FWFldGet("A2_CGC"))
        ENDIF
