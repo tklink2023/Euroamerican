@@ -85,9 +85,9 @@ User Function MPCPWF001()
     lEnvio   := u_TManagerEmail(cPara, cAssunto, cCorpo, aAnexos, lExibeHelp, .T.)
    
     If lEnvio
-        FWAlertSuccess("Sucesso no disparo do e-Mail", "Sucesso")
+       CONOUT("Sucesso no disparo do e-Mail")
     Else
-        FWAlertError("Falha no disparo do e-Mail", "Atenção (Erro)")
+       CONOUT("Falha no disparo do e-Mail")
     EndIf
 
 
