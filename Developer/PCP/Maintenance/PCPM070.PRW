@@ -8,20 +8,23 @@
 #INCLUDE 'FWMBrowse.ch'
 #INCLUDE "ParmType.ch"
 
+/*/{Protheus.doc} PCPM070
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 07/11/2024
+@return variant, return_description
+/*/
 User Function PCPM070()
     Local aArea := FwgetArea()
-    Local aFields :={}
-    Local ctmp    := "A"+GetNextAlias()
-    Local cQuery  as character 
-    Local cAlias  := "B"+getNextAlias()
-    Local oTable  := FWTemporaryTable():New( ctmp ) 
-    Local aRet  	:= 	{}
-
-   Local aPergs   := {}
-   Local dDataDe  := FirstDate(Date())
-   Local dDataAt  := LastDate(Date())
-   Local nTotal   := 0
-
+    Local aFields := {}
+    
+    Local aRet  	:=	{}
+    Local aPergs   := {}
+    Local dDataDe  := FirstDate(Date())
+    Local dDataAt  := LastDate(Date())
+    
     Local oDlgMark    as Object 
     Local aSize         := MsAdvSize()
     local bSair   as block
@@ -30,7 +33,12 @@ User Function PCPM070()
     Local bGraf   as Block
     Local bTela   as Block
     Local bSolic  as Block
-
+    Local bF04    as Block
+    Local bF05    as Block
+    Local bF06    as Block
+    //Local bF10    as Block
+    Local bRl01   as Block
+    Local bRl02   as Block
     local oArea   as object
     local oBtn1   as object
     local oBtn2   as object
@@ -49,6 +57,8 @@ User Function PCPM070()
     local oOption as object
     local oSide   as object
  
+    Private ctmp    := "A"+GetNextAlias()
+    Private oTable  := FWTemporaryTable():New( ctmp ) 
     Private nPosCli := 01 ,nPosPed := 02 ,nPosItem := 03 ,nPosPro := 04 ,nPosDesc := 05 ,nPosLocal := 06 ,nPosQtd := 07 ,nPosSld := 08 ,nPosTot := 09 ,nPosApu := 10 ,nPossta := 11,NPOSDEL := 12
 
     Private aBrowse     := {}
@@ -56,15 +66,16 @@ User Function PCPM070()
     Private dDataIni
     Private dDataFim
 
-    bSair   := {|| Iif(MsgYesNo('Deseja realmente sair?','Gerenciamento'),(oDlg:End()),NIL)}
-    BFiltra := {|| PM070FIL(aBrowse[oBrowse:nAt][nPosPro]) }
+    bSair   := {|| Iif(MsgYesNo('Deseja realmente sair?','Gerenciamento'),(oDlgMark:End()),NIL)}
+    bGrava := {|| PM070FIL() }
+    bGraf  := {|| PM070RPT() }
 
-    aAdd(aFields,{"TMP_FILIAL"		, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
+    aAdd(aFields,{"TMP_FILIAL"	, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
     aAdd(aFields,{"TMP_NOME"	   , GetSx3Cache("A1_NOME","X3_TIPO")		   ,tamSx3("A1_NOME")[1]	    ,tamSx3("A1_NOME")[2]})
     aAdd(aFields,{"TMP_NUM"  		, GetSx3Cache("C6_NUM","X3_TIPO")		   ,tamSx3("C6_NUM")[1]	       ,tamSx3("C6_NUM")[2]})
-    aAdd(aFields,{"TMP_ITEM"  		, GetSx3Cache("C6_ITEM","X3_TIPO")		   ,tamSx3("C6_ITEM")[1]	    ,tamSx3("C6_ITEM")[2]})
+    aAdd(aFields,{"TMP_ITEM"  	, GetSx3Cache("C6_ITEM","X3_TIPO")		   ,tamSx3("C6_ITEM")[1]	    ,tamSx3("C6_ITEM")[2]})
     aAdd(aFields,{"TMP_COD"  		, GetSx3Cache("C6_PRODUTO","X3_TIPO")	   ,tamSx3("C6_PRODUTO")[1]	 ,tamSx3("C6_PRODUTO")[2]})
-    aAdd(aFields,{"TMP_DESC"  		, GetSx3Cache("B1_DESC","X3_TIPO")		   ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
+    aAdd(aFields,{"TMP_DESC"  	, GetSx3Cache("B1_DESC","X3_TIPO")		   ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
     aAdd(aFields,{"TMP_LOCAL"  	, GetSx3Cache("C6_LOCAL","X3_TIPO")		   ,tamSx3("C6_LOCAL")[1]	    ,tamSx3("C6_LOCAL")[2]})
     aAdd(aFields,{"TMP_QTD"  		, GetSx3Cache("C6_QTDVEN","X3_TIPO")	   ,tamSx3("C6_QTDVEN")[1]	    ,tamSx3("C6_QTDVEN")[2]})
     aAdd(aFields,{"TMP_SALDO"  	, GetSx3Cache("B2_QATU","X3_TIPO")		   ,tamSx3("B2_QATU")[1]	    ,tamSx3("B2_QATU")[2]})
@@ -72,79 +83,22 @@ User Function PCPM070()
     aAdd(aFields,{"TMP_QTAPU"  	, GetSx3Cache("C2_QUANT","X3_TIPO")		   ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
     aAdd(aFields,{"TMP_STATUS"  	, GetSx3Cache("A1_NREDUZ","X3_TIPO")	   ,tamSx3("A1_NREDUZ")[1]	    ,tamSx3("A1_NREDUZ")[2]})
 
-   oTable:SetFields( aFields )
-	oTable:AddIndex("ind1",{"TMP_FILIAL","TMP_NUM","TMP_COD"} )
- 	oTable:Create()  
+    oTable:SetFields( aFields )
+	 oTable:AddIndex("ind1",{"TMP_FILIAL","TMP_NUM","TMP_COD"} )
+ 	 oTable:Create()  
 
-	aAdd(aPergs, {1, "Data De",  dDataDe,  "", ".T.", "", ".T.", 80,  .F.})
-   aAdd(aPergs, {1, "Data Até", dDataAt,  "", ".T.", "", ".T.", 80,  .T.})
+	 aAdd(aPergs, {1, "Data De",  dDataDe,  "", ".T.", "", ".T.", 80,  .F.})
+    aAdd(aPergs, {1, "Data Até", dDataAt,  "", ".T.", "", ".T.", 80,  .T.})
  
-   If ParamBox(aPergs, "Informe os parâmetros",aRet)  
+    If ParamBox(aPergs, "Informe os parâmetros",aRet)  
       dDataIni := aRet[1]
 		dDataFim := aRet[2]
-   Else
+    Else
 		MsgAlert("Encerrado")
 		Return
-	EndIf
-
-
-    cQuery:="Select SA1.A1_NOME      NOME "+CRLF
-    cQuery+="		,SC6.C6_NUM       PEDIDO "+CRLF
-    cQuery+="		,SC6.C6_ITEM      ITEM "+CRLF
-    cQuery+="		,SC6.C6_PRODUTO   PRODUTO "+CRLF
-    cQuery+="		,SB1.B1_DESC      DESCRICAO "+CRLF
-    cQuery+="		,SC6.C6_LOCAL     ARMAZEM "+CRLF
-    cQuery+="		,SC6.C6_QTDVEN    QUANT "+CRLF
-    cQuery+="		,SB2.B2_QATU      SALDO "+CRLF
-    cQuery+="from " + RetSqlName("SC6") + " SC6 "+CRLF
-    cQuery+="INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND SC5.D_E_L_E_T_ = ' ' "+CRLF
-    cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND SB1.D_E_L_E_T_ = ' ' "+CRLF
-    cQuery+="INNER JOIN " + RetSqlName("SA1") + " SA1 ON A1_FILIAL = C6_FILIAL AND A1_COD = C6_CLI AND A1_LOJA = C6_LOJA AND SA1.D_E_L_E_T_ = ' ' "+CRLF
-    cQuery+="LEFT JOIN  " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = C6_FILIAL AND B2_LOCAL = C6_LOCAL AND B2_COD = SC6.C6_PRODUTO AND SB2.D_E_L_E_T_= ' ' "+CRLF
-    cQuery+="Where SC6.D_E_L_E_T_ = ' ' "+CRLF
-    cQuery+="AND SC6.C6_FILIAL = '"+FWxFilial("SC6")+"'  "+CRLF
-    cQuery+="AND SC6.C6_NOTA = ' ' "+CRLF
-    cQuery+="AND SC5.C5_EMISSAO BETWEEN '"+Dtos(dDataIni)+"' AND '"+Dtos(dDataFim)+"' "+CRLF
-    cQuery+="ORDER BY SC6.C6_NUM "+CRLF
-
-   DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
- 
-   IF (cAlias)->(Eof())
-      (cAlias)->(DbCloseArea())   
-       FwRestArea(aArea)
-      Return
-   endif
+	 EndIf
    
-   ProcRegua((cAlias)->(LastRec()))
-   dbselectArea(cAlias)
-   (cAlias)->( dbGoTop() )
-   While (cAlias)->( !Eof())
-         IncProc("Gerando arquivo, aguarde...")
-         nTotal := PCPM70QTD((cAlias)->PRODUTO,(cAlias)->ARMAZEM)
-         dbselectarea(ctmp)
-         (ctmp)->( dbSetOrder(1))
-         if (ctmp)->( !dbSeek(FWxFilial("SC6")+(cAlias)->PEDIDO+(cAlias)->PRODUTO,.T.))
-          IF RecLock(ctmp,.T.)
-            TMP_FILIAL := FWxFilial("SC6")
-            TMP_NOME   := (cAlias)->NOME
-            TMP_NUM    := (cAlias)->PEDIDO
-            TMP_ITEM   := (cAlias)->ITEM
-            TMP_COD    := (cAlias)->PRODUTO
-            TMP_DESC   := (cAlias)->DESCRICAO
-            TMP_LOCAL  := (cAlias)->ARMAZEM
-            TMP_QTD    := (cAlias)->QUANT
-            TMP_SALDO  := (cAlias)->SALDO
-            TMP_TOTAL  := nTotal
-            TMP_QTAPU  := (cAlias)->SALDO - nTotal
-            TMP_STATUS := IIF(TMP_QTAPU<0,'Bloqueado','Liberado')
-
-            (ctmp)->( MsUnlock() )
-          endif
-         Endif   
-         (cAlias)->( dbSkip() )
-   EndDo
-
-   (calias)->(DbCloseArea()) 
+   MsgRun("Criando tabela de dados. Aguarde.....", "Processando", {|| RunProc() })
 
     dbSelectArea(ctmp)
     (ctmp)->( dbgotop() )
@@ -185,10 +139,10 @@ User Function PCPM070()
     oArea:AddPanel(100,100,"oOption")
     oOption := oArea:GetPanel("oOption")
 
-    oBtn1 := TButton():New( 1,202,'Gravar Revisões' ,oOption, bGrava,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+    oBtn1 := TButton():New( 1,202,'Observações' ,oOption, bGrava,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
     oBtn1:Align := CONTROL_ALIGN_TOP
 
-    oBtn8 := TButton():New( 1,202,'Observação' ,oOption, BFiltra,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+    oBtn8 := TButton():New( 1,202,'xxx' ,oOption, BFiltra,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
     oBtn8:Align := CONTROL_ALIGN_TOP    
 
     oBtn4 := TButton():New( 1,202,'xxx' ,oOption, bSolic,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
@@ -200,7 +154,7 @@ User Function PCPM070()
     oBtn5 := TButton():New( 1,202,'xx' ,oOption, bF04,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
     oBtn5:Align := CONTROL_ALIGN_TOP
 
-    oBtn3 := TButton():New( 1,202,'xx' ,oOption, bGraf,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+    oBtn3 := TButton():New( 1,202,'Relatorio' ,oOption, bGraf,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
     oBtn3:Align := CONTROL_ALIGN_TOP
 
     oBtn6 := TButton():New( 1,202,'xx' ,oOption, bF05,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
@@ -258,7 +212,7 @@ User Function PCPM070()
 
     //oBrowse:setAfterAddLine( { || posIncLine()} )
     oBrowse:setEditCell( .T.,{ || PM070VLD() } )
-
+   oBrowse:Refresh(.T.)	
    oBrowse:Activate()
 
    ACTIVATE MSDIALOG oDlgMark CENTERED
@@ -267,6 +221,81 @@ User Function PCPM070()
    FwRestArea(aArea)
 Return
 
+Static Function RunProc()
+   Local aArea := FwgetArea()
+   Local cQuery  as character 
+   Local cAlias  := "B"+getNextAlias()
+   Local nTotal   := 0
+
+   cQuery:="Select SA1.A1_NOME     NOME "+CRLF
+   cQuery+="		,SC6.C6_NUM       PEDIDO "+CRLF
+   cQuery+="		,SC6.C6_ITEM      ITEM "+CRLF
+   cQuery+="		,SC6.C6_PRODUTO   PRODUTO "+CRLF
+   cQuery+="		,SB1.B1_DESC      DESCRICAO "+CRLF
+   cQuery+="		,SC6.C6_LOCAL     ARMAZEM "+CRLF
+   cQuery+="		,SC6.C6_QTDVEN    QUANT "+CRLF
+   cQuery+="		,SB2.B2_QATU      SALDO "+CRLF
+   cQuery+="from " + RetSqlName("SC6") + " SC6 "+CRLF
+   cQuery+="INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND SC5.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND SB1.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="INNER JOIN " + RetSqlName("SA1") + " SA1 ON A1_FILIAL = C6_FILIAL AND A1_COD = C6_CLI AND A1_LOJA = C6_LOJA AND SA1.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="LEFT JOIN  " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = C6_FILIAL AND B2_LOCAL = C6_LOCAL AND B2_COD = SC6.C6_PRODUTO AND SB2.D_E_L_E_T_= ' ' "+CRLF
+   cQuery+="Where SC6.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="AND SC6.C6_FILIAL = '"+FWxFilial("SC6")+"'  "+CRLF
+   cQuery+="AND SC6.C6_NOTA = ' ' "+CRLF
+   cQuery+="AND SC5.C5_EMISSAO BETWEEN '"+Dtos(dDataIni)+"' AND '"+Dtos(dDataFim)+"' "+CRLF
+   cQuery+="ORDER BY SC6.C6_NUM "+CRLF
+
+   DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+ 
+   IF (cAlias)->(Eof())
+      (cAlias)->(DbCloseArea())   
+       FwRestArea(aArea)
+      Return
+   endif
+
+   dbselectArea(cAlias)
+   (cAlias)->( dbGoTop() )
+   While (cAlias)->( !Eof())
+         nTotal := PCPM70QTD((cAlias)->PRODUTO,(cAlias)->ARMAZEM)
+         dbselectarea(ctmp)
+         (ctmp)->( dbSetOrder(1))
+         if (ctmp)->( !dbSeek(FWxFilial("SC6")+(cAlias)->PEDIDO+(cAlias)->PRODUTO,.T.))
+
+          IF RecLock(ctmp,.T.)
+            TMP_FILIAL := FWxFilial("SC6")
+            TMP_NOME   := (cAlias)->NOME
+            TMP_NUM    := (cAlias)->PEDIDO
+            TMP_ITEM   := (cAlias)->ITEM
+            TMP_COD    := (cAlias)->PRODUTO
+            TMP_DESC   := (cAlias)->DESCRICAO
+            TMP_LOCAL  := (cAlias)->ARMAZEM
+            TMP_QTD    := (cAlias)->QUANT
+            TMP_SALDO  := (cAlias)->SALDO
+            TMP_TOTAL  := nTotal
+            TMP_QTAPU  := (cAlias)->SALDO - nTotal
+            TMP_STATUS := IIF(TMP_QTAPU<0,'Bloqueado','Liberado')
+
+            (ctmp)->( MsUnlock() )
+          endif
+         Endif   
+         (cAlias)->( dbSkip() )
+   EndDo
+
+   (calias)->(DbCloseArea()) 
+
+Return
+
+/*/{Protheus.doc} PCPM70QTD
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 07/11/2024
+@param cProduto, character, param_description
+@param cLocal, character, param_description
+@return variant, return_description
+/*/
 Static Function PCPM70QTD(cProduto,cLocal)
     Local aArea := FwgetArea()
    Local cQuery  as character 
@@ -331,5 +360,73 @@ static function PM070VLD()
 Return(.T.)
 
 Static Function PM070FIL()
+  Local aArea := FwgetArea()
+  Local aRet  	  :=	{}
+  Local aPergs    := {}
+  Local cProduto  := Space(TamSX3("B1_COD")[01])
+  Local nTipo    := 1
+  Local cObserv   := ' '
+  Local aArray    := {"1=Bloqueado","2=Liberado","3=Ag. Envase","4=Ag. Estoque"}
+
+aAdd(aPergs, {1, "Produto De" ,  cProduto,  "", ".T.", "SB1", ".T.", 80,  .F.})
+aAdd(aPergs, {2, "Tipo"       ,  nTipo, aArray,     122, ".T.", .F.})
+ 
+ If ParamBox(aPergs, "Informe os parâmetros",aRet)  
+      cProduto := aRet[1]
+		cObserv  := Substring(aArray[val(aRet[2])],3,10)
+ Else
+		MsgAlert("Encerrado")
+		Return
+ EndIf
+   
+  MsgRun("Atualizando a  tabela de dados. Aguarde.....", "Processando", {|| RunAlter(cProduto,cObserv) })
+  oBrowse:Refresh(.T.)	
+  FWRestArea(aArea)
+
+Return
+
+
+Static Function RunAlter(cProduto,cObserv)
+Local aArea := FwgetArea()
+Local lRet  := .F.
+
+   dbselectArea(ctmp)
+   (ctmp)->( dbGoTop() )
+   While (ctmp)->( !Eof())
+       IF TMP_COD = cProduto
+          IF RecLock(ctmp,.F.)
+            TMP_STATUS := cObserv
+            (ctmp)->( MsUnlock() )
+            lRet  := .T.
+          endif
+      Endif   
+      (ctmp)->( dbSkip() )
+   EndDo
+   IF !lRet
+      MsgAlert("Não encontrou movimentacao...")
+   else
+    dbSelectArea(ctmp)
+    (ctmp)->( dbgotop() )
+    While (ctmp)->( !Eof() )
+        aAdd( aBrowse, {        (ctmp)->TMP_NOME,;
+                                (ctmp)->TMP_NUM,;
+                                (ctmp)->TMP_ITEM,;
+                                (ctmp)->TMP_COD,;
+                                (ctmp)->TMP_DESC,;
+                                (ctmp)->TMP_LOCAL,;
+                                (ctmp)->TMP_QTD,;
+                                (ctmp)->TMP_SALDO,;
+                                (ctmp)->TMP_TOTAL,;
+                                (ctmp)->TMP_QTAPU,;
+                                (ctmp)->TMP_STATUS,;
+                                .F.})
+        (ctmp)->(dbSkip() )
+    EndDo
+   ENDIF
+
+FWRestArea(aArea)
+Return
+
+Static Function  PM070RPT()
 
 Return
