@@ -7,19 +7,22 @@
  
  
 User Function PCPE070()
+      Local aArea        := GetArea()
+      Private cPerg 		:= PADR("PCPR070",10)
+      Pergunte(cPerg,.T.)	 
+      MsgRun("Gerando a Planilha.    Aguarde.....", "Processando", {|| RunProc() })
+      RestArea(aArea)
+Return
+
+Static Function RunProc()
     Local aArea        := GetArea()
     Local cQuery       := ""
     Local cQry         := ""
     Local cQry3        := " "
+    Local cQry4        := " "
     Local oFWMsExcel
     Local oExcel
     Local cArquivo    := GetTempPath()+'PCPE070.xml'
-    
-    Private cPerg 		:= PADR("PCPR070",10)
-    Pergunte(cPerg,.T.)	 
-
-    //Pegando os dados
-
 
     cQry:= "SELECT STATUS AS 'STATUS',ANO AS 'ANO', "+cEof
     cQry+= "		ISNULL([1],0) AS 'JAN', "+cEof
@@ -55,7 +58,7 @@ User Function PCPE070()
 
 
 
-    cQuery :="Select ZB_COD,ZB_DESC,ZB_LOCAL,ZB_NOME,ZB_QTD,ZB_SALDO,ZB_TOTAL,ZB_QTAPU,ZB_STATUS  "+cEof
+    cQuery :="Select ZB_COD,ZB_DESC,ZB_LOCAL,ZB_NOME,ZB_QTD,ZB_SALDO,ZB_TOTAL,ZB_QTAPU,ZB_STATUS,ZB_SITUA,ZB_CLASSE,ZB_TIPO  "+cEof
     cQuery +="From "+RetSqlName("SZB")+" SZB  "+cEof
     cQuery +="Where SZB.D_E_L_E_T_ = ' '  "+cEof
     cQuery +="AND ZB_FILIAL = '0803' "+cEof
@@ -70,13 +73,13 @@ User Function PCPE070()
    TCQuery cQuery New Alias "QRYPRO"
      
 
-    cQry3:= "Select ZB_STATUS,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
+    cQry3:= "Select ZB_SITUA,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
     cQry3+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQry3+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQry3+= "AND ZB_FILIAL = '0803' "+cEof
     cQry3+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
-    cQry3+= "GROUP BY ZB_STATUS "+cEof
-    cQry3+= "ORDER BY ZB_STATUS "+cEof
+    cQry3+= "GROUP BY ZB_SITUA "+cEof
+    cQry3+= "ORDER BY ZB_SITUA "+cEof
 
     If  Select("QRYPER") > 0
             DbSelectArea("QRYPER")
@@ -84,6 +87,22 @@ User Function PCPE070()
     Endif
 
    TCQuery cQry3 New Alias "QRYPER"
+
+    cQry4:= "Select ZB_CLASSE,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
+    cQry4+= "from "+RetSqlName("SZB")+" SZB "+cEof
+    cQry4+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
+    cQry4+= "AND ZB_FILIAL = '0803' "+cEof
+    cQry4+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    cQry4+= "and RTRIM(ZB_SITUA) = 'Bloqueado'  "+cEof
+    cQry4+= "GROUP BY ZB_CLASSE "+cEof
+    cQry4+= "ORDER BY ZB_CLASSE "+cEof
+
+    If  Select("QRYBLQ") > 0
+            DbSelectArea("QRYBLQ")
+            DbCloseArea()
+    Endif
+
+   TCQuery cQry4 New Alias "QRYBLQ"
 
     //Criando o objeto que irá gerar o conteúdo do Excel
     oFWMsExcel := FWMSExcel():New()
@@ -95,18 +114,24 @@ User Function PCPE070()
     oFWMsExcel:AddTable("Relacao Produtos","Produtos")
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Produto",1)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Descricao",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Situacao",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Classe",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Tipo",1)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Status",1)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Nome",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Razao social do cliente",1)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Quantidade",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Saldo",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Total",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Apurado",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Disponivel",2,2)
     DbSelectArea("QRYPRO")
         //Criando as Linhas... Enquanto não for fim da query
     While !(QRYPRO->(EoF()))
             oFWMsExcel:AddRow("Relacao Produtos","Produtos",{;
                                                                     QRYPRO->ZB_COD,;
                                                                     QRYPRO->ZB_DESC,;
+                                                                    QRYPRO->ZB_SITUA,;
+                                                                    QRYPRO->ZB_CLASSE,;
+                                                                    QRYPRO->ZB_TIPO,;                      
                                                                     QRYPRO->ZB_STATUS,;
                                                                     QRYPRO->ZB_NOME,;
                                                                     QRYPRO->ZB_QTD,;
@@ -134,7 +159,7 @@ User Function PCPE070()
     //Criando as Linhas... Enquanto não for fim da query
     While !(QRYPER->(EoF()))
             oFWMsExcel:AddRow("Percentual","Indicadores",{;
-                                                                    QRYPER->ZB_STATUS,;
+                                                                    QRYPER->ZB_SITUA,;
                                                                     QRYPER->QUANT,;
                                                                     (QRYPER->QUANT/nQuant)*100;
                                                                      })
@@ -143,6 +168,30 @@ User Function PCPE070()
             QRYPER->(DbSkip())
     EndDo
 
+    oFWMsExcel:AddworkSheet("Bloqueados") //Não utilizar número junto com sinal de menos. Ex.: 1-
+        //Criando a Tabela
+    oFWMsExcel:AddTable("Bloqueados","projecao")
+        //Criando Colunas
+    oFWMsExcel:AddColumn("Bloqueados","projecao","Tipo",1,1) //1 = Modo Texto
+    oFWMsExcel:AddColumn("Bloqueados","projecao","Quantidade",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Bloqueados","projecao","Percente",2,2) //2 = Valor sem R$
+
+    nQuant := CalcBloq()
+    
+    DbSelectArea("QRYBLQ")
+    //Criando as Linhas... Enquanto não for fim da query
+    While !(QRYBLQ->(EoF()))
+            oFWMsExcel:AddRow("Bloqueados","projecao",{;
+                                                                    QRYBLQ->ZB_CLASSE,;
+                                                                    QRYBLQ->QUANT,;
+                                                                    (QRYBLQ->QUANT/nQuant)*100;
+                                                                     })
+         
+            //Pulando Registro
+            QRYBLQ->(DbSkip())
+    EndDo
+
+/*
     //Aba 03 - Estatistica do ano
     oFWMsExcel:AddworkSheet("Estatistica") //Não utilizar número junto com sinal de menos. Ex.: 1-
         //Criando a Tabela
@@ -186,7 +235,7 @@ User Function PCPE070()
             //Pulando Registro
             QRYSZB->(DbSkip())
     EndDo
-
+*/
     //Ativando o arquivo e gerando o xml
     oFWMsExcel:Activate()
     oFWMsExcel:GetXMLFile(cArquivo)
@@ -211,6 +260,33 @@ Static Function CalcTotal()
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '0803' "+cEof
+    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+
+    If  Select("QRYCAL") > 0
+            DbSelectArea("QRYCAL")
+            DbCloseArea()
+    Endif
+
+    TCQuery cQuery New Alias "QRYCAL"
+
+    if !(QRYCAL->(EoF()))
+       lRet := QRYCAL->Quant
+    endif
+
+    RestArea(aArea)
+Return(lRet)
+
+
+Static Function CalcBloq()
+    Local aArea        := GetArea()
+    Local cQuery       := ""
+    Local lRet         := 0
+
+    cQuery:= "Select ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
+    cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
+    cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
+    cQuery+= "AND ZB_FILIAL = '0803' "+cEof
+    cQuery+= "and RTRIM(ZB_SITUA) = 'Bloqueado'  "+cEof
     cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
 
     If  Select("QRYCAL") > 0

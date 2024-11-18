@@ -58,7 +58,7 @@ User Function PCPM070()
  
     Private ctmp    := "A"+GetNextAlias()
     Private oTable  := FWTemporaryTable():New( ctmp ) 
-    Private nPosCli := 01 ,nPosPed := 02 ,nPosItem := 03 ,nPosPro := 04 ,nPosDesc := 05 ,nPosLocal := 06 ,nPosQtd := 07 ,nPosSld := 08 ,nPosTot := 09 ,nPosApu := 10 ,nPossta := 11,nPossit := 12,nPoslin := 13,NPOSDEL := 14
+    Private nPosCli := 01 ,nPosPed := 02 ,nPosItem := 03 ,nPosPro := 04 ,nPosDesc := 05 ,nPosLocal := 06 ,nPosQtd := 07 ,nPosSld := 08 ,nPosTot := 09 ,nPosApu := 10 ,nPossta := 11,nPosDel := 12
 
     Private aBrowse    := {}
     Private oBrowse    := FwBrowse():New()
@@ -86,7 +86,8 @@ User Function PCPM070()
     aAdd(aFields,{"TMP_QTAPU"  	, GetSx3Cache("C2_QUANT","X3_TIPO")		   ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
     aAdd(aFields,{"TMP_STATUS"  	, GetSx3Cache("A1_NREDUZ","X3_TIPO")	   ,tamSx3("A1_NREDUZ")[1]	    ,tamSx3("A1_NREDUZ")[2]})
     aAdd(aFields,{"TMP_SITUA"  	, GetSx3Cache("A1_NREDUZ","X3_TIPO")	   ,tamSx3("A1_NREDUZ")[1]	    ,tamSx3("A1_NREDUZ")[2]})
-    aAdd(aFields,{"TMP_LINHA"  	, GetSx3Cache("A1_NREDUZ","X3_TIPO")	   ,tamSx3("A1_NREDUZ")[1]	    ,tamSx3("A1_NREDUZ")[2]})
+    aAdd(aFields,{"TMP_CLASS"  	, GetSx3Cache("A1_NREDUZ","X3_TIPO")	   ,tamSx3("A1_NREDUZ")[1]	    ,tamSx3("A1_NREDUZ")[2]})
+    aAdd(aFields,{"TMP_BASE"  	, GetSx3Cache("A1_NREDUZ","X3_TIPO")	   ,tamSx3("A1_NREDUZ")[1]	    ,tamSx3("A1_NREDUZ")[2]})
 
 
     oTable:SetFields( aFields )
@@ -123,8 +124,6 @@ User Function PCPM070()
                                 (ctmp)->TMP_TOTAL,;
                                 (ctmp)->TMP_QTAPU,;
                                 (ctmp)->TMP_STATUS,;
-                                (ctmp)->TMP_SITUA,;
-                                (ctmp)->TMP_LINHA,;
                                 .F.})
         (ctmp)->(dbSkip() )
     EndDo
@@ -224,13 +223,9 @@ User Function PCPM070()
     
     oBrowse:addColumn({"Total_Qtd", {||aBrowse[oBrowse:nAt,nPosTot]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 1, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XTOTALQTD",, .F., .T.,, "XTOTALQTD"})
     
-    oBrowse:addColumn({"Apurados" , {||aBrowse[oBrowse:nAt,nPosApu]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 1, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XAPURADO",, .F., .T.,, "XAPURADO"})
+    oBrowse:addColumn({"Disponivel" , {||aBrowse[oBrowse:nAt,nPosApu]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 1, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XAPURADO",, .F., .T.,, "XAPURADO"})
     
     oBrowse:addColumn({"Status"   , {||aBrowse[oBrowse:nAt,nPossta]}, GetSx3Cache("A1_NREDUZ","X3_TIPO"), pesqPict("SA1","A1_NREDUZ") , 1, tamSx3("A1_NREDUZ")[1] ,, .T. ,, .F.,, "XSTATUS",, .F., .T.,, "XSTATUS"})
-
-   oBrowse:addColumn({"Situacao"   , {||aBrowse[oBrowse:nAt,nPossit]}, GetSx3Cache("A1_NREDUZ","X3_TIPO"), pesqPict("SA1","A1_NREDUZ") , 1, tamSx3("A1_NREDUZ")[1] ,, .T. ,, .F.,, "XSITUACAO",, .F., .T.,, "XSITUACAO"})
-
-   oBrowse:addColumn({"Linha"   , {||aBrowse[oBrowse:nAt,nPoslin]}, GetSx3Cache("A1_NREDUZ","X3_TIPO"), pesqPict("SA1","A1_NREDUZ") , 1, tamSx3("A1_NREDUZ")[1] ,, .T. ,, .F.,, "XLINHA",, .F., .T.,, "XLINHA"})
 
     oBrowse:acolumns[nPossta]:ledit     := .T.
     oBrowse:acolumns[nPossta]:cReadVar:= 'aBrowse[oBrowse:nAt,nPossta]'
@@ -270,7 +265,13 @@ Static Function RunProc()
    cQuery+="		,SC6.C6_LOCAL     ARMAZEM "+CRLF
    cQuery+="		,SC6.C6_QTDVEN    QUANT "+CRLF
    cQuery+="		,SB2.B2_QATU      SALDO "+CRLF
-   cQuery+="		,SB1.B1_XLINHA    LINHA "+CRLF
+   cQuery+="     ,CASE WHEN SB1.B1_XCLASSI = 'L' THEN 'LINHA' ELSE 'ESPECIAL' END AS Classe "+CRLF
+   cQuery+="	  ,CASE WHEN SB1.B1_XTPBASE = 'A' THEN 'Agua' "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'S' THEN 'Solvente' "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'C' THEN 'Acrilico' "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'V' THEN 'Viniculo' "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'O' THEN 'Outros' "+CRLF
+   cQuery+="			else 'Sem Tipo' end AS Tipo "+CRLF
    cQuery+="from " + RetSqlName("SC6") + " SC6 "+CRLF
    cQuery+="INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND SC5.D_E_L_E_T_ = ' ' "+CRLF
    cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND SB1.D_E_L_E_T_ = ' ' "+CRLF
@@ -316,7 +317,8 @@ Static Function RunProc()
                   TMP_QTAPU   := (cAlias)->SALDO - nTotal
                   TMP_STATUS  := IIF(TMP_QTAPU<0,'Bloqueado','Liberado')
                   TMP_SITUA   := IIF(TMP_QTAPU<0,'Bloqueado','Liberado')
-                  TMP_LINHA   := (cAlias)->LINHA
+                  TMP_CLASS   := (cAlias)->CLASSE
+                  TMP_BASE    := (cAlias)->TIPO
                   (ctmp)->( MsUnlock() )
                endif
          Endif   
@@ -368,7 +370,8 @@ Static Function RunInc()
                SZB->ZB_STATUS  := (ctmp)->TMP_STATUS
                SZB->ZB_PERIODO := AnoMes(dDataIni)
                SZB->ZB_SITUA   := (ctmp)->TMP_SITUA
-               SZB->ZB_LINHA   := (ctmp)->TMP_LINHA
+               SZB->ZB_CLASSE  := (ctmp)->TMP_CLASS
+               SZB->ZB_TIPO    := (ctmp)->TMP_BASE
 
                ("SZB")->( MsUnlock() )
             else
@@ -555,8 +558,6 @@ Local lRet  := .F.
                                     (ctmp)->TMP_TOTAL,;
                                     (ctmp)->TMP_QTAPU,;
                                     (ctmp)->TMP_STATUS,;
-                                    (ctmp)->TMP_SITUA,;
-                                    (ctmp)->TMP_LINHA,;
                                     .F.})
             (ctmp)->(dbSkip() )
          EndDo
