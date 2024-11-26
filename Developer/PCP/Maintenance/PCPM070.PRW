@@ -68,8 +68,10 @@ User Function PCPM070()
     bSair  := {|| Iif(MsgYesNo('Deseja realmente sair?','Gerenciamento'),(oDlgMark:End()),NIL)}
     bGrava := {|| PM070FIL() }
     bPrt1  := {|| U_PCPR070() }
-    bGraf  := {|| U_PCPG070() }
+    //bGraf  := {|| U_PCPG070() }
     bExcel := {|| U_PCPE070() }
+    //bTela  := {|| U_PCPP070() }
+    
 
     aAdd(aFields,{"TMP_FILIAL"	, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
     aAdd(aFields,{"TMP_CLIE"  	, GetSx3Cache("A1_COD","X3_TIPO")		   ,tamSx3("A1_COD")[1]	       ,tamSx3("A1_COD")[2]})
@@ -158,26 +160,26 @@ User Function PCPM070()
     oBtn4 := TButton():New( 1,202,'Exporta Excell' ,oOption, bExcel,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
     oBtn4:Align := CONTROL_ALIGN_TOP
 
-    oBtn2 := TButton():New( 1,202,'xx' ,oOption, bTela,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
-    oBtn2:Align := CONTROL_ALIGN_TOP    
+   // oBtn2 := TButton():New( 1,202,'xx' ,oOption, bTela,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+   // oBtn2:Align := CONTROL_ALIGN_TOP    
 
-    oBtn5 := TButton():New( 1,202,'xx' ,oOption, bF04,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
-    oBtn5:Align := CONTROL_ALIGN_TOP
+   // oBtn5 := TButton():New( 1,202,'xx' ,oOption, bF04,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+   // oBtn5:Align := CONTROL_ALIGN_TOP
 
-    oBtn3 := TButton():New( 1,202,'Grafico' ,oOption, bGraf,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
-    oBtn3:Align := CONTROL_ALIGN_TOP
+   // oBtn3 := TButton():New( 1,202,'xx' ,oOption, bGraf,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+   // oBtn3:Align := CONTROL_ALIGN_TOP
 
-    oBtn6 := TButton():New( 1,202,'xx' ,oOption, bF05,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
-    oBtn6:Align := CONTROL_ALIGN_TOP
+   // oBtn6 := TButton():New( 1,202,'xx' ,oOption, bF05,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+   // oBtn6:Align := CONTROL_ALIGN_TOP
 
-    oBtn7 := TButton():New( 1,202,'xx' ,oOption, bF06,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
-    oBtn7:Align := CONTROL_ALIGN_TOP    
+   // oBtn7 := TButton():New( 1,202,'xx' ,oOption, bF06,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+   // oBtn7:Align := CONTROL_ALIGN_TOP    
 
-    oBtn9 := TButton():New( 1,202,'xx' ,oOption, bRl01,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
-    oBtn9:Align := CONTROL_ALIGN_TOP    
+   // oBtn9 := TButton():New( 1,202,'xx' ,oOption, bRl01,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+   // oBtn9:Align := CONTROL_ALIGN_TOP    
 
-    oBtn10 := TButton():New( 1,202,'xx' ,oOption, bRl02,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
-    oBtn10:Align := CONTROL_ALIGN_TOP    
+   // oBtn10 := TButton():New( 1,202,'xx' ,oOption, bRl02,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
+    //oBtn10:Align := CONTROL_ALIGN_TOP    
 
     oBtn2 := TButton():New( 1,202,'Sair'    ,oOption, bSair,35 ,15 ,,,.F. ,.T. ,.F. ,,.F. ,,,.F. )
     oBtn2:Align := CONTROL_ALIGN_BOTTOM
