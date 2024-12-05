@@ -81,7 +81,7 @@ Static Function ReportPrint(oReport)
             Exit
         EndIf        
 
-        oSection:Cell("PRODUTO"):SetValue ((("cQry01")->ZB_COD))
+        oSection:Cell("PRODUTO"):SetValue((("cQry01")->ZB_COD))
         oSection:Cell("DESCPROD"):SetValue((("cQry01")->ZB_DESC))	
         oSection:Cell("CLASSE"):SetValue((("cQry01")->ZB_CLASSE))	
         oSection:Cell("TIPO"):SetValue((("cQry01")->ZB_TIPO))	

@@ -55,23 +55,29 @@ User Function PCPM070()
     local oPanel  as object
     local oOption as object
     local oSide   as object
- 
+    Local aFilter := {}
+    Local nX      := 1
     Private ctmp    := "A"+GetNextAlias()
     Private oTable  := FWTemporaryTable():New( ctmp ) 
-    Private nPosCli := 01 ,nPosPed := 02 ,nPosItem := 03 ,nPosPro := 04 ,nPosDesc := 05 ,nPosLocal := 06 ,nPosQtd := 07 ,nPosSld := 08 ,nPosTot := 09 ,nPosApu := 10 ,nPossta := 11,nPosDel := 12
+    Private nPosCli := 01 ,nPosPed := 02 ,nPosItem := 03,nPosLead := 04 ,nPosPro := 05 ,nPosDesc := 06 ,nPosLocal := 07 ,nPosQtd := 08 ,nPosSld := 09 ,nPosTot := 10 ,nPosApu := 11 ,nPossta := 12,nPosDel := 13
 
     Private aBrowse    := {}
     Private oBrowse    := FwBrowse():New()
     Private dDataIni
     Private dDataFim
+   
+   aFields[nX][1] := "ZB_SITUA"
+   aFields[nX][2] := "Situacao"
+   aFields[nX][3] := "C" 
+   aFields[nX][4] := 25
+   aFields[nX][5] := 0
+   aFields[nX][6] := "@!"
 
-    bSair  := {|| Iif(MsgYesNo('Deseja realmente sair?','Gerenciamento'),(oDlgMark:End()),NIL)}
-    bGrava := {|| PM070FIL() }
-    bPrt1  := {|| U_PCPR070() }
-    //bGraf  := {|| U_PCPG070() }
-    bExcel := {|| U_PCPE070() }
-    //bTela  := {|| U_PCPP070() }
     
+    bSair  := {|| Iif(MsgYesNo('Deseja realmente sair?','Gerenciamento'),(oDlgMark:End()),NIL)}
+    bGrava := {|| PM070FIL(aBrowse[oBrowse:nAt][nPosPro]) }
+    bPrt1  := {|| U_PCPR071() }
+    bExcel := {|| U_PCPE070() }
 
     aAdd(aFields,{"TMP_FILIAL"	, GetSx3Cache("C2_FILIAL","X3_TIPO")		,tamSx3("C2_FILIAL")[1]	    ,tamSx3("C2_FILIAL")[2]})
     aAdd(aFields,{"TMP_CLIE"  	, GetSx3Cache("A1_COD","X3_TIPO")		   ,tamSx3("A1_COD")[1]	       ,tamSx3("A1_COD")[2]})
@@ -79,6 +85,7 @@ User Function PCPM070()
     aAdd(aFields,{"TMP_NOME"	   , GetSx3Cache("A1_NOME","X3_TIPO")		   ,tamSx3("A1_NOME")[1]	    ,tamSx3("A1_NOME")[2]})
     aAdd(aFields,{"TMP_NUM"  		, GetSx3Cache("C6_NUM","X3_TIPO")		   ,tamSx3("C6_NUM")[1]	       ,tamSx3("C6_NUM")[2]})
     aAdd(aFields,{"TMP_ITEM"  	, GetSx3Cache("C6_ITEM","X3_TIPO")		   ,tamSx3("C6_ITEM")[1]	    ,tamSx3("C6_ITEM")[2]})
+    aAdd(aFields,{"TMP_LEAD"  	, GetSx3Cache("C2_QUANT","X3_TIPO")		   ,tamSx3("C2_QUANT")[1]	    ,tamSx3("C2_QUANT")[2]})
     aAdd(aFields,{"TMP_COD"  		, GetSx3Cache("C6_PRODUTO","X3_TIPO")	   ,tamSx3("C6_PRODUTO")[1]	 ,tamSx3("C6_PRODUTO")[2]})
     aAdd(aFields,{"TMP_DESC"  	, GetSx3Cache("B1_DESC","X3_TIPO")		   ,tamSx3("B1_DESC")[1]	    ,tamSx3("B1_DESC")[2]})
     aAdd(aFields,{"TMP_LOCAL"  	, GetSx3Cache("C6_LOCAL","X3_TIPO")		   ,tamSx3("C6_LOCAL")[1]	    ,tamSx3("C6_LOCAL")[2]})
@@ -99,7 +106,7 @@ User Function PCPM070()
 
 	 aAdd(aPergs, {1, "Data De",  dDataDe,  "", ".T.", "", ".T.", 80,  .F.})
     aAdd(aPergs, {1, "Data Até", dDataAt,  "", ".T.", "", ".T.", 80,  .T.})
- 
+    
     If ParamBox(aPergs, "Informe os parâmetros",aRet)  
       dDataIni := aRet[1]
 		dDataFim := aRet[2]
@@ -115,9 +122,11 @@ User Function PCPM070()
     dbSelectArea(ctmp)
     (ctmp)->( dbgotop() )
     While (ctmp)->( !Eof() )
+   
         aAdd( aBrowse, {        (ctmp)->TMP_NOME,;
                                 (ctmp)->TMP_NUM,;
                                 (ctmp)->TMP_ITEM,;
+                                (ctmp)->TMP_LEAD,;
                                 (ctmp)->TMP_COD,;
                                 (ctmp)->TMP_DESC,;
                                 (ctmp)->TMP_LOCAL,;
@@ -187,14 +196,14 @@ User Function PCPM070()
     oArea:AddLayout ( "Default" )
     oLayout := oArea:GetLayout ( "Default" )
 
-    oArea:AddWindow ( 100, 100, "cId2","Estruturas", 3 , 3,oLayout, CONTROL_ALIGN_TOP )
+    oArea:AddWindow ( 100, 100, "cId2","Relação de Produtos Barrados", 3 , 3,oLayout, CONTROL_ALIGN_TOP )
     oArea:AddPanel(100,100,"oCenterPanel")
     oCenterPanel := oArea:GetPanel("oCenterPanel")
 
      if oBrowse != nil
         oBrowse:DeActivate()
      endif
-    
+   
     // Função de telas 
     
     oBrowse:SetOwner(oCenterPanel)
@@ -202,30 +211,33 @@ User Function PCPM070()
     oBrowse:setArray( aBrowse )
     oBrowse:disableConfig()
     oBrowse:disableReport()
-    //oBrowse:AddStatusColumns( { || BrwStatus() }, { || BrwLegend() } )
     oBrowse:setInsert( .T. ) 
+    oBrowse:SetFieldFilter(aFilter)
+    oBrowse:SetUseFilter(1,{|| .t.})
     oBrowse:Setdelete(.T.,{ || PM070DEL() } ) 
     oBrowse:SetBlkBackColor({|| IIf(aBrowse[oBrowse:nAt,nPosDel]=.T. , CLR_LIGHTGRAY , Nil )})
 
     oBrowse:addColumn({"Cliente" , {||aBrowse[oBrowse:nAt,nPosCli]}, GetSx3Cache("A1_NOME","X3_TIPO"), pesqPict("SA1","A1_NOME") , 1, tamSx3("A1_NOME")[1] ,, .T. ,, .F.,, "XA1_NOME",, .F., .T.,, "XA1_NOME"})
     
-    oBrowse:addColumn({"Pedido"  , {||aBrowse[oBrowse:nAt,nPosPed]}, GetSx3Cache("C6_NUM","X3_TIPO"), pesqPict("SC6","C6_NUM") , 1, tamSx3("C6_NUM")[1] ,, .T. ,, .F.,, "XC6_NUM",, .F., .T.,, "XC6_NUM"})
+    oBrowse:addColumn({"Pedido"  , {||aBrowse[oBrowse:nAt,nPosPed]}, GetSx3Cache("C6_NUM","X3_TIPO"), pesqPict("SC6","C6_NUM") , 0, tamSx3("C6_NUM")[1] ,, .T. ,, .F.,, "XC6_NUM",, .F., .T.,, "XC6_NUM"})
     
-    oBrowse:addColumn({"item"    , {||aBrowse[oBrowse:nAt,nPosItem]}, GetSx3Cache("C6_ITEM","X3_TIPO"), pesqPict("SC6","C6_ITEM") , 1, tamSx3("C6_ITEM")[1] ,, .T. ,, .F.,, "XC6_ITEM",, .F., .T.,, "XC6_ITEM"})
+    oBrowse:addColumn({"item"    , {||aBrowse[oBrowse:nAt,nPosItem]}, GetSx3Cache("C6_ITEM","X3_TIPO"), pesqPict("SC6","C6_ITEM") , 0, tamSx3("C6_ITEM")[1] ,, .T. ,, .F.,, "XC6_ITEM",, .F., .T.,, "XC6_ITEM"})
+
+    oBrowse:addColumn({"Lead Time"    , {||aBrowse[oBrowse:nAt,nPosLead]}, GetSx3Cache("ZB_LEAD","X3_TIPO"), pesqPict("SZB","ZB_LEAD") ,0, tamSx3("ZB_LEAD")[1] ,, .T. ,, .F.,, "XLEADTIME",, .F., .T.,, "XLEADTIME"})
     
     oBrowse:addColumn({"Produto" , {||aBrowse[oBrowse:nAt,nPosPro]}, GetSx3Cache("C6_PRODUTO","X3_TIPO"), pesqPict("SC6","C6_PRODUTO") , 1, tamSx3("C6_PRODUTO")[1] ,, .T. ,, .F.,, "XC6_PRODUTO",, .F., .T.,, "XC6_PRODUTO"})
     
     oBrowse:addColumn({"Descrição", {||aBrowse[oBrowse:nAt,nPosDesc]}, GetSx3Cache("B1_DESC","X3_TIPO"), pesqPict("SB1","B1_DESC") , 1, tamSx3("B1_DESC")[1] ,, .T. ,, .F.,, "XB1_DESC",, .F., .T.,, "XB1_DESC"})    
     
-    oBrowse:addColumn({"Local"    , {||aBrowse[oBrowse:nAt,nPosLocal]}, GetSx3Cache("C6_LOCAL","X3_TIPO"), pesqPict("SC6","C6_LOCAL") , 1, tamSx3("C6_LOCAL")[1] ,, .T. ,, .F.,, "XC6_LOCAL",, .F., .T.,, "XC6_LOCAL"})
+    oBrowse:addColumn({"Local"    , {||aBrowse[oBrowse:nAt,nPosLocal]}, GetSx3Cache("C6_LOCAL","X3_TIPO"), pesqPict("SC6","C6_LOCAL") , 0, tamSx3("C6_LOCAL")[1] ,, .T. ,, .F.,, "XC6_LOCAL",, .F., .T.,, "XC6_LOCAL"})
     
-    oBrowse:addColumn({"Quantidade", {||aBrowse[oBrowse:nAt,nPosQtd]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 1, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XC6_QTDVEN",, .F., .T.,, "XC6_QTDVEN"})
+    oBrowse:addColumn({"Quantidade", {||aBrowse[oBrowse:nAt,nPosQtd]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 2, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XC6_QTDVEN",, .F., .T.,, "XC6_QTDVEN"})
     
-    oBrowse:addColumn({"Saldo"    , {||aBrowse[oBrowse:nAt,nPosSld]}, GetSx3Cache("B2_QATU","X3_TIPO"), pesqPict("SB2","B2_QATU") , 1, tamSx3("B2_QATU")[1] ,, .T. ,, .F.,, "XB2_QATU",, .F., .T.,, "XB2_QATU"})
+    oBrowse:addColumn({"Saldo"    , {||aBrowse[oBrowse:nAt,nPosSld]}, GetSx3Cache("B2_QATU","X3_TIPO"), pesqPict("SB2","B2_QATU") , 2, tamSx3("B2_QATU")[1] ,, .T. ,, .F.,, "XB2_QATU",, .F., .T.,, "XB2_QATU"})
     
-    oBrowse:addColumn({"Total_Qtd", {||aBrowse[oBrowse:nAt,nPosTot]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 1, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XTOTALQTD",, .F., .T.,, "XTOTALQTD"})
+    oBrowse:addColumn({"Total_Qtd", {||aBrowse[oBrowse:nAt,nPosTot]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 2, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XTOTALQTD",, .F., .T.,, "XTOTALQTD"})
     
-    oBrowse:addColumn({"Disponivel" , {||aBrowse[oBrowse:nAt,nPosApu]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 1, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XAPURADO",, .F., .T.,, "XAPURADO"})
+    oBrowse:addColumn({"Disponivel" , {||aBrowse[oBrowse:nAt,nPosApu]}, GetSx3Cache("C6_QTDVEN","X3_TIPO"), pesqPict("SC6","C6_QTDVEN") , 2, tamSx3("C6_QTDVEN")[1] ,, .T. ,, .F.,, "XAPURADO",, .F., .T.,, "XAPURADO"})
     
     oBrowse:addColumn({"Status"   , {||aBrowse[oBrowse:nAt,nPossta]}, GetSx3Cache("A1_NREDUZ","X3_TIPO"), pesqPict("SA1","A1_NREDUZ") , 1, tamSx3("A1_NREDUZ")[1] ,, .T. ,, .F.,, "XSTATUS",, .F., .T.,, "XSTATUS"})
 
@@ -255,13 +267,14 @@ Static Function RunProc()
    Local aArea   := FwgetArea()
    Local cQuery  as character 
    Local cAlias  := "B"+getNextAlias()
-   Local nTotal  := 0
+   Local nTotal  := 0 
 
-   cQuery:="Select SA1.A1_NOME      NOME "+CRLF
+   cQuery:="Select REPLACE(SA1.A1_NOME,'eamp;','e')  NOME "+CRLF
    cQuery+="      ,SA1.A1_COD       CODCLI "+CRLF
    cQuery+="      ,SA1.A1_LOJA      LOJA "+CRLF
    cQuery+="		,SC6.C6_NUM       PEDIDO "+CRLF
    cQuery+="		,SC6.C6_ITEM      ITEM "+CRLF
+   cQuery+="	   ,DATEDIFF(DD,C5_EMISSAO, GETDATE())  LEAD "+CRLF
    cQuery+="		,SC6.C6_PRODUTO   PRODUTO "+CRLF
    cQuery+="		,SB1.B1_DESC      DESCRICAO "+CRLF
    cQuery+="		,SC6.C6_LOCAL     ARMAZEM "+CRLF
@@ -296,23 +309,41 @@ Static Function RunProc()
    dbselectArea(cAlias)
    (cAlias)->( dbGoTop() )
    While (cAlias)->( !Eof())
-
+         // Funcao que traz o total de quantidades
          nTotal := PCPM70QTD((cAlias)->PRODUTO,(cAlias)->ARMAZEM)
-   
+         //
          dbselectarea(ctmp)
          (ctmp)->( dbSetOrder(1))
          if (ctmp)->( !dbSeek(FWxFilial("SC6")+(cAlias)->PEDIDO+(cAlias)->PRODUTO,.T.))
 
                IF RecLock(ctmp,.T.)
                   TMP_FILIAL := FWxFilial("SC6")
-                  TMP_NOME    := (cAlias)->NOME
+                  TMP_NOME    := RemoveChar((cAlias)->NOME)
                   TMP_CLIE    := (cAlias)->CODCLI
                   TMP_LOJA    := (cAlias)->LOJA
                   TMP_NUM     := (cAlias)->PEDIDO
                   TMP_ITEM    := (cAlias)->ITEM
+                  TMP_LEAD    := (cAlias)->LEAD
                   TMP_COD     := (cAlias)->PRODUTO
                   TMP_DESC    := (cAlias)->DESCRICAO
                   TMP_LOCAL   := (cAlias)->ARMAZEM
+                  TMP_QTD     := (cAlias)->QUANT
+                  TMP_SALDO   := (cAlias)->SALDO
+                  TMP_TOTAL   := nTotal
+                  TMP_QTAPU   := (cAlias)->SALDO - nTotal
+                  TMP_STATUS  := IIF(TMP_QTAPU<0,'Bloqueado','Liberado')
+                  TMP_SITUA   := IIF(TMP_QTAPU<0,'Bloqueado','Liberado')
+                  TMP_CLASS   := (cAlias)->CLASSE
+                  TMP_BASE    := (cAlias)->TIPO
+                  (ctmp)->( MsUnlock() )
+               endif
+         else
+               IF RecLock(ctmp,.F.)
+                  TMP_NOME    := RemoveChar((cAlias)->NOME)
+                  TMP_CLIE    := (cAlias)->CODCLI
+                  TMP_LOJA    := (cAlias)->LOJA
+                  TMP_ITEM    := (cAlias)->ITEM
+                  TMP_LEAD    := (cAlias)->LEAD
                   TMP_QTD     := (cAlias)->QUANT
                   TMP_SALDO   := (cAlias)->SALDO
                   TMP_TOTAL   := nTotal
@@ -359,11 +390,12 @@ Static Function RunInc()
                SZB->ZB_FILIAL  :=xFilial("SZB")
                SZB->ZB_CLIENTE := (ctmp)->TMP_CLIE
                SZB->ZB_LOJA    := (ctmp)->TMP_LOJA
-               SZB->ZB_NOME    := (ctmp)->TMP_NOME
+               SZB->ZB_NOME    := RemoveChar((ctmp)->TMP_NOME)
                SZB->ZB_PEDIDO  := (ctmp)->TMP_NUM
                SZB->ZB_ITEM    := (ctmp)->TMP_ITEM
+               SZB->ZB_LEAD    := (ctmp)->TMP_LEAD
                SZB->ZB_COD     := (ctmp)->TMP_COD
-               SZB->ZB_DESC    := (ctmp)->TMP_DESC
+               SZB->ZB_DESC    := _NoTags((FwNoAccent((ctmp)->TMP_DESC)))
                SZB->ZB_LOCAL   := (ctmp)->TMP_LOCAL
                SZB->ZB_QTD     := (ctmp)->TMP_QTD
                SZB->ZB_SALDO   := (ctmp)->TMP_SALDO
@@ -489,21 +521,18 @@ description Rotina que permite escolher atraves de combo as opções que será grav
 @since 08/11/2024
 @return variant, return_description
 /*/
-Static Function PM070FIL()
+Static Function PM070FIL(cCodProd)
   Local aArea := FwgetArea()
   Local aRet  	  :=	{}
   Local aPergs    := {}
-  Local cProduto  := Space(TamSX3("B1_COD")[01])
-  Local nTipo    := 1
+  Local cProduto  := cCodProd
   Local cObserv   := ' '
-  Local aArray    := {"1=Bloqueado","2=Liberado","3=Ag. Envase","4=Ag. Estoque"}
-
   aAdd(aPergs, {1, "Produto De" ,  cProduto,  "", ".T.", "SB1", ".T.", 80,  .F.})
-  aAdd(aPergs, {2, "Tipo"       ,  nTipo, aArray,     122, ".T.", .F.})
- 
+  aAdd( aPergs ,{1,"Digite:   " , Upper(Space(100))    ,"","","","",110,.T.})
+
   If ParamBox(aPergs, "Informe os parâmetros",aRet)  
       cProduto := aRet[1]
-		cObserv  := Substring(aArray[val(aRet[2])],3,10)
+      cObserv  := aRet[2]
   Else
 		MsgAlert("Encerrado")
 		Return
@@ -584,3 +613,17 @@ Local lRet  := .F.
 
 FWRestArea(aArea)
 Return
+
+Static Function RemoveChar(cCampo)
+   Local lRet := ""
+   lRet := Strtran(cCampo,"&","",1)
+   lRet := Strtran(lRet,"$","",1)
+   lRet := Strtran(lRet,"#","",1)
+   lRet := Strtran(lRet,">","",1)
+   lRet := Strtran(lRet,"<","",1)
+   lRet := Strtran(lRet,"Ç","",1)
+   lRet := Strtran(lRet,"ç","",1)
+   lRet := Strtran(lRet,"!","",1)
+   lRet := Strtran(lRet,"=","",1)
+   lRet := Strtran(lRet,"Ç","",1)
+Return(lRet)

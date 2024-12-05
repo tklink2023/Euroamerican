@@ -35,14 +35,13 @@ Static Function ReportDef()
     oSection1 := TRSection():New(oReport,"",{"cQry01"},aOrdem)
 
     TRCell():New(oSection1,'FILIAL'		,'cQry01','Filial'     		    	,PesqPict('SG1',"G1_FILIAL")	,TamSX3("G1_FILIAL") [1]+1,,) 
-     TRCell():New(oSection1,'TIPO'   	,'cQry01','Tipo'         			,PesqPict('SB1',"B1_TIPO")		,TamSX3("B1_TIPO") [1]+1,,)  
+    TRCell():New(oSection1,'TIPOC'   	,'cQry01','Tipo'         			,PesqPict('SB1',"B1_TIPO")		,TamSX3("B1_TIPO") [1]+1,,)      
+    TRCell():New(oSection1,'TIPO'   	,'cQry01','Tipo'         			,PesqPict('SB1',"B1_TIPO")		,TamSX3("B1_TIPO") [1]+1,,)  
     TRCell():New(oSection1,'PRODUTO'	,'cQry01','Produto'     			,PesqPict('SG1',"G1_COD")		,TamSX3("G1_COD") [1]+1,,)  
     TRCell():New(oSection1,'DESCPROD'	,'cQry01','Descricao'     			,PesqPict('SB1',"B1_DESC")		,TamSX3("B1_DESC") [1]+1,,)  
     TRCell():New(oSection1,'SEQ'		,'cQry01','Seq'     		    	,PesqPict('SG1',"G1_TRT")		,TamSX3("G1_TRT") [1]+1,,) 
-    TRCell():New(oSection1,'TIPOC'   	,'cQry01','Tipo'         			,PesqPict('SB1',"B1_TIPO")		,TamSX3("B1_TIPO") [1]+1,,)  
 	TRCell():New(oSection1,'COMPONENTE'	,'cQry01','Componente'     			,PesqPict('SG1',"G1_COD")		,TamSX3("G1_COD") [1]+1,,)  
     TRCell():New(oSection1,'DESCCOMP'	,'cQry01','Descricao'     			,PesqPict('SB1',"B1_DESC")		,TamSX3("B1_DESC") [1]+1,,)  
-   
     TRCell():New(oSection1,'QTDE'		,'cQry01','Quantidade' 		    	,PesqPict('SG1',"G1_QUANT")		,TamSX3("G1_QUANT") [1]+1,,)  
 	TRCell():New(oSection1,'PERDA'		,'cQry01','Perda'   		    	,PesqPict('SG1',"G1_PERDA")		,TamSX3("G1_PERDA") [1]+1,,)  
     TRCell():New(oSection1,'CUSTD'		,'cQry01','Custo Stand'  	    	,PesqPict('SB1',"B1_CUSTD")		,TamSX3("B1_CUSTD") [1]+1,,) 
@@ -56,9 +55,6 @@ Static Function ReportDef()
     TRCell():New(oSection1,'REVFIM'		,'cQry01','Rev.Final'     			,PesqPict('SG1',"G1_REVFIM")	,TamSX3("G1_REVFIM") [1]+1,,)  
     TRCell():New(oSection1,'REVISA'		,'cQry01','Rev. em uso'  	       	,PesqPict('SB1',"B1_REVATU")	,TamSX3("B1_REVATU") [1]+1,,)
     TRCell():New(oSection1,'UDREV'		,'cQry01','Data'        	       	,PesqPict('SB1',"B1_UREV")		,TamSX3("B1_UREV") [1]+1,,)
-    //TRCell():New(oSection1,'MARGEM'		,'cQry01','Margem Prod'        		,PesqPict('SB9',"B9_CM1")		,TamSX3("B9_CM1") [1]+1,,)
-    //TRCell():New(oSection1,'MARGCP'		,'cQry01','Margem Comp'       		,PesqPict('SB9',"B9_CM1")		,TamSX3("B9_CM1") [1]+1,,)
-   
     TRCell():New(oSection1,'ESTOQUE'	,'cQry01','Saldo' 		        	,PesqPict('SG1',"G1_QUANT")		,TamSX3("G1_QUANT") [1]+1,,)  
     TRCell():New(oSection1,'EMPENHO'	,'cQry01','Empenho' 		    	,PesqPict('SG1',"G1_QUANT")		,TamSX3("G1_QUANT") [1]+1,,)  
     TRCell():New(oSection1,'DISPON'		,'cQry01','Disponivel' 		    	,PesqPict('SG1',"G1_QUANT")		,TamSX3("G1_QUANT") [1]+1,,)  
@@ -89,7 +85,7 @@ Static Function ReportPrint(oReport)
    cQuery +="	     SB1_A.B1_TIPO,     "+cEof 
    cQuery +=" 		 SB1_A.B1_CUSTD,    "+cEof 
    cQuery +="		 SB1_A.B1_CUSTNET,  "+cEof 
-   cQuery +="		 B9_CM1,            "+cEof 
+   cQuery +="		 B2_CM1 AS B9_CM1,  "+cEof 
    cQuery +="	     SB1_B.B1_TIPO TIPOC,"+cEof 
    cQuery +="		 SB1_B.B1_REVATU,   "+cEof 
    cQuery +="		 SB1_B.B1_UREV,     "+cEof 
@@ -113,7 +109,6 @@ Static Function ReportPrint(oReport)
    cQuery +="	  AND G1_COD BETWEEN '"+MV_PAR01+"' and '"+MV_PAR02+"' "+cEof
    cQuery +="	  and G1_REVINI >=   '"+MV_PAR04+"' "+cEof 
    cQuery +="	  and G1_REVFIM <=   '"+MV_PAR05+"' "+cEof 
-   //cQuery +="     AND G5_STATUS <> '2' "+cEof 
    cQuery +="	  ORDER BY G1_COD,G1_COMP,G1_REVINI,G1_REVFIM "+cEof 
 
 

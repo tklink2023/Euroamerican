@@ -191,7 +191,6 @@ Static Function RunProc()
             QRYBLQ->(DbSkip())
     EndDo
 
-/*
     //Aba 03 - Estatistica do ano
     oFWMsExcel:AddworkSheet("Estatistica") //Não utilizar número junto com sinal de menos. Ex.: 1-
         //Criando a Tabela
@@ -235,7 +234,7 @@ Static Function RunProc()
             //Pulando Registro
             QRYSZB->(DbSkip())
     EndDo
-*/
+
     //Ativando o arquivo e gerando o xml
     oFWMsExcel:Activate()
     oFWMsExcel:GetXMLFile(cArquivo)
