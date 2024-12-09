@@ -56,7 +56,7 @@ User Function PCPM070()
     local oOption as object
     local oSide   as object
     Local aFilter := {}
-    Local nX      := 1
+   
     Private ctmp    := "A"+GetNextAlias()
     Private oTable  := FWTemporaryTable():New( ctmp ) 
     Private nPosCli := 01 ,nPosPed := 02 ,nPosItem := 03,nPosLead := 04 ,nPosPro := 05 ,nPosDesc := 06 ,nPosLocal := 07 ,nPosQtd := 08 ,nPosSld := 09 ,nPosTot := 10 ,nPosApu := 11 ,nPossta := 12,nPosDel := 13
@@ -66,14 +66,8 @@ User Function PCPM070()
     Private dDataIni
     Private dDataFim
    
-   aFields[nX][1] := "ZB_SITUA"
-   aFields[nX][2] := "Situacao"
-   aFields[nX][3] := "C" 
-   aFields[nX][4] := 25
-   aFields[nX][5] := 0
-   aFields[nX][6] := "@!"
-
-    
+    Aadd(aFilter,{{"ZB_SITUA","Situacao","C",25,0,"@!"}})
+   
     bSair  := {|| Iif(MsgYesNo('Deseja realmente sair?','Gerenciamento'),(oDlgMark:End()),NIL)}
     bGrava := {|| PM070FIL(aBrowse[oBrowse:nAt][nPosPro]) }
     bPrt1  := {|| U_PCPR071() }

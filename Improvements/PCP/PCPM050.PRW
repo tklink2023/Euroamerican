@@ -66,6 +66,8 @@ user function PCPM050()
     Private aDespes:= {}
     Private nConsumoDia := 0.0000
     Private nEstDispDia := nEstSegDia := nEstSimDia := 0
+    // 
+    MsgRun("Atualizando dados  .....", "Aguardem...", {|| RunProc() })
 
      // Botões do painel lateral da tela
     bSair   := {|| Iif(MsgYesNo('Deseja realmente sair do gerenciamento?','Gerenciamento'),(oDlg:End()),NIL)}
@@ -107,8 +109,7 @@ user function PCPM050()
 		FROM %Table:SZJ% SZJ
 		WHERE SZJ.%NotDel%
 		and ZJ_FILIAL =  %xFilial:SZJ%
-      and ZJ_KEYUSER =  %Exp:__cUserID% 
-	    ORDER BY ZJ_PRODUTO
+	   ORDER BY ZJ_PRODUTO
     EndSQL
      If (cAlias)->(!EOF())
         While (cAlias)->(!EOF())
@@ -908,4 +909,83 @@ Static Function PCPCALCOM()
   FwRestArea(aArea)
 Return(nConsumo)
  
+Static Function RunProc()
+   Local aArea   := FwgetArea()
+   Local cQuery  as character 
+   Local cAlias  := "PCP_"+getNextAlias()
+
+      cQuery:="		Select B2_FILIAL	FILIAL                                                            "+CRLF
+      cQuery+="				,B2_COD		CODIGO                                                            "+CRLF
+      cQuery+="				,B1_DESC    DESCRICAO                                                         "+CRLF
+      cQuery+="				,B2_LOCAL	ALMOX                                                             "+CRLF
+      cQuery+="				,B2_QATU	   SALDO                                                             "+CRLF
+      cQuery+="				,B2_QEMP	   EMP                                                               "+CRLF
+      cQuery+="				,(B2_QATU - B2_QEMP) DISPO                                                    "+CRLF
+      cQuery+="				,ISNULL(ROUND((SELECT DIstinct AVG(Produzido) OVER(PARTITION BY Ano) AS Media "+CRLF
+      cQuery+="				  FROM ( Select	D4_COD as Produto,                                          "+CRLF
+      cQuery+="								Year(D4_DATA) as Ano,                                             "+CRLF
+      cQuery+="								Month(D4_DATA) as Mes,                                            "+CRLF
+      cQuery+="								Sum(D4_QTDEORI) as Produzido                                      "+CRLF
+      cQuery+="						 From  " + RetSqlName("SD4") + "  SD4                                   "+CRLF
+      cQuery+="						 Where SD4.D_E_L_E_T_ = ' '                                             "+CRLF
+      cQuery+="						 AND D4_FILIAL = B2_FILIAL                                              "+CRLF
+      cQuery+="						 AND Year(D4_DATA) = Year(Getdate())                                    "+CRLF
+      cQuery+="						 AND Month(D4_DATA) BETWEEN Month(GetDate())-6 AND Month(GetDate())     "+CRLF
+      cQuery+="						 AND D4_COD = B2_COD                                                    "+CRLF
+      cQuery+="						 Group By D4_COD, Year(D4_DATA),Month(D4_DATA) ) xxx),3),0) MEDIA       "+CRLF
+      cQuery+="		From  " + RetSqlName("SB2") + "  SB2                                                "+CRLF
+      cQuery+="		INNER JOIN  " + RetSqlName("SB1") + "  SB1 ON B1_COD = B2_COD AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' '"+CRLF
+      cQuery+="		Where SB2.D_E_L_E_T_ = ' '                                                          "+CRLF
+      cQuery+="		AND B2_FILIAL ='"+xFilial("SB2")+"'                                                 "+CRLF
+      cQuery+="		AND B2_LOCAL = B1_LOCPAD                                                            "+CRLF
+      cQuery+="		ORDER BY 1,2,3                                                                      "+CRLF
+
+   DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+   IF (cAlias)->(Eof())
+      (cAlias)->(DbCloseArea())   
+       FwRestArea(aArea)
+      Return
+   endif
+   dbselectArea(cAlias)
+   (cAlias)->( dbGoTop() )
+   While (cAlias)->( !Eof())
+   
+         dbSelectArea("SZJ")
+         SZJ->( dbSetOrder(1) )
+         IF SZJ->( !dbSeek(xFilial("SZJ") + (cAlias)->CODIGO,.T. ))
+            IF RecLock("SZJ",.T.)
+               SZJ->ZJ_FILIAL       :=  xFilial("SZJ")
+               SZJ->ZJ_PRODUTO      :=  (cAlias)->CODIGO 
+               SZJ->ZJ_LOCAL        :=  (cAlias)->ALMOX 
+               SZJ->ZJ_SALDO        :=  (cAlias)->SALDO
+               SZJ->ZJ_QEMP         :=  (cAlias)->EMP
+               SZJ->ZJ_DISPON       :=  (cAlias)->DISPO 
+               SZJ->ZJ_CONSUM       :=  (cAlias)->MEDIA 
+               SZJ->ZJ_CONSUD       :=  IIF((cAlias)->MEDIA > 0 , (cAlias)->MEDIA / 30 ,0 )
+               SZJ->ZJ_STOKDAY      :=  IIF((cAlias)->DISPO > 0 ,(cAlias)->DISPO / 30 , 0 )	
+               SZJ->ZJ_KEYUSER      :=  __cUserID 
+               SZJ->ZJ_DATA         :=  dDataBase               
+               SZJ->( MsUnlock() )
+            Endif
+         else
+            IF RecLock("SZJ",.F.)
+                SZJ->ZJ_SALDO       :=  (cAlias)->SALDO
+               SZJ->ZJ_QEMP         :=  (cAlias)->EMP
+               SZJ->ZJ_DISPON       :=  (cAlias)->DISPO 
+               SZJ->ZJ_CONSUM       :=  (cAlias)->MEDIA 
+               SZJ->ZJ_CONSUD       :=  IIF((cAlias)->MEDIA > 0 , (cAlias)->MEDIA / 30 ,0 )
+               SZJ->ZJ_STOKDAY      :=  IIF((cAlias)->DISPO > 0 ,(cAlias)->DISPO / 30 , 0 )	      
+               SZJ->( MsUnlock() )
+            Endif
+            
+         ENDIF
+
+         (cAlias)->( dbSkip() )
+   EndDo
+
+   (calias)->(DbCloseArea()) 
+
+    FwRestArea(aArea)   
+Return
  
