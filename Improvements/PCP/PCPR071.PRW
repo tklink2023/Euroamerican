@@ -17,6 +17,7 @@ User Function PCPR071()
     Private oReport
     Private cPerg 	:= PADR("PCPR070",10)
     Private cTitulo := OemToAnsi("Relação dos Produtos Barrados")
+    Private aCols   := {}
     oReport := ReportDef()
     oReport:PrintDialog()
 Return
@@ -103,7 +104,8 @@ Static Function ReportPrint(oReport)
     Local cQuer2        := ""
     Local nQuant        := 0
     Local nPercentual   := 0
-
+    Local nSomaPerc     := 0.00
+  
     dbSelectArea("SZB")
     ("SZB")->( dbSetOrder(2) )
     IF ("SZB")->( dbSeek( xFilial("SZB")+Alltrim(MV_PAR01) ) )
@@ -117,6 +119,11 @@ Static Function ReportPrint(oReport)
                     Exit
              EndIf        
 
+              IF UPPER(SZB->ZB_SITUA) <> 'BLOQUEADO'
+                   dbSelectArea("SZB")
+                   SZB->( dbSkip())
+                   LOOP
+              ENDIF
                 //----------------//
                 // Secao 01
                 //----------------//
@@ -171,45 +178,73 @@ Static Function ReportPrint(oReport)
        EndDo
     ENDIF 
 
-    cQuer1:= "Select ZB_SITUA,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
-    cQuer1+= "from "+RetSqlName("SZB")+" SZB "+cEof
-    cQuer1+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
-    cQuer1+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuer1+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
-    cQuer1+= "GROUP BY ZB_SITUA "+cEof
-    cQuer1+= "ORDER BY ZB_SITUA "+cEof
+   nQuant := CalcTotal()
+
+    oReport:SkipLine() 
+    oReport:PrintText("+-----------------------------------------------------------------------------------+",,oSection1:Cell("PRODUTO"):ColPos())
+    oReport:PrintText("| TOTAL DE STATUS                                                                   |",,oSection1:Cell("PRODUTO"):ColPos())
+    oReport:PrintText("+-----------------------------------------------------------------------------------+",,oSection1:Cell("PRODUTO"):ColPos())
+
+    // Abater os percentuais dos outros tipos
+    cQuera:= "Select ZB_STATUS,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
+    cQuera+= "from "+RetSqlName("SZB")+" SZB "+cEof
+    cQuera+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
+    cQuera+= "AND ZB_FILIAL = '0803' "+cEof
+    cQuera+= "AND UPPER(ZB_STATUS)  NOT IN ('BLOQUEADO','LIBERADO') "+cEof
+    cQuera+= "GROUP BY ZB_STATUS "+cEof
+    cQuera+= "ORDER BY ZB_STATUS "+cEof
 
     If  Select("QRYPER") > 0
             DbSelectArea("QRYPER")
             DbCloseArea()
     Endif
 
-    TCQuery cQuer1 New Alias "QRYPER"
-    oReport:SkipLine() 
-    oReport:SkipLine() 
+    TCQuery cQuera New Alias "QRYPER"
 
-    oReport:PrintText("+-----------------------------------------------------------------------------------+",,oSection1:Cell("PRODUTO"):ColPos())
-    oReport:PrintText("| TOTAL DE STATUS                                                                   |",,oSection1:Cell("PRODUTO"):ColPos())
-    oReport:PrintText("+-----------------------------------------------------------------------------------+",,oSection1:Cell("PRODUTO"):ColPos())
-
-     nQuant := CalcTotal()
-
+    nSomaPerc := 0.00
     DbSelectArea("QRYPER")
     //Criando as Linhas... Enquanto não for fim da query
     While !(QRYPER->(EoF()))    
+      nSomaPerc   += (QRYPER->QUANT/nQuant)*100
       nPercentual := (QRYPER->QUANT/nQuant)*100
-      oReport:PrintText(Alltrim(QRYPER->ZB_SITUA)+" Quantidade: "+cValtoChar(QRYPER->QUANT)+" Percentual: "+cValtoChar( Round(nPercentual,2))  )
+      oReport:PrintText(Alltrim(QRYPER->ZB_STATUS)+" - Quantidade: "+cValtoChar(QRYPER->QUANT)+"  - Percentual: "+cValtoChar( Round(nPercentual,2))  )      
       QRYPER->(DbSkip())  
     Enddo
+   
+    // Apenas os BLOQUEADOS E LIBERADOS
+    cQuer1:= "Select ZB_SITUA,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
+    cQuer1+= "from "+RetSqlName("SZB")+" SZB "+cEof
+    cQuer1+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
+    cQuer1+= "AND ZB_FILIAL = '0803' "+cEof
+    cQuer1+= "GROUP BY ZB_SITUA "+cEof
+    cQuer1+= "ORDER BY ZB_SITUA "+cEof
+    If  Select("QRYSTA") > 0
+            DbSelectArea("QRYSTA")
+            DbCloseArea()
+    Endif
+    TCQuery cQuer1 New Alias "QRYSTA"
+
+    DbSelectArea("QRYSTA")
+    //Criando as Linhas... Enquanto não for fim da query
+    While !(QRYSTA->(EoF()))    
+      nPercentual := (QRYSTA->QUANT/nQuant)*100
+      IF ALLTRIM(QRYSTA->ZB_SITUA) = 'BLOQUEADO'
+         nPercentual := nPercentual - nSomaPerc
+      ENDIF
+      oReport:PrintText(Alltrim(QRYSTA->ZB_SITUA)+"  -  Quantidade: "+cValtoChar(QRYSTA->QUANT)+" - Percentual: "+cValtoChar( Round(nPercentual,2))  )
+      QRYSTA->(DbSkip())  
+    Enddo
+
     oReport:PrintText("+-----------------------------------------------------------------------------------+",,oSection1:Cell("PRODUTO"):ColPos())
     oReport:SkipLine()   
 
+     // Listar as Classes
     cQuer2:= "Select ZB_CLASSE,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
     cQuer2+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuer2+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuer2+= "AND ZB_FILIAL = '0803' "+cEof
     cQuer2+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
-    cQuer2+= "and RTRIM(ZB_SITUA) = 'Bloqueado'  "+cEof
+    cQuer2+= "AND upper(ZB_SITUA) = 'BLOQUEADO'   "+cEof
     cQuer2+= "GROUP BY ZB_CLASSE "+cEof
     cQuer2+= "ORDER BY ZB_CLASSE "+cEof
 
@@ -220,7 +255,6 @@ Static Function ReportPrint(oReport)
 
    TCQuery cQuer2 New Alias "QRYBLQ"
     
-    oReport:SkipLine() 
     oReport:SkipLine() 
 
     oReport:PrintText("+-----------------------------------------------------------------------------------+",,oSection1:Cell("PRODUTO"):ColPos())
@@ -282,7 +316,7 @@ Static Function CalcBloq()
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuery+= "and RTRIM(ZB_SITUA) = 'Bloqueado'  "+cEof
+    cQuery+= "AND upper(ZB_SITUA) = 'BLOQUEADO'   "+cEof
     cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
 
     If  Select("QRYCAL") > 0
