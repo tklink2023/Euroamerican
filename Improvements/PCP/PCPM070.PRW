@@ -20,10 +20,6 @@ description Programa que ira substituir a planilha de programação TB-18
 /*/
 User Function PCPM070()
     Local aArea      := FwgetArea()
-    Local aRet       :=	{}
-    Local aPergs     := {}
-    Local dDataDe    := FirstDate(Date())
-    Local dDataAt    := LastDate(Date())
     
     Local oDlgMark as Object 
     Local aSize      := MsAdvSize()
@@ -55,19 +51,9 @@ User Function PCPM070()
     bGrava := {|| PM070FIL(aBrowse[oBrowse:nAt][nPosPro]) }
     bPrt1  := {|| U_PCPR071() }
     bExcel := {|| U_PCPE070() }
-
-	 aAdd(aPergs, {1, "Data De",  dDataDe,  "", ".T.", "", ".T.", 80,  .F.})
-    aAdd(aPergs, {1, "Data Até", dDataAt,  "", ".T.", "", ".T.", 80,  .T.})
-    
-    If ParamBox(aPergs, "Informe os parâmetros",aRet)  
-      dDataIni := aRet[1]
-		dDataFim := aRet[2]
-    Else
-		MsgAlert("Encerrado")
-		Return
-	 EndIf
    
     MsgRun("Criando tabela de dados. Aguarde.....", "Processando", {|| RunProc() })
+
     MsgRun("Carregando dados. Aguarde.....", "Processando", {|| CallBase() })
       
     oMainWnd:ReadClientCoors()
@@ -133,7 +119,7 @@ User Function PCPM070()
     oBrowse:addColumn({"Cliente" , {||aBrowse[oBrowse:nAt,nPosCli]}, GetSx3Cache("A1_NOME","X3_TIPO"), pesqPict("SA1","A1_NOME") , 1, tamSx3("A1_NOME")[1] ,, .T. ,, .F.,, "XA1_NOME",, .F., .T.,, "XA1_NOME"})
     oBrowse:addColumn({"Pedido"  , {||aBrowse[oBrowse:nAt,nPosPed]}, GetSx3Cache("C6_NUM","X3_TIPO"), pesqPict("SC6","C6_NUM") , 0, tamSx3("C6_NUM")[1] ,, .T. ,, .F.,, "XC6_NUM",, .F., .T.,, "XC6_NUM"})
     oBrowse:addColumn({"item"    , {||aBrowse[oBrowse:nAt,nPosItem]}, GetSx3Cache("C6_ITEM","X3_TIPO"), pesqPict("SC6","C6_ITEM") , 0, tamSx3("C6_ITEM")[1] ,, .T. ,, .F.,, "XC6_ITEM",, .F., .T.,, "XC6_ITEM"})
-    oBrowse:addColumn({"Lead Time"    , {||aBrowse[oBrowse:nAt,nPosLead]}, GetSx3Cache("ZB_LEAD","X3_TIPO"), pesqPict("SZB","ZB_LEAD") ,0, tamSx3("ZB_LEAD")[1] ,, .T. ,, .F.,, "XLEADTIME",, .F., .T.,, "XLEADTIME"})
+    oBrowse:addColumn({"Lead Time", {||aBrowse[oBrowse:nAt,nPosLead]}, GetSx3Cache("ZB_LEAD","X3_TIPO"), pesqPict("SZB","ZB_LEAD") ,0, tamSx3("ZB_LEAD")[1] ,, .T. ,, .F.,, "XLEADTIME",, .F., .T.,, "XLEADTIME"})
     oBrowse:addColumn({"Produto" , {||aBrowse[oBrowse:nAt,nPosPro]}, GetSx3Cache("C6_PRODUTO","X3_TIPO"), pesqPict("SC6","C6_PRODUTO") , 1, tamSx3("C6_PRODUTO")[1] ,, .T. ,, .F.,, "XC6_PRODUTO",, .F., .T.,, "XC6_PRODUTO"})
     oBrowse:addColumn({"Descrição", {||aBrowse[oBrowse:nAt,nPosDesc]}, GetSx3Cache("B1_DESC","X3_TIPO"), pesqPict("SB1","B1_DESC") , 1, tamSx3("B1_DESC")[1] ,, .T. ,, .F.,, "XB1_DESC",, .F., .T.,, "XB1_DESC"})    
     oBrowse:addColumn({"Local"    , {||aBrowse[oBrowse:nAt,nPosLocal]}, GetSx3Cache("C6_LOCAL","X3_TIPO"), pesqPict("SC6","C6_LOCAL") , 0, tamSx3("C6_LOCAL")[1] ,, .T. ,, .F.,, "XC6_LOCAL",, .F., .T.,, "XC6_LOCAL"})
@@ -168,36 +154,38 @@ Static Function RunProc()
    Local aArea   := FwgetArea()
    Local cQuery  as character 
    Local cAlias  := "B"+getNextAlias()
-   Local nTotal  := 0 
 
-   cQuery:="Select REPLACE(SA1.A1_NOME,'eamp;','e')  NOME "+CRLF
-   cQuery+="      ,SA1.A1_COD       CODCLI "+CRLF
-   cQuery+="      ,SA1.A1_LOJA      LOJA "+CRLF
-   cQuery+="		,SC6.C6_NUM       PEDIDO "+CRLF
-   cQuery+="		,SC6.C6_ITEM      ITEM "+CRLF
-   cQuery+="	   ,DATEDIFF(DD,C5_EMISSAO, GETDATE())  LEAD "+CRLF
-   cQuery+="		,SC6.C6_PRODUTO   PRODUTO "+CRLF
-   cQuery+="		,SB1.B1_DESC      DESCRICAO "+CRLF
-   cQuery+="		,SC6.C6_LOCAL     ARMAZEM "+CRLF
-   cQuery+="		,SC6.C6_QTDVEN    QUANT "+CRLF
-   cQuery+="		,SB2.B2_QATU      SALDO "+CRLF
-   cQuery+="     ,CASE WHEN SB1.B1_XCLASSI = 'L' THEN 'LINHA' ELSE 'ESPECIAL' END AS Classe "+CRLF
-   cQuery+="	  ,CASE WHEN SB1.B1_XTPBASE = 'A' THEN 'Agua' "+CRLF
-   cQuery+="			WHEN SB1.B1_XTPBASE = 'S' THEN 'Solvente' "+CRLF
-   cQuery+="			WHEN SB1.B1_XTPBASE = 'C' THEN 'Acrilico' "+CRLF
-   cQuery+="			WHEN SB1.B1_XTPBASE = 'V' THEN 'Viniculo' "+CRLF
-   cQuery+="			WHEN SB1.B1_XTPBASE = 'O' THEN 'Outros' "+CRLF
-   cQuery+="			else 'Sem Tipo' end AS Tipo "+CRLF
-   cQuery+="from " + RetSqlName("SC6") + " SC6 "+CRLF
-   cQuery+="INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND SC5.D_E_L_E_T_ = ' ' "+CRLF
-   cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND SB1.D_E_L_E_T_ = ' ' "+CRLF
-   cQuery+="INNER JOIN " + RetSqlName("SA1") + " SA1 ON A1_FILIAL = C6_FILIAL AND A1_COD = C6_CLI AND A1_LOJA = C6_LOJA AND SA1.D_E_L_E_T_ = ' ' "+CRLF
-   cQuery+="LEFT JOIN  " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = C6_FILIAL AND B2_LOCAL = C6_LOCAL AND B2_COD = SC6.C6_PRODUTO AND SB2.D_E_L_E_T_= ' ' "+CRLF
-   cQuery+="Where SC6.D_E_L_E_T_ = ' ' "+CRLF
-   cQuery+="AND SC6.C6_FILIAL = '"+FWxFilial("SC6")+"'  "+CRLF
-   cQuery+="AND SC6.C6_NOTA = ' ' "+CRLF
-   cQuery+="AND SC5.C5_EMISSAO BETWEEN '"+Dtos(dDataIni)+"' AND '"+Dtos(dDataFim)+"' "+CRLF
-   cQuery+="ORDER BY SC6.C6_NUM "+CRLF
+   cQuery:="   SELECT A1_NOME NOME "+CRLF
+   cQuery+="   ,PCP.Pedido "+CRLF
+   cQuery+="   ,PCP.Item "+CRLF
+   cQuery+="   ,PCP.Sequencia "+CRLF
+   cQuery+="   ,PCP.Produto "+CRLF
+   cQuery+="   ,PCP.Descrição  DESCR"+CRLF
+   cQuery+="   ,PCP.Local ALMOX "+CRLF
+   cQuery+="   ,PCP.QtdLiberar "+CRLF
+   cQuery+="   ,PCP.DataLiberacao "+CRLF
+   cQuery+="   ,PCP.DataEntrega "+CRLF
+   cQuery+="   ,PCP.SaldoEnderecado "+CRLF
+   cQuery+="   ,PCP.SaldoEnderecar "+CRLF
+   cQuery+="   ,PCP.SaldoEstoque "+CRLF
+   cQuery+="   ,PCP.TotalLiberado "+CRLF
+   cQuery+="   ,PCP.SaldoDisponivel "+CRLF
+   cQuery+="   ,PCP.Status Situacao"+CRLF
+   cQuery+="   ,SC5.C5_CLIENT, SC5.C5_LOJACLI "+CRLF
+   cQuery+="  ,DATEDIFF(DD,C5_EMISSAO, GETDATE())  LEAD  "+CRLF
+   cQuery+="  ,CASE WHEN SB1.B1_XCLASSI = 'L' THEN 'LINHA' ELSE 'ESPECIAL' END AS Classe "+CRLF 
+   cQuery+="  ,CASE WHEN SB1.B1_XTPBASE = 'A' THEN 'Agua'  "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'S' THEN 'Solvente'  "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'C' THEN 'Acrilico'  "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'V' THEN 'Viniculo'  "+CRLF
+   cQuery+="			WHEN SB1.B1_XTPBASE = 'O' THEN 'Outros'  "+CRLF
+   cQuery+="			else 'Sem Tipo' end AS Tipo  "+CRLF
+   cQuery+="FROM dbo.V_PCP_AnaliseLiberacoesPV PCP "+CRLF
+   cQuery+="INNER JOIN "+RetSqlName("SC5")+"  SC5 ON C5_FILIAL = PCP.Filial and C5_NUM = PCP.Pedido and SC5.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="INNER JOIN "+RetSqlName("SB1")+"  SB1 ON B1_COD = PCP.Produto and SB1.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="INNER JOIN "+RetSqlName("SA1")+"  SA1 ON A1_FILIAL = PCP.Filial and A1_COD = SC5.C5_CLIENTE AND A1_LOJA = SC5.C5_LOJACLI and SA1.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="WHERE PCP.Filial = '0803' "+CRLF
+   cQuery+="order by PCP.Pedido "+CRLF
 
    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
  
@@ -207,48 +195,61 @@ Static Function RunProc()
       Return
    endif
 
+
    dbselectArea(cAlias)
    (cAlias)->( dbGoTop() )
    While (cAlias)->( !Eof())
          // Funcao que traz o total de quantidades
-         nTotal := PCPM70QTD((cAlias)->PRODUTO,(cAlias)->ARMAZEM)
 
          dbSelectArea("SZB")
          ("SZB")->( dbSetOrder(1) )
 
-         if  ("SZB")->( !dbSeek(xFilial("SZB")+(cAlias)->CODCLI+(cAlias)->LOJA+(cAlias)->PEDIDO+(cAlias)->PRODUTO,.T.))
+         if  ("SZB")->( !dbSeek(xFilial("SZB")+(cAlias)->C5_CLIENT+(cAlias)->C5_LOJACLI+(cAlias)->Pedido+(cAlias)->Produto,.T.))
 
             IF RECLOCK("SZB",.T.)
 
                SZB->ZB_FILIAL  :=xFilial("SZB")
-               SZB->ZB_CLIENTE := (cAlias)->CODCLI
-               SZB->ZB_LOJA    := (cAlias)->LOJA
+               SZB->ZB_CLIENTE := (cAlias)->C5_CLIENT
+               SZB->ZB_LOJA    := (cAlias)->C5_LOJACLI
                SZB->ZB_NOME    := (cAlias)->NOME
-               SZB->ZB_PEDIDO  := (cAlias)->PEDIDO
-               SZB->ZB_ITEM    := (cAlias)->ITEM
+               SZB->ZB_PEDIDO  := (cAlias)->Pedido
+               SZB->ZB_ITEM    := (cAlias)->Item
+
+               SZB->ZB_SEQ     := (cAlias)->Sequencia
+               SZB->ZB_DTLIB   := stod((cAlias)->DataLiberacao)
+               SZB->ZB_DTENT   := stod((cAlias)->DataEntrega)
+
                SZB->ZB_LEAD    := (cAlias)->LEAD
-               SZB->ZB_COD     := (cAlias)->PRODUTO
-               SZB->ZB_DESC    := (cAlias)->DESCRICAO
-               SZB->ZB_LOCAL   := (cAlias)->ARMAZEM
-               SZB->ZB_QTD     := (cAlias)->QUANT
-               SZB->ZB_SALDO   := (cAlias)->SALDO
-               SZB->ZB_TOTAL   := nTotal
-               SZB->ZB_QTAPU   := (cAlias)->SALDO - nTotal
-               SZB->ZB_STATUS  := IIF(((cAlias)->SALDO - nTotal)<=0,'BLOQUEADO','LIBERADO')
-               SZB->ZB_PERIODO := AnoMes(dDataIni)
-               SZB->ZB_SITUA   := IIF(((cAlias)->SALDO - nTotal)<=0,'BLOQUEADO','LIBERADO')
+
+               SZB->ZB_COD     := (cAlias)->Produto
+               SZB->ZB_DESC    := (cAlias)->DESCR
+               SZB->ZB_LOCAL   := (cAlias)->ALMOX
+               SZB->ZB_QTD     := (cAlias)->QtdLiberar
+
+               SZB->ZB_SLDE    := (cAlias)->SaldoEnderecado
+               SZB->ZB_SLDA    := (cAlias)->SaldoEnderecar
+            
+               SZB->ZB_PERIODO := AnoMes(dDataBase)
+               SZB->ZB_SALDO   := (cAlias)->SaldoEstoque
+               SZB->ZB_TOTAL   := (cAlias)->TotalLiberado
+               SZB->ZB_QTAPU   := (cAlias)->SaldoDisponivel
+               SZB->ZB_STATUS  := alltrim(Upper((cAlias)->Situacao))
+               SZB->ZB_SITUA   := alltrim(Upper((cAlias)->Situacao))
                SZB->ZB_CLASSE  := (cAlias)->Classe
                SZB->ZB_TIPO    := (cAlias)->Tipo
                ("SZB")->( MsUnlock() )
             else
-               IF RECLOCK("SZB",.F.)             
-                  SZB->ZB_LEAD    :=  (cAlias)->LEAD
-                  SZB->ZB_QTD     :=  (cAlias)->QUANT
-                  SZB->ZB_SALDO   := (cAlias)->SALDO
-                  SZB->ZB_TOTAL   := nTotal
-                  SZB->ZB_QTAPU   := (cAlias)->SALDO - nTotal                
-                  SZB->ZB_STATUS  := IIF(((cAlias)->SALDO - nTotal)<=0,'BLOQUEADO','LIBERADO')
-                  SZB->ZB_SITUA   := IIF(((cAlias)->SALDO - nTotal)<=0,'BLOQUEADO','LIBERADO')
+               IF RECLOCK("SZB",.F.)        
+                  
+                  SZB->ZB_QTD     := (cAlias)->QtdLiberar     
+                  SZB->ZB_SLDE    := (cAlias)->SaldoEnderecado
+                  SZB->ZB_SLDA    := (cAlias)->SaldoEnderecar                  
+                  SZB->ZB_SALDO   := (cAlias)->SaldoEstoque
+                  SZB->ZB_TOTAL   := (cAlias)->TotalLiberado
+                  SZB->ZB_QTAPU   := (cAlias)->SaldoDisponivel
+                  //SZB->ZB_STATUS  := alltrim(Upper((cAlias)->Situacao))
+                  SZB->ZB_SITUA   := alltrim(Upper((cAlias)->Situacao))
+
                  ("SZB")->( MsUnlock() ) 
                ENDIF  
             ENDIF   
@@ -262,50 +263,6 @@ Static Function RunProc()
    (calias)->(DbCloseArea()) 
 
 Return
-
-/*/{Protheus.doc} PCPM70QTD
-description Rotina que soma as quantidade de pedido de venda do mesmo produto que vai atualizar o campo TMP_TOTAL
-@type function
-@version 1.0
-@author Paulo Lenzi
-@since 07/11/2024
-@param cProduto, character, param_description
-@param cLocal, character, param_description
-@return variant, return_description
-/*/
-Static Function PCPM70QTD(cProduto,cLocal)
-   Local aArea   := FwgetArea()
-   Local cQuery  as character 
-   Local cAlias  := "C"+getNextAlias()
-   Local nRetorno:= 0
-
-	cQuery:="Select SUM(C6_QTDVEN) QTDE From " + RetSqlName("SC6") + " SC6 "+CRLF
-   cQuery+=" Inner Join " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND C5_EMISSAO BETWEEN '"+Dtos(dDataIni)+"' AND '"+Dtos(dDataFim)+"'  AND SC5.D_E_L_E_T_ = ' ' "+CRLF
-   cQuery+="			Where SC6.D_E_L_E_T_ = ' ' "+CRLF
-   cQuery+="			AND C6_FILIAL = '"+FWxFilial("SC6")+"' "+CRLF
-   cQuery+="			AND C6_NOTA = ' ' "+CRLF
-   cQuery+="			AND C6_PRODUTO = '"+cProduto+"' "+CRLF
-   cQuery+="			AND C6_LOCAL = '"+cLocal+"'  "+CRLF
-
-   DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
- 
-   IF (cAlias)->(Eof())
-      (cAlias)->(DbCloseArea())   
-       FwRestArea(aArea)
-      Return(nRetorno)
-   endif
-
-   dbselectArea(cAlias)
-   (cAlias)->( dbGoTop() )
-   While (cAlias)->( !Eof())
-        nRetorno := (cAlias)->QTDE
-       (cAlias)->( dbSkip() )
-   EndDo
-
-   (calias)->(DbCloseArea()) 
-      
-    FwRestArea(aArea)
-Return(nRetorno)
 
 /*/{Protheus.doc} PM070DEL
 description Rotina para deletar as linhas do aBrowse quando for necessario 
@@ -385,7 +342,7 @@ Static Function PM070FIL(cCodProd)
    cQuery += "from  "+RetSqlName("SZB")+" SZB  "+cEof
    cQuery += "WHERE SZB.D_E_L_E_T_ = ' '  "+cEof
    cQuery += "AND ZB_FILIAL = '"+xFilial("SZB")+"'  "+cEof
-   cQuery += "AND ZB_PERIODO = '"+AnoMes(dDataIni)+"'  "+cEof
+   cQuery += "AND ZB_PERIODO = '"+AnoMes(dDataBase)+"'  "+cEof
    cQuery += "AND ZB_COD = '"+cProduto+"'  "+cEof
 
    If TCSqlExec(cQuery) < 0
@@ -428,11 +385,13 @@ Static Function CallBase()
    Local cQuery  as character 
    Local cAlias  := getNextAlias()
 
+   nPosicao := 2
+
    cQuery:= "Select * "+cEof
    cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
    cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
    cQuery+= "AND ZB_FILIAL = '0803' "+cEof
-   cQuery+= "AND RTRIM(ZB_PERIODO) = '"+AnoMes(dDataIni)+"'  "+cEof
+   cQuery+= "AND RTRIM(ZB_PERIODO) = '"+AnoMes(dDataBase)+"'  "+cEof
 
   DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
  
@@ -448,12 +407,12 @@ Static Function CallBase()
    While (cAlias)->( !Eof())
    
         IF nPosicao = 1
-            IF Alltrim((cAlias)->ZB_SITUA) = "BLOQUEADO"
+            IF Alltrim((cAlias)->ZB_SITUA) = "BARRADOS"
                (cAlias)->(dbSkip() )
                Loop
             Endif
 
-        elseif  nPosicao = 2
+        elseif  nPosicao = 2  // Liberado
             IF Alltrim((cAlias)->ZB_SITUA) = "LIBERADO"
                (cAlias)->(dbSkip() )
                Loop

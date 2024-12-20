@@ -44,7 +44,7 @@ Static Function RunProc()
     cQry+= "	   ,ISNULL(SUM(ZB_QTD),0) QTDE "+cEof
     cQry+= "FROM "+RetSqlName("SZB")+" SZB "+cEof
     cQry+= "WHERE SZB.D_E_L_E_T_ = ' ' "+cEof
-    cQry+= "AND ZB_FILIAL = '0803' "+cEof
+    cQry+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
     cQry+= "GROUP BY ZB_STATUS,SUBSTRING(ZB_PERIODO,1,4),SUBSTRING(ZB_PERIODO,5,2) ) XARQ "+cEof
     cQry+= "PIVOT ( SUM(QTDE) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT "+cEof
     cQry+= "WHERE PT.ANO = YEAR(GETDATE()) "+cEof
@@ -58,10 +58,10 @@ Static Function RunProc()
 
 
 
-    cQuery :="Select ZB_COD,ZB_DESC,ZB_LOCAL,ZB_NOME,ZB_QTD,ZB_SALDO,ZB_TOTAL,ZB_QTAPU,ZB_STATUS,ZB_SITUA,ZB_CLASSE,ZB_TIPO  "+cEof
+    cQuery :="Select *  "+cEof
     cQuery +="From "+RetSqlName("SZB")+" SZB  "+cEof
     cQuery +="Where SZB.D_E_L_E_T_ = ' '  "+cEof
-    cQuery +="AND ZB_FILIAL = '0803' "+cEof
+    cQuery +="AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
     cQuery +="AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
     cQuery +="order by ZB_COD,ZB_STATUS  "+cEof
 
@@ -76,7 +76,7 @@ Static Function RunProc()
     cQry3:= "Select ZB_SITUA,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
     cQry3+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQry3+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
-    cQry3+= "AND ZB_FILIAL = '0803' "+cEof
+    cQry3+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
     cQry3+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
     cQry3+= "GROUP BY ZB_SITUA "+cEof
     cQry3+= "ORDER BY ZB_SITUA "+cEof
@@ -91,9 +91,9 @@ Static Function RunProc()
     cQry4:= "Select ZB_CLASSE,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
     cQry4+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQry4+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
-    cQry4+= "AND ZB_FILIAL = '0803' "+cEof
+    cQry4+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
     cQry4+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
-    cQry4+= "and RTRIM(ZB_SITUA) = 'Bloqueado'  "+cEof
+    cQry4+= "and RTRIM(ZB_SITUA) = 'BARRADO'  "+cEof
     cQry4+= "GROUP BY ZB_CLASSE "+cEof
     cQry4+= "ORDER BY ZB_CLASSE "+cEof
 
@@ -112,33 +112,32 @@ Static Function RunProc()
     oFWMsExcel:AddworkSheet("Relacao Produtos")
         //Criando a Tabela
     oFWMsExcel:AddTable("Relacao Produtos","Produtos")
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Cliente",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Pedido",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Item",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Sequencia",1)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Produto",1)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Descricao",1)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Situacao",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Local",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Quantidade",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Data LIber",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Data Entregue",1)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","SaldoEnderecado",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","SaldoaEnderecar",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","SaldoEstoque",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","TotalLiberado",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Disponivel",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Status",1)    
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Classe",1)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Tipo",1)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Status",1)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Razao social do cliente",1)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Quantidade",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Saldo",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Total",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Disponivel",2,2)
+    
+
     DbSelectArea("QRYPRO")
         //Criando as Linhas... Enquanto não for fim da query
     While !(QRYPRO->(EoF()))
-            oFWMsExcel:AddRow("Relacao Produtos","Produtos",{;
-                                                                    QRYPRO->ZB_COD,;
-                                                                    QRYPRO->ZB_DESC,;
-                                                                    QRYPRO->ZB_SITUA,;
-                                                                    QRYPRO->ZB_CLASSE,;
-                                                                    QRYPRO->ZB_TIPO,;                      
-                                                                    QRYPRO->ZB_STATUS,;
-                                                                    QRYPRO->ZB_NOME,;
-                                                                    QRYPRO->ZB_QTD,;
-                                                                    QRYPRO->ZB_SALDO,;
-                                                                    QRYPRO->ZB_TOTAL,;
-                                                                    QRYPRO->ZB_QTAPU;
-                                                                     })
+            oFWMsExcel:AddRow("Relacao Produtos","Produtos",{ QRYPRO->ZB_NOME,QRYPRO->ZB_PEDIDO,QRYPRO->ZB_ITEM,QRYPRO->ZB_SEQ,QRYPRO->ZB_COD,QRYPRO->ZB_DESC,QRYPRO->ZB_LOCAL,;
+                                                                    QRYPRO->ZB_QTD,QRYPRO->ZB_DTLIB,QRYPRO->ZB_DTENT,QRYPRO->ZB_SLDE,QRYPRO->ZB_SLDA,QRYPRO->ZB_SALDO,QRYPRO->ZB_TOTAL,;
+                                                                    QRYPRO->ZB_QTAPU,QRYPRO->ZB_STATUS,QRYPRO->ZB_CLASSE,QRYPRO->ZB_TIPO })
          
             //Pulando Registro
             QRYPRO->(DbSkip())
@@ -168,20 +167,20 @@ Static Function RunProc()
             QRYPER->(DbSkip())
     EndDo
 
-    oFWMsExcel:AddworkSheet("Bloqueados") //Não utilizar número junto com sinal de menos. Ex.: 1-
+    oFWMsExcel:AddworkSheet("Barrados") //Não utilizar número junto com sinal de menos. Ex.: 1-
         //Criando a Tabela
-    oFWMsExcel:AddTable("Bloqueados","projecao")
+    oFWMsExcel:AddTable("Barrados","projecao")
         //Criando Colunas
-    oFWMsExcel:AddColumn("Bloqueados","projecao","Tipo",1,1) //1 = Modo Texto
-    oFWMsExcel:AddColumn("Bloqueados","projecao","Quantidade",2,2) //2 = Valor sem R$
-    oFWMsExcel:AddColumn("Bloqueados","projecao","Percente",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Barrados","projecao","Tipo",1,1) //1 = Modo Texto
+    oFWMsExcel:AddColumn("Barrados","projecao","Quantidade",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Barrados","projecao","Percente",2,2) //2 = Valor sem R$
 
     nQuant := CalcBloq()
     
     DbSelectArea("QRYBLQ")
     //Criando as Linhas... Enquanto não for fim da query
     While !(QRYBLQ->(EoF()))
-            oFWMsExcel:AddRow("Bloqueados","projecao",{;
+            oFWMsExcel:AddRow("Barrados","projecao",{;
                                                                     QRYBLQ->ZB_CLASSE,;
                                                                     QRYBLQ->QUANT,;
                                                                     (QRYBLQ->QUANT/nQuant)*100;
@@ -258,7 +257,7 @@ Static Function CalcTotal()
     cQuery:= "Select ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
-    cQuery+= "AND ZB_FILIAL = '0803' "+cEof
+    cQuery+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
     cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
 
     If  Select("QRYCAL") > 0
@@ -284,8 +283,8 @@ Static Function CalcBloq()
     cQuery:= "Select ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
-    cQuery+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuery+= "and RTRIM(ZB_SITUA) = 'Bloqueado'  "+cEof
+    cQuery+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
+    cQuery+= "and RTRIM(ZB_SITUA) = 'BARRADO'  "+cEof
     cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
 
     If  Select("QRYCAL") > 0

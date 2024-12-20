@@ -44,13 +44,9 @@ Static Function ReportDef()
 
     oReport:= TReport():New("PCPR071",cTitulo,cPerg, {|oReport| ReportPrint(oReport)},cDesc)
     oReport:SetLandscape() 
-    //oReport:SetTotalText("Totais")  // STR0008
     oReport:SetTotalInLine(.F.)
-    //oReport:PrintSHeader(.T.)
-    //oReport:ShowParamPage(.F.)
     oReport:lParamPage := .T.
-    //oReport:nFontBody := 12 
-
+    
     //--------------------------------------------------------//
     // Seção 01 - Dados do Produto
     //--------------------------------------------------------//
@@ -112,14 +108,14 @@ Static Function ReportPrint(oReport)
 
        oReport:SetMeter(SZB->(LastRec()))
     
-       While ("SZB")->( !Eof() ) .and. SZB->ZB_PERIODO = MV_PAR01 .AND. !oReport:Cancel()
+       While ("SZB")->( !Eof() ) .and. SZB->ZB_PERIODO = Alltrim(MV_PAR01) .AND. !oReport:Cancel()
 
              oReport:IncMeter()
              If oReport:Cancel()
                     Exit
              EndIf        
 
-              IF UPPER(SZB->ZB_SITUA) <> 'BLOQUEADO'
+              IF UPPER(SZB->ZB_SITUA) <> 'BARRADO'
                    dbSelectArea("SZB")
                    SZB->( dbSkip())
                    LOOP
@@ -132,7 +128,6 @@ Static Function ReportPrint(oReport)
                 oSection1:Init()
                 if !Empty(cCodigo)
                    oReport:SkipLine() 
-                   //oSection1:SetHeaderSection(.F.)
                 endif
                 
                 oSection1:Cell("PRODUTO" 	 ):SetValue((SZB->ZB_COD)) 
@@ -153,13 +148,11 @@ Static Function ReportPrint(oReport)
                 oSection2:Init()
                 if !Empty(cStatus)
                     oReport:SkipLine() 
-                    //oSection2:SetHeaderSection(.F.)
                 endif                
                 oSection2:Cell("STATUS"	     ):SetValue((SZB->ZB_STATUS))	
                 oSection2:PrintLine()
                 cStatus := SZB->ZB_STATUS
                 oSection3:Init()
-                //oSection3:SetHeaderSection(.T.)
              endif
         //----------------//
         // Secao 03
@@ -190,7 +183,7 @@ Static Function ReportPrint(oReport)
     cQuera+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuera+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuera+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuera+= "AND UPPER(ZB_STATUS)  NOT IN ('BLOQUEADO','LIBERADO') "+cEof
+    cQuera+= "AND UPPER(ZB_STATUS)  NOT IN ('BARRADO','LIBERADO') "+cEof
     cQuera+= "GROUP BY ZB_STATUS "+cEof
     cQuera+= "ORDER BY ZB_STATUS "+cEof
 
@@ -228,7 +221,7 @@ Static Function ReportPrint(oReport)
     //Criando as Linhas... Enquanto não for fim da query
     While !(QRYSTA->(EoF()))    
       nPercentual := (QRYSTA->QUANT/nQuant)*100
-      IF ALLTRIM(QRYSTA->ZB_SITUA) = 'BLOQUEADO'
+      IF ALLTRIM(QRYSTA->ZB_SITUA) = 'BARRADO'
          nPercentual := nPercentual - nSomaPerc
       ENDIF
       oReport:PrintText(Alltrim(QRYSTA->ZB_SITUA)+"  -  Quantidade: "+cValtoChar(QRYSTA->QUANT)+" - Percentual: "+cValtoChar( Round(nPercentual,2))  )
@@ -243,8 +236,8 @@ Static Function ReportPrint(oReport)
     cQuer2+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuer2+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuer2+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuer2+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
-    cQuer2+= "AND upper(ZB_SITUA) = 'BLOQUEADO'   "+cEof
+    cQuer2+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
+    cQuer2+= "AND upper(ZB_SITUA) = 'BARRADO'   "+cEof
     cQuer2+= "GROUP BY ZB_CLASSE "+cEof
     cQuer2+= "ORDER BY ZB_CLASSE "+cEof
 
@@ -291,7 +284,7 @@ Static Function CalcTotal()
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
 
     If  Select("QRYCAL") > 0
             DbSelectArea("QRYCAL")
@@ -316,8 +309,8 @@ Static Function CalcBloq()
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuery+= "AND upper(ZB_SITUA) = 'BLOQUEADO'   "+cEof
-    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    cQuery+= "AND upper(ZB_SITUA) = 'BARRADO'   "+cEof
+    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
 
     If  Select("QRYCAL") > 0
             DbSelectArea("QRYCAL")
