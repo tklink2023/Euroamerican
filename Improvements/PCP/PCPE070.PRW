@@ -63,6 +63,7 @@ Static Function RunProc()
     cQuery +="Where SZB.D_E_L_E_T_ = ' '  "+cEof
     cQuery +="AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
     cQuery +="AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    cQuery +="AND ZB_SITUA = 'BARRADO' "+cEof
     cQuery +="order by ZB_COD,ZB_STATUS  "+cEof
 
     If  Select("QRYPRO") > 0

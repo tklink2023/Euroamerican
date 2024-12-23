@@ -57,7 +57,6 @@ User Function PCPM080()
 
    oDlg := MSDialog():New(aSize[7],0, nHeight,nWidth,"Movimentacoes ",,,.F.,,,,,,.T.,,,.T. )
    oDlg:bInit := {||EnchoiceBar(oDlg,{||oDlg:End()},{|| oDlg:End()},,aButtons)}
-
    oBrowse := TCBrowse():New( aSize[7]+35,5,nWidth, nHeight,,;
     {'Produto', 'Descrição', 'Local' , 'Saldo','Empenho','Disponivel','Media','Demanda','Estoque'},;
 	{   010,       050,        005,      050,    050,        050,    050,      050,   020 },;
@@ -74,6 +73,10 @@ User Function PCPM080()
 					  Transform(aBrowse[oBrowse:nAt,09],"@E 999999,99999")} }	// Estoque   
 
     oBrowse:bLDblClick := { || PCP80EMP(aBrowse[oBrowse:nAt,01],aBrowse[oBrowse:nAt,06],aBrowse[oBrowse:nAt,07]) }
+    oBrowse:SetPopup(oMenu) 	
+    oBrowse:GoDown()
+    oBrowse:GoTop()
+    oBrowse:nRowCount()
 
     oDlg:Activate(,,,.T.)
     RestArea(aArea)

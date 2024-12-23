@@ -54,10 +54,10 @@ Static Function RunProc()
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Empenho",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Pedidos",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Custo Medio",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Demanda",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Consumo",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Consumido até Hoje",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","% Redução",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Demanda Reduzido",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","% Previsto",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Projecao Consumo",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Producao",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Falta",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Saldo Final",2,2)
@@ -88,11 +88,13 @@ Static Function RunProc()
                    nDemanda     := lRet[2]
                    VlrReduz     := nDemanda - ((nDemanda*MV_PAR01)/100)
                    nProducao    := nConsumo + (cAlias)->B2_QEMP
-                   nFalta       := IIF((nDemanda - nConsumo)<0,0,nDemanda - nConsumo)
-                   nSobra       := IIF((nFalta - (cAlias)->B2_QATU)<0,0,nFalta - (cAlias)->B2_QATU)
+
+                   nFalta       := nDemanda - nConsumo //IIF((nDemanda - nConsumo)<0,0,nDemanda - nConsumo)
+
+                   nSobra       := nFalta - (cAlias)->B2_QATU //IIF((nFalta - (cAlias)->B2_QATU)<0,0,nFalta - (cAlias)->B2_QATU)
                    nEstSeg      := (nDemanda/30) * MV_PAR02
-                   nCompraMes   := IIF((nSobra-nEstSeg)<0,0,nSobra + nEstSeg)
-                   nCustoMes    := nCompraMes * (cAlias)->B2_CM1
+                   nCompraMes   := nSobra + nEstSeg  //IIF((nSobra+nEstSeg)<0,0,nSobra + nEstSeg)
+                   nCustoMes    := IIF(nCompraMes<=0,0,nCompraMes * (cAlias)->B2_CM1)  //nCompraMes * (cAlias)->B2_CM1
                    nCompraPox   := VlrReduz
                    nCustoProx   := nCompraPox * (cAlias)->B2_CM1
             else

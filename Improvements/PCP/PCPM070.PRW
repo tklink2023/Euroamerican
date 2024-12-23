@@ -247,7 +247,9 @@ Static Function RunProc()
                   SZB->ZB_SALDO   := (cAlias)->SaldoEstoque
                   SZB->ZB_TOTAL   := (cAlias)->TotalLiberado
                   SZB->ZB_QTAPU   := (cAlias)->SaldoDisponivel
-                  //SZB->ZB_STATUS  := alltrim(Upper((cAlias)->Situacao))
+                  IF alltrim(Upper((cAlias)->Situacao)) = "LIBERADO"
+                     SZB->ZB_STATUS  := alltrim(Upper((cAlias)->Situacao))
+                  ENDIF   
                   SZB->ZB_SITUA   := alltrim(Upper((cAlias)->Situacao))
 
                  ("SZB")->( MsUnlock() ) 
@@ -438,6 +440,10 @@ Static Function CallBase()
     aSort(aBrowse, , , {|x, y| x[5] < y[5]})
     (cAlias)->(DbCloseArea())   
     FwRestArea(aArea)
+Return
+
+Static Function PCP070CLEAR()
+
 Return
 //-====================================================================================================================================================//
 // FIM DO PROGRAMA
