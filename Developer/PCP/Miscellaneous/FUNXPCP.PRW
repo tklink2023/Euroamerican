@@ -856,3 +856,230 @@ Static Function NFEVisua(nRecno)
     FwRestArea(cAreaSD1)
     FwRestArea(cArea)
 Return .T.
+
+//===================================================================================================================================//
+
+/*/{Protheus.doc} Callbase
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 26/12/2024
+@return variant, return_description
+/*/
+User Function PCP80CALL()
+  Local aArea := GetArea()
+  Local cAlias  	:= GetNextAlias()
+ BeginSQL Alias cAlias
+		SELECT      *
+    	FROM %Table:PZ2% PZ2
+		WHERE PZ2.%NotDel%
+		and PZ2_FILIAL =  %xFilial:PZ2%
+	    ORDER BY PZ2_COD
+    EndSQL
+    if (cAlias)->( Eof())
+        MsgAlert("Nao tem nada empenhado nesse produto","Atencao")
+        FwRestArea(aArea)
+	    RETURN
+    Endif
+    aBrowse :={}
+    If (cAlias)->(!EOF())
+          While (cAlias)->(!EOF())
+		        aAdd(aBrowse , {(cAlias)->PZ2_COD,;
+							    (cAlias)->PZ2_DESCR,;
+							    (cAlias)->PZ2_LOCAL,;
+							    (cAlias)->PZ2_SALDO,;
+							    (cAlias)->PZ2_EMP,;
+							    (cAlias)->PZ2_DISPO,;
+							    (cAlias)->PZ2_MEDIA,;
+							    (cAlias)->PZ2_DEMAN,;
+							    (cAlias)->PZ2_STOK})
+                (cAlias)->(dbSkip() )
+          End
+   Endif
+   (cAlias)->(DbCloseArea())
+    RestArea(aArea)  
+Return
+
+/*/{Protheus.doc} RunProc
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 26/12/2024
+@return variant, return_description
+/*/
+User Function PCP80RUNP()
+   Local aArea   := FwgetArea()
+   Local cQuery  as character 
+   Local cAlias  := "PCP_"+getNextAlias()     
+
+   cQuery:="Select B2_FILIAL	FILIAL                                                         "+CRLF
+   cQuery+="		,B2_COD		CODIGO                                                         "+CRLF
+   cQuery+="		,B1_DESC    DESCRICAO                                                      "+CRLF
+   cQuery+="		,B2_LOCAL	ALMOX                                                          "+CRLF
+   cQuery+="		,B2_QATU	   SALDO                                                          "+CRLF
+   cQuery+="		,B2_QEMP	   EMPENHO                                                        "+CRLF
+   cQuery+="		,ROUND((B2_QATU - B2_QEMP),3) DISPO                                        "+CRLF
+   cQuery+="		,ISNULL(ROUND((SELECT DIstinct AVG(Produzido) OVER(PARTITION BY Ano) AS Media "+CRLF
+   cQuery+="		  FROM ( Select	D4_COD as Produto,                                       "+CRLF
+   cQuery+="						Year(D4_DATA) as Ano,                                          "+CRLF
+   cQuery+="						Month(D4_DATA) as Mes,                                         "+CRLF
+   cQuery+="						Sum(D4_QTDEORI) as Produzido                                   "+CRLF
+   cQuery+="				 From " + RetSqlName("SD4") + " SD4                                  "+CRLF
+   cQuery+="				 Where SD4.D_E_L_E_T_ = ' '                                          "+CRLF
+   cQuery+="				 AND D4_FILIAL = B2_FILIAL                                           "+CRLF
+   cQuery+="				 AND Year(D4_DATA) = YEAR(Getdate())                                 "+CRLF
+   cQuery+="				 AND Month(D4_DATA) BETWEEN Month(GetDate())-6 AND Month(GetDate())  "+CRLF
+   cQuery+="				 AND D4_COD = B2_COD                                                 "+CRLF
+   cQuery+="				 Group By D4_COD, Year(D4_DATA),Month(D4_DATA) ) xxx),3),0) MEDIA    "+CRLF
+   cQuery+="From " + RetSqlName("SB2") + " SB2                                               "+CRLF
+   cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = B2_COD AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' ' "+CRLF
+   cQuery+="Where SB2.D_E_L_E_T_ = ' '                                                       "+CRLF
+   cQuery+="AND B2_FILIAL = '"+xFilial("SB2")+"'                                             "+CRLF
+   cQuery+="AND B2_LOCAL = B1_LOCPAD                                                         "+CRLF
+   cQuery+="AND B2_QATU > 0                                                                  "+CRLF
+
+   DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+ 
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return
+   endif
+
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+            dbSelectArea("PZ2")
+            PZ2->( dbSetOrder(1))
+            IF PZ2->( !dbSeek(xFilial("PZ2")+(cAlias)->CODIGO,.T.))
+               IF RecLock("PZ2", .T.)
+                  PZ2->PZ2_FILIAL   :=  xFilial("PZ2")
+                  PZ2->PZ2_COD      := (cAlias)->CODIGO
+                  PZ2->PZ2_DESCR    := (cAlias)->DESCRICAO
+                  PZ2->PZ2_LOCAL    := (cAlias)->ALMOX
+                  PZ2->PZ2_SALDO    := (cAlias)->SALDO
+                  PZ2->PZ2_EMP      := (cAlias)->EMPENHO
+                  PZ2->PZ2_DISPO    := (cAlias)->DISPO
+                  PZ2->PZ2_MEDIA    := (cAlias)->MEDIA
+                  PZ2->PZ2_DEMAN    := IIF((cAlias)->MEDIA>0, ROUND(((cAlias)->MEDIA / 30 ),0) ,0 )
+                  PZ2->PZ2_STOK     := IIF((cAlias)->DISPO>0, ROUND(((cAlias)->DISPO / 30),0),0)
+                  PZ2->( MsUnlock())
+               Endif
+            else
+               IF RecLock("PZ2", .F.)
+                  PZ2->PZ2_SALDO    := (cAlias)->SALDO
+                  PZ2->PZ2_EMP      := (cAlias)->EMPENHO
+                  PZ2->PZ2_DISPO    := (cAlias)->DISPO
+                  PZ2->PZ2_MEDIA    := (cAlias)->MEDIA
+                  PZ2->PZ2_DEMAN    := IIF((cAlias)->MEDIA>0, ROUND(((cAlias)->MEDIA / 30 ),0) ,0 )
+                  PZ2->PZ2_STOK     := IIF((cAlias)->DISPO>0, ROUND(((cAlias)->DISPO / 30),0),0)
+                  PZ2->( MsUnlock())
+               Endif
+                   
+            Endif
+        (cAlias)->( dbSkip() )
+    EndDo
+            
+    (calias)->(DbCloseArea()) 
+    FwRestArea(aArea)
+Return
+
+/*/{Protheus.doc} RunProj
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 26/12/2024
+@return variant, return_description
+/*/
+User Function PCP80PROC()
+   Local aArea   := FwgetArea()
+   Local cQuery  as character 
+   Local cAlias  := "PCP_"+getNextAlias()     
+
+cQuery:="SELECT CODIGO,ANO,MES,DIA,QTD,D4_DATA              "+CRLF
+cQuery+="FROM (                                             "+CRLF
+cQuery+="    SELECT                                         "+CRLF
+cQuery+="		  D4_COD			   AS CODIGO,                 "+CRLF
+cQuery+="        DAY(D4_DATA)	   AS DIA,                    "+CRLF
+cQuery+="        MONTH(D4_DATA)	AS MES,                    "+CRLF
+cQuery+="        YEAR(D4_DATA)	AS ANO,                    "+CRLF
+cQuery+="        D4_DATA,                                   "+CRLF
+cQuery+="        Sum(D4_QTDEORI) as QTD                     "+CRLF
+cQuery+="    FROM " + RetSqlName("SD4") + " SD4             "+CRLF
+cQuery+="	INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = D4_COD AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' '  "+CRLF
+cQuery+="	INNER JOIN " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = D4_FILIAL AND B2_COD = D4_COD AND  B2_LOCAL = D4_LOCAL AND B2_QATU > 0 AND  SB2.D_E_L_E_T_ = ' '                               "+CRLF
+cQuery+="	Where SD4.D_E_L_E_T_ = ' '                      "+CRLF
+cQuery+="	AND D4_FILIAL = '"+xFilial("SD4")+"'            "+CRLF
+cQuery+="	AND YEAR(D4_DATA) = YEAR(Getdate())             "+CRLF
+cQuery+="	AND MONTH(D4_DATA) >= Month(GetDate())          "+CRLF
+cQuery+="    GROUP BY D4_COD, YEAR(D4_DATA), MONTH(D4_DATA), DAY(D4_DATA),D4_DATA "+CRLF
+cQuery+=") a                                                 "+CRLF
+cQuery+="ORDER BY CODIGO, ANO, MES, DIA                      "+CRLF
+
+DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+TCSetField(cAlias, "D4_DATA", "D")
+
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return
+   endif
+
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+            dbSelectArea("PZ3")
+            PZ3->( dbSetOrder(1))
+            IF PZ3->( !dbSeek(xFilial("PZ3")+(cAlias)->CODIGO + cValtoChar((cAlias)->ANO) + cValtoChar((cAlias)->MES) + cValtoChar((cAlias)->DIA) ,.T.))
+               IF RecLock("PZ3", .T.)
+                  PZ3->PZ3_FILIAL       :=  xFilial("PZ3")
+                  PZ3->PZ3_PROD         := (cAlias)->CODIGO
+                  PZ3->PZ3_ANO          := cValtoChar((cAlias)->ANO)
+                  PZ3->PZ3_MES          := cValtoChar((cAlias)->MES)
+                  PZ3->PZ3_DIA          := cValtoChar((cAlias)->DIA)
+                  PZ3->PZ3_QTD          := (cAlias)->QTD
+                  PZ3->PZ3_DATA         := (cAlias)->D4_DATA
+                  PZ3->( MsUnlock())
+               Endif
+            else
+               IF RecLock("PZ3", .F.)
+                  PZ3->PZ3_QTD          := (cAlias)->QTD
+                  PZ3->( MsUnlock())
+               Endif
+                   
+            Endif
+        (cAlias)->( dbSkip() )
+    EndDo
+            
+    (calias)->(DbCloseArea()) 
+    FwRestArea(aArea)
+Return
+
+/*/{Protheus.doc} RegLog
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 26/12/2024
+@return variant, return_description
+/*/
+User Function PCP80CV8()
+    Local cArea := FwGetArea()
+
+        dbSelectArea("CV8")
+        If RecLock("CV8",.T.)
+                CV8->CV8_FILIAL:= xFilial("CV8")
+                CV8->CV8_DATA 	:= MsDate()
+                CV8->CV8_HORA 	:= SubStr(Time(),1,TamSx3("CV8_HORA")[1])
+                CV8->CV8_PROC	:= 'PCPM080'
+                CV8->CV8_USER	:= 'ADMINISTRADOR            '
+                CV8->CV8_INFO   := '2'
+                CV8->CV8_MSG 	:= 'Gravando Tabelas PZ2/PZ3 '
+                CV8->(MsUnlock())
+          EndIf
+
+     FwRestArea(cArea)
+Return

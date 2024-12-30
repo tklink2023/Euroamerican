@@ -35,6 +35,7 @@ User Function PCPWF80()
 
 Return
 
+
 /*/{Protheus.doc} RunProc
 description Rotina que utliza a Query para atualizar a tabela PZ2
 @type function
