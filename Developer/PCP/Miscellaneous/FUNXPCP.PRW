@@ -1083,3 +1083,165 @@ User Function PCP80CV8()
 
      FwRestArea(cArea)
 Return
+
+/*/{Protheus.doc} PCP80AVG
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 02/01/2025
+@param cProduto, character, param_description
+@param DTINICIO, date, param_description
+@param DTFIM, date, param_description
+@return variant, return_description
+/*/
+User Function PCP80AVG(cProduto,DTINICIO,DTFIM)
+  Local aArea   := FwgetArea()
+  Local cQuery  as character 
+  Local cAlias  := "PCP_"+getNextAlias() 
+  Local nResult := 0
+
+  cQuery:="Select AVG(D2_QUANT) MEDIA   "+CRLF
+  cQuery+="From " + RetSqlName("SD2") + " SD2   "+CRLF
+  cQuery+="INNER JOIN " + RetSqlName("SF4") + " SF4 ON F4_FILIAL = SUBSTRING(D2_FILIAL,1,2) AND F4_CODIGO = D2_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '   "+CRLF
+  cQuery+="Where SD2.D_E_L_E_T_ = ' '   "+CRLF
+  cQuery+="AND D2_FILIAL = '"+xFilial("SD2")+"'   "+CRLF
+  cQuery+="AND D2_EMISSAO BETWEEN '"+DtoS(DTINICIO)+"' AND '"+DtoS(DTFIM)+"'   "+CRLF
+  cQuery+="AND D2_COD = '"+cProduto+"'   "+CRLF
+
+  If TCSqlExec(cQuery) < 0
+         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
+  else
+	  (calias)->(DbCloseArea()) 
+	  FwRestArea(aArea)
+	  Return(0) 
+  EndIf
+  nResult := (cAlias)->MEDIA
+  (calias)->(DbCloseArea()) 
+  FwRestArea(aArea)
+Return(nResult)
+
+/*/{Protheus.doc} PCP80DVP
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 02/01/2025
+@param cProduto, character, param_description
+@param DTINICIO, date, param_description
+@param DTFIM, date, param_description
+@return variant, return_description
+/*/
+User Function PCP80DVP(cProduto,DTINICIO,DTFIM)
+  Local aArea   := FwgetArea()
+  Local cQuery  as character 
+  Local cAlias  := "PCP_"+getNextAlias() 
+  Local nResult := 0
+
+  cQuery:="Select STDEVP(D2_QUANT) DESVIO  "+CRLF
+  cQuery+="From " + RetSqlName("SD2") + " SD2  "+CRLF
+  cQuery+="INNER JOIN " + RetSqlName("SF4") + " SF4 ON F4_FILIAL = SUBSTRING(D2_FILIAL,1,2) AND F4_CODIGO = D2_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '  "+CRLF
+  cQuery+="Where SD2.D_E_L_E_T_ = ' '   "+CRLF
+  cQuery+="AND D2_FILIAL = '"+xFilial("SD2")+"'   "+CRLF
+  cQuery+="AND D2_EMISSAO BETWEEN '"+DtoS(DTINICIO)+"' AND '"+DtoS(DTFIM)+"'   "+CRLF
+  cQuery+="AND D2_COD = '"+cProduto+"'   "+CRLF
+
+  If TCSqlExec(cQuery) < 0
+         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
+		 (calias)->(DbCloseArea()) 
+	     FwRestArea(aArea)
+	   Return(0) 
+  EndIf
+   nResult := (cAlias)->DESVIO 
+  (calias)->(DbCloseArea()) 
+  FwRestArea(aArea)
+Return(nResult)
+
+/*/{Protheus.doc} PCP80SEG
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 03/01/2025
+@param nDesvio, numeric, param_description
+@param nLeadTime, numeric, param_description
+@param nMedia, numeric, param_description
+@param nPercent, numeric, param_description
+@return variant, return_description
+/*/
+User Function PCP80SEG(nDesvio,nLeadTime,nMedia,nPercent)
+  Local aArea   := FwgetArea()
+  Local cQuery  as character 
+  Local nResult := 0
+  cQuery:="select round(SQRT(POWER("+nDesvio+", 2) * "+nLeadTime+" + POWER("+nMedia+", 2))*"+nPercent+") result  "+CRLF
+  If TCSqlExec(cQuery) < 0
+         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
+		 (calias)->(DbCloseArea()) 
+	     FwRestArea(aArea)
+	   Return(0) 
+  EndIf
+  nResult := (cAlias)->result
+  (calias)->(DbCloseArea()) 
+  FwRestArea(aArea)
+Return(nResult)
+
+/*/{Protheus.doc} PCP80SLDINI
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 03/01/2025
+@param cProduto, character, param_description
+@return variant, return_description
+/*/
+User Function PCP80SLDINI(cProduto)
+Local aArea   := FwgetArea()
+Local cQuery  as character
+Local nResult := 0
+
+cQuery:="Select B9_QINI SLDINI "+CRLF
+cQuery+="from " + RetSqlName("SB9") + " SB9 "+CRLF
+cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = B9_COD AND B1_TIPO = 'PA' AND SB1.D_E_L_E_T_ = ' ' "+CRLF
+cQuery+="Where SB9.D_E_L_E_T_ = ' ' "+CRLF
+cQuery+="AND B9_FILIAL ='"+xFilial("SD2")+"'  "+CRLF
+cQuery+="AND B9_COD = '"+cProduto+"' "+CRLF
+cQuery+="AND B9_LOCAL = B1_LOCPAD  "+CRLF
+cQuery+="AND B9_DATA = ( Select MAX(B9_DATA) from SB9100 SB9 Where SB9.D_E_L_E_T_ = ' ' AND B9_FILIAL = '"+xFilial("SD2")+"' AND B9_COD = B1_COD AND B9_LOCAL = B1_LOCPAD) "+CRLF
+
+If TCSqlExec(cQuery) < 0
+         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
+		 (calias)->(DbCloseArea()) 
+	     FwRestArea(aArea)
+	   Return(0) 
+EndIf
+
+nResult := (cAlias)->SLDINI 
+(calias)->(DbCloseArea()) 
+FwRestArea(aArea)
+Return(nResult)
+/*/{Protheus.doc} PCP80PERC
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 03/01/2025
+@param cPerc, character, param_description
+@return variant, return_description
+/*/
+User Function PCP80PERC(cPerc)
+Local aArea   := FwgetArea()
+Local aDadosSX5 := FWGetSX5("XY") 
+Local nReult := 0
+if len(aDadosSX5) > 0
+   aScan(aArray,{|x| x[1] == Month(dDataBase) } )
+   nPos := aScan(aDadosSX5,{|x| x[1] == Alltrim(cPerc) })
+   if nPos > 0
+	  nReult := aDadosSX5[nPos][2]
+   endif
+Endif   
+FwRestArea(aArea)
+Return(nReult)
+
+//===================================================================================================================================//
+//===============[ FINAL DO PROGRAMA]================================================================================================//
+//===================================================================================================================================//

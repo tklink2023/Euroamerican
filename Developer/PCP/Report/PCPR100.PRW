@@ -26,9 +26,9 @@ Static Function RunProc()
     Local oExcel
     Local cArquivo      := GetTempPath()+'PCPR100.xml'
 
-    cQuery:="Select B2_COD,B1_DESC,B1_TIPO,B2_LOCAL,B2_QATU,B2_QEMP,B2_QPEDVEN,B2_CM1   "+CRLF
+    cQuery:="Select B2_COD,B1_DESC,B1_TIPO,B2_LOCAL,B2_QATU,B2_QEMP,B2_QPEDVEN,B2_CM1,B1_LE,B1_LOTVEN     "+CRLF
     cQuery+="From " + RetSqlName("SB2") + " SB2   "+CRLF
-    cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = B2_COD AND B1_TIPO IN ( 'MP','EM' ) AND SB1.D_E_L_E_T_ = ' '   "+CRLF
+    cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = B2_COD AND B1_TIPO IN ( 'MP','EM' )  AND SB1.D_E_L_E_T_ = ' '   "+CRLF
     cQuery+="Where SB2.D_E_L_E_T_ = ' '   "+CRLF
     cQuery+="AND B2_FILIAL =  '"+xFilial("SB2")+"'    "+CRLF
     cQuery+="AND B2_LOCAL = B1_LOCPAD   "+CRLF
@@ -63,6 +63,8 @@ Static Function RunProc()
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Saldo Final",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Dias Estoque",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Estoque Seg",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Lote Econom",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Quebra Compra",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Compra Mes",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Custo Mes",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Compra Prevista",2,2)
@@ -94,6 +96,7 @@ Static Function RunProc()
                    nSobra       := nFalta - (cAlias)->B2_QATU //IIF((nFalta - (cAlias)->B2_QATU)<0,0,nFalta - (cAlias)->B2_QATU)
                    nEstSeg      := (nDemanda/30) * MV_PAR02
                    nCompraMes   := nSobra + nEstSeg  //IIF((nSobra+nEstSeg)<0,0,nSobra + nEstSeg)
+
                    nCustoMes    := IIF(nCompraMes<=0,0,nCompraMes * (cAlias)->B2_CM1)  //nCompraMes * (cAlias)->B2_CM1
                    nCompraPox   := VlrReduz
                    nCustoProx   := nCompraPox * (cAlias)->B2_CM1
@@ -105,7 +108,7 @@ Static Function RunProc()
             
             oFWMsExcel:AddRow("Relacao Produtos","Produtos",{(cAlias)->B2_COD,(cAlias)->B1_DESC,(cAlias)->B1_TIPO,(cAlias)->B2_LOCAL,;
             (cAlias)->B2_QATU,(cAlias)->B2_QEMP,(cAlias)->B2_QPEDVEN,(cAlias)->B2_CM1,nDemanda,nConsumo,MV_PAR01,VlrReduz,nProducao,;
-            nFalta,nSobra,MV_PAR02,nEstSeg,nCompraMes,nCustoMes,nCompraPox,nCustoProx})
+            nFalta,nSobra,MV_PAR02,nEstSeg,(cAlias)->B1_LE,(cAlias)->B1_LOTVEN,nCompraMes,nCustoMes,nCompraPox,nCustoProx})
             (cAlias)->(DbSkip())
     EndDo
     oFWMsExcel:Activate()
@@ -126,6 +129,8 @@ Static Function PCP100SQL(cProduto)
     Local aArea         := FwgetArea()
     Local cQuery        as character 
     Local cAlias        := "B_"+getNextAlias()    
+    Local cAno          := alltrim(Str(Year(dDataBase)))
+    Local cMes          :=  alltrim(Str(Month(dDataBase)))
     Local nRetorno      := {}
     Local aArray        := {}
     cQuery:="SELECT Produto,Ano,Mes, Produzido, AVG(Produzido) OVER(PARTITION BY Ano) AS Media  "+CRLF
@@ -137,9 +142,9 @@ Static Function PCP100SQL(cProduto)
     cQuery+="From " + RetSqlName("SD3") + " SD3  "+CRLF
     cQuery+="WHERE SD3.D_E_L_E_T_ =  ' '  "+CRLF
     cQuery+="AND D3_FILIAL =  '"+xFilial("SD3")+"'  "+CRLF
-    cQuery+="AND Year(D3_EMISSAO) = Year(GetDate()) "+CRLF
-    cQuery+="AND D3_COD = '"+cProduto+"' "+CRLF
-    cQuery+="AND MONTH(D3_EMISSAO) <= MONTH(GetDate())  "+CRLF
+    cQuery+="AND Year(D3_EMISSAO) = "+cAno+" "+CRLF
+    cQuery+="AND D3_COD = '"+Alltrim(cProduto)+"' "+CRLF
+    cQuery+="AND MONTH(D3_EMISSAO) <= "+cMes+"  "+CRLF
     cQuery+="AND D3_OP <> ' ' "+CRLF
     cQuery+="Group By D3_COD, Year(D3_EMISSAO),Month(D3_EMISSAO)  "+CRLF
     cQuery+=") xxx  "+CRLF

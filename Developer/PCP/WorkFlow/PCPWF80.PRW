@@ -10,8 +10,6 @@ description Scheduller para atualizar a tabela PZ2 que corresponde os movimentos
 /*/
 User Function PCPWF80()
      Local  _lAuto	:= .F.
-     Private cAno    := Year(MSDate())
-     Private cMes    := Month(MsDate())
 
      If Select("SM0") <= 0
 		RPCSetType(3)
@@ -26,8 +24,6 @@ User Function PCPWF80()
         RunProj()
         RegLog()
     else
-         cAno    := Year(dDataBase)
-         cMes    := Month(dDataBase)
          Processa({||  RunProc() }, "Processando...")
          Processa({||  RunProj() }, "Processando...")
          Processa({||  RegLog() }, "Processando...")

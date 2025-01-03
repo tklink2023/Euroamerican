@@ -11,15 +11,31 @@ Static cTitulo    := "Movimento de Gerenciamento de Risco"
 Static cAliasPZ2  := "PZ2"
 Static cAliasPZ3  := "PZ3"
 
+/*/{Protheus.doc} PCPM080
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/12/2024
+@return variant, return_description
+/*/
 User Function PCPM080()
     Local aArea := GetArea()
     Pcp80Screen()
     RestArea(aArea)
 Return
 
+/*/{Protheus.doc} Pcp80Screen
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/12/2024
+@return variant, return_description
+/*/
 Static Function Pcp80Screen()
-    Local aArea := FwGetArea()
-    Local oBrowse := FWMBrowse():New()
+    Local aArea     := FwGetArea()
+    Local oBrowse   := FWMBrowse():New()
 
     Private aRotina := {}
 
@@ -34,6 +50,14 @@ Static Function Pcp80Screen()
     FwRestArea(aArea)
 Return Nil
 
+/*/{Protheus.doc} MenuDef
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/12/2024
+@return variant, return_description
+/*/
 Static Function MenuDef()
   Local aRotina := {}
     ADD OPTION aRotina TITLE "Pesquisar" ACTION "PesqBrw" OPERATION 1 ACCESS 0
@@ -43,6 +67,14 @@ Static Function MenuDef()
     ADD OPTION aRotina TITLE "Excluir" ACTION "VIEWDEF.PCPM080" OPERATION 5 ACCESS 0
 Return(aRotina)
 
+/*/{Protheus.doc} ModelDef
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/12/2024
+@return variant, return_description
+/*/
 Static Function ModelDef()
     Local oStrPz2 := FWFormStruct(1, cAliasPZ2)
     Local oStrPz3 := FWFormStruct(1, cAliasPZ3)
@@ -74,7 +106,14 @@ Static Function ModelDef()
 
 Return oModel
 
-
+/*/{Protheus.doc} ViewDef
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/12/2024
+@return variant, return_description
+/*/
 Static Function ViewDef()
     Local oModel := FWLoadModel("PCPM080")
     Local oStrPz2 := FWFormStruct(2, cAliasPZ2)
@@ -102,3 +141,4 @@ Static Function ViewDef()
  
 Return oView
 
+//--------------------------------------------------------------------------------------------------//
