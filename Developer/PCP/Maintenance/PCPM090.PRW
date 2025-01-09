@@ -73,6 +73,8 @@ Static Function PCP90Scren()
     Private nGetStokMax := 0
     Private nGetSldIni := 0
     Private nGetRessup := 0
+    Private nGetstkMedio := 0   
+    Private cOperacao := "1"  // PAs
         
     //Adiciona as colunas que serão criadas na temporária
     aAdd(aCampos, { "OK"        , "C", 2    , 0 })
@@ -192,19 +194,25 @@ Static Function PCP90Scren()
         oGetRessup  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetRessup := u, nGetRessup)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
 
         nLinhaObj += 15
+        oSaysldini  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Estoque Inical"}, oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
+        oGetsldini  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetsldini := u, nGetsldini)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
+
+        nLinhaObj += 15
         oSaystokMax  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Estoque Maximo"}, oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
         oGetstokMax  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetStokMax := u, nGetStokMax)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
 
         nLinhaObj += 15
-        oSaysldini  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Estoque Inical"}, oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
-        oGetsldini  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetsldini := u, nGetsldini)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
+        oSaysldini  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Estoque Medio"}, oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
+        oGetsldini  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetstkMedio := u, nGetstkMedio)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
+
 
         nLinhaObj += 25
-        oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Projetar dados", oPanDados, {|| fPopula()}, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
+        oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Projetar dados", oPanDados, {|| IIF(cOperacao=="1",fPopula(),fEntrada()) }, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
         oBtnProc:SetCSS("TButton { font: bold;     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #0D9CBF);    color: #FFFFFF;     border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:focus {    padding:0px; outline-width:1px; outline-style:solid; outline-color: #51DAFC; outline-radius:3px; border-color:#369CB5;}TButton:hover {    color: #FFFFFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #1188A6);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:pressed {    color: #FFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #1188A6, stop: 1 #3DAFCC);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:disabled {    color: #FFFFFF;     background-color: #4CA0B5; }")
 
         nLinhaObj += 25
-        oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Grafico Media", oPanDados, {|| U_PCP90GRMED(cGetProd,Year(dGetDtFim))}, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
+        oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Grafico", oPanDados, {||IIF(cOperacao=="1", U_PCP90GRMED(cGetProd,Year(dGetDtFim)),U_PCP91GRMED(cGetProd,Year(dGetDtFim)))}, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
+        
         oBtnProc:SetCSS("TButton { font: bold;     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #0D9CBF);    color: #FFFFFF;     border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:focus {    padding:0px; outline-width:1px; outline-style:solid; outline-color: #51DAFC; outline-radius:3px; border-color:#369CB5;}TButton:hover {    color: #FFFFFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #1188A6);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:pressed {    color: #FFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #1188A6, stop: 1 #3DAFCC);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:disabled {    color: #FFFFFF;     background-color: #4CA0B5; }")
 
     Activate MsDialog oDlg Centered
@@ -274,6 +282,7 @@ Static Function fVldProd()
         SB1->( dbSetOrder(1) )
         IF SB1->(dbSeek(xFilial("SB1")+cGetProd) )
            cGetDesc := SB1->B1_DESC
+           cOperacao := IIF(SB1->B1_TIPO == "PA", "1", "2")
         else
             MsgAlert("Produto não encontrado")
             cGetDesc := "Produto não encontrado"
@@ -351,12 +360,18 @@ description
 Static Function PCP80CALC()
     Local aArea := GetArea()
     Local nPerct := U_PCP80PERC(nGetPerc)
-    nGetMedia := U_PCP80AVG(cGetProd,dGetDtIni,dGetDtFim)
-    nGetDesvio:= U_PCP80DVP(cGetProd,dGetDtIni,dGetDtFim)
+    if cOperacao == "1"
+        nGetMedia := U_PCP80AVG(cGetProd,dGetDtIni,dGetDtFim)
+        nGetDesvio:= U_PCP80DVP(cGetProd,dGetDtIni,dGetDtFim)
+    else
+        nGetMedia := U_PCP90AVG(cGetProd,dGetDtIni,dGetDtFim)
+        nGetDesvio:= U_PCP90DVP(cGetProd,dGetDtIni,dGetDtFim)
+    endif    
     nGetEstSeg:= U_PCP80SEG(nGetDesvio,nGetDias,nGetMedia,nPerct)
     nGetsldini:= U_PCP80SLDINI(cGetProd)
     nGetRessup:= (nGetMedia * nGetDias) + nGetEstSeg
     nGetStokMax:= (nGetMedia + nGetEstSeg) * nGetDias
+    nGetstkMedio := ((nGetStokMax - nGetEstSeg)/2)+nGetEstSeg
     RestArea(aArea) 
 Return
 
@@ -543,6 +558,180 @@ Static Function fPopula()
   FwRestArea(aArea)
 Return
 
+/*/{Protheus.doc} fEntrada
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 09/01/2025
+@return variant, return_description
+/*/
+Static Function fEntrada()
+    Local aArea   := FwgetArea()
+    Local cQuery  as character 
+    Local cAlias  := "PCP_"+getNextAlias() 
+    Local afields := {} ; aDados := {}
+    Local AB
+    Local XY
+    Local nPos := 0
+
+
+    Local nSldProc    := nGetsldini
+    Local nQtdRessupr := nGetRessup
+    Local nQtdStokMax := nGetStokMax
+    Local nQtdAbast   := 0
+    Local nQtdSoma    := 0
+
+    cQuery:="Select D1_COD,D1_DTDIGIT,SUM(D1_QUANT) QTD   "+CRLF
+    cQuery+="From " + RetSqlName("SD1") + " SD1   "+CRLF
+    cQuery+="INNER JOIN " + RetSqlName("SF4") + " SF4 ON F4_FILIAL = SUBSTRING(D1_FILIAL,1,2) AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '   "+CRLF
+    cQuery+="Where SD1.D_E_L_E_T_ = ' '   "+CRLF
+    cQuery+="AND D1_FILIAL = '"+xFilial("SD1")+"'   "+CRLF
+    cQuery+="AND D1_DTDIGIT BETWEEN '"+DtoS(dGetDtIni)+"' AND '"+DtoS(dGetDtFim)+"'   "+CRLF
+    cQuery+="AND D1_COD = '"+cGetProd+"'   "+CRLF
+    cQuery+="GROUP BY D1_COD,D1_DTDIGIT   "+CRLF
+    cQuery+="ORDER BY D1_COD,D1_DTDIGIT   "+CRLF
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+    TCSetField(cAlias, "D1_DTDIGIT", "D")
+
+    IF (cAlias)->(Eof())
+            (cAlias)->(DbCloseArea())   
+            FwRestArea(aArea)
+            Return(0)
+    endif
+    
+    //-------------------------------------------
+    // Dados do Movimento de Saída
+    //----------------------------------------- 
+
+    dbSelectArea(cAlias)
+    (cAlias)->( dbgotop())
+    DO WHILE !(cAlias)->(Eof())
+        
+        nSldProc := (nSldProc - (cAlias)->QTD ) 
+        nQtdAbast := 0
+        DtPrevisto:= Ctod("  /  /  ") 
+
+        if nSldProc <= nQtdRessupr 
+            nQtdAbast  :=  (nQtdStokMax - (nSldProc * -1)) - nQtdSoma
+            DtPrevisto :=  DataValida((cAlias)->D1_DTDIGIT + nGetDias)
+            aAdd(afields, { (cAlias)->D1_DTDIGIT, (cAlias)->QTD, 0, nSldProc, DtPrevisto, nQtdAbast})
+
+            nSldProc   :=  nQtdAbast
+            nQtdSoma   := 0
+            aAdd(aDados, { DtPrevisto, 0, nQtdAbast, nSldProc, Ctod("  /  /  "), 0})
+            
+             (cAlias)->(dbskip())
+             Loop
+
+        Endif
+
+        aAdd(afields, { (cAlias)->D1_DTDIGIT, (cAlias)->QTD, 0, nSldProc, DtPrevisto, nQtdAbast})
+        nQtdSoma := nQtdSoma + (cAlias)->QTD
+        (cAlias)->(dbskip())
+    ENDDO
+
+    //-------------------------------------------
+    // Ajustando as Datas de Entrada no Movimento de Saída
+    //----------------------------------------- 
+
+ 
+      if len(aDados) > 0
+       FOR AB:= 1 TO LEN(aDados)
+       
+          nPos := aScan(afields,{|x| x[1] == aDados[AB][1] })
+          if nPos > 0
+            afields[nPos][3] := afields[nPos][3] + aDados[AB][3]
+            nSldProc := (afields[nPos-1][4] - afields[nPos][2]) + afields[nPos][2] 
+            afields[nPos][4] := nSldProc
+          else
+
+            FOR XY:= 1 TO 10
+              nPos := aScan(afields,{|x| x[1] == (aDados[AB][1])+xy })
+              if nPos > 0
+                 afields[nPos][3] := afields[nPos][3] + aDados[AB][3]
+                 nSldProc := (afields[nPos-1][4] - afields[nPos][2]) + afields[nPos][2] 
+                 afields[nPos][4] := nSldProc
+                 exit
+              endif                  
+            NEXT
+
+          endif
+
+       NEXT  
+    endif
+
+    //-------------------------------------------
+    // Ajustando Saldo dos movimento de Saída
+    //----------------------------------------- 
+
+    nSldProc := nGetsldini
+    if len(afields) > 0
+       FOR AB:= 1 TO LEN(afields)
+
+            nSldProc := (nSldProc + afields[AB][3] )  - afields[AB][2]
+            afields[AB][4] := nSldProc
+
+            if nSldProc > nGetRessup
+               aFields[AB][5] := Ctod("  /  /  ")                
+               afields[AB][6] := 0              
+            endif    
+
+       NEXT  
+    endif
+
+   //-------------------------------------------
+    // Gravando os dados na Temporária
+    //----------------------------------------- 
+
+    if len(afields) > 0
+       FOR AB:= 1 TO LEN(afields)
+           dbSelectArea(cAliasTmp)
+           (cAliasTmp)->( dbSetOrder(1))
+           if (cAliasTmp)->( !dbSeek( afields[AB][1] ),.T.)
+        
+                IF RecLock(cAliasTmp, .T.)
+                    (cAliasTmp)->OK     := ""
+                    (cAliasTmp)->EMISSAO    := afields[AB][1]
+                    (cAliasTmp)->QUANTIDADE := afields[AB][2]
+                    (cAliasTmp)->ENTRADA    := afields[AB][3]
+                    (cAliasTmp)->SALDO      := afields[AB][4]
+                    (cAliasTmp)->ENTREGA    := afields[AB][5]  
+                    (cAliasTmp)->PREVISTO   := afields[AB][6]
+                    (cAliasTmp)->(MsUnlock())
+                Endif         
+            else
+                IF RecLock(cAliasTmp, .F.)
+                    (cAliasTmp)->QUANTIDADE := afields[AB][2]
+                    (cAliasTmp)->ENTRADA    := afields[AB][3]
+                    (cAliasTmp)->SALDO      := afields[AB][4]
+                    (cAliasTmp)->ENTREGA    := afields[AB][5]  
+                    (cAliasTmp)->PREVISTO   := afields[AB][6]
+                    (cAliasTmp)->(MsUnlock())
+                Endif   
+            endif    
+       NEXT
+
+    endif
+    
+         //Cria a grid
+        oMarkBrowse := FWMarkBrowse():New()
+        oMarkBrowse:SetAlias(cAliasTmp)
+        oMarkBrowse:DisableFilter()
+        oMarkBrowse:DisableConfig()
+        oMarkBrowse:DisableReport()
+        oMarkBrowse:DisableSeek()
+        oMarkBrowse:DisableSaveConfig()
+        oMarkBrowse:SetFontBrowse(oFontSay)
+        oMarkBrowse:SetFieldMark('OK')
+        oMarkBrowse:SetTemporary(.T.)
+        oMarkBrowse:SetColumns(aColunas)
+        oMarkBrowse:SetOwner(oPanGrid)
+        oMarkBrowse:Activate()
+
+  (calias)->(DbCloseArea()) 
+  FwRestArea(aArea)
+Return
 //---------------------------------------------------------------------------------------------------------------------------------------//
 // FINAL DO PROGRAMA
 //---------------------------------------------------------------------------------------------------------------------------------------//

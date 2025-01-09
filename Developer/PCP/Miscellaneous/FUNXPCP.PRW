@@ -1267,12 +1267,110 @@ Endif
 FwRestArea(aArea)
 Return(nReult)
 
+//--------------- REFERENTE A MP E EMBALAGEM -------------------//
+/*/{Protheus.doc} PCP90AVG
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 09/01/2025
+@param cProduto, character, param_description
+@param DTINICIO, date, param_description
+@param DTFIM, date, param_description
+@return variant, return_description
+/*/
+User Function PCP90AVG(cProduto,DTINICIO,DTFIM)
+  Local aArea   := FwgetArea()
+  Local cQuery  as character 
+  Local cAlias  := "PCP_"+getNextAlias() 
+  Local nResult := 0
 
+  cQuery:="Select AVG(D1_QUANT) MEDIA   "+CRLF
+  cQuery+="From " + RetSqlName("SD1") + " SD1   "+CRLF
+  cQuery+="INNER JOIN " + RetSqlName("SF4") + " SF4 ON F4_FILIAL = SUBSTRING(D1_FILIAL,1,2) AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '   "+CRLF
+  cQuery+="Where SD1.D_E_L_E_T_ = ' '   "+CRLF
+  cQuery+="AND D1_FILIAL = '"+xFilial("SD2")+"'   "+CRLF
+  cQuery+="AND D1_DTDIGIT BETWEEN '"+DtoS(DTINICIO)+"' AND '"+DtoS(DTFIM)+"'   "+CRLF
+  cQuery+="AND D1_COD = '"+cProduto+"'   "+CRLF
+  DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return(0)
+   endif
+
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+        	  nResult := (cAlias)->MEDIA
+     		(cAlias)->( dbSkip() )
+    EndDo			 
+
+  (calias)->(DbCloseArea()) 
+  FwRestArea(aArea)
+Return(nResult)
+
+/*/{Protheus.doc} PCP90DVP
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 09/01/2025
+@param cProduto, character, param_description
+@param DTINICIO, date, param_description
+@param DTFIM, date, param_description
+@return variant, return_description
+/*/
+User Function PCP90DVP(cProduto,DTINICIO,DTFIM)
+  Local aArea   := FwgetArea()
+  Local cQuery  as character 
+  Local cAlias  := "PCP_"+getNextAlias() 
+  Local nResult := 0
+
+  cQuery:="Select STDEVP(D1_QUANT) DESVIO  "+CRLF
+  cQuery+="From " + RetSqlName("SD1") + " SD1  "+CRLF
+  cQuery+="INNER JOIN " + RetSqlName("SF4") + " SF4 ON F4_FILIAL = SUBSTRING(D1_FILIAL,1,2) AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '  "+CRLF
+  cQuery+="Where SD1.D_E_L_E_T_ = ' '   "+CRLF
+  cQuery+="AND D1_FILIAL = '"+xFilial("SD2")+"'   "+CRLF
+  cQuery+="AND D1_DTDIGIT BETWEEN '"+DtoS(DTINICIO)+"' AND '"+DtoS(DTFIM)+"'   "+CRLF
+  cQuery+="AND D1_COD = '"+cProduto+"'   "+CRLF
+
+  DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return(0)
+   endif
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+   			nResult := (cAlias)->DESVIO
+     		(cAlias)->( dbSkip() )
+    EndDo			 
+  (calias)->(DbCloseArea()) 
+  FwRestArea(aArea)
+Return(nResult)
+
+/*/{Protheus.doc} PCP90GRMED
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 09/01/2025
+@param cProduto, character, param_description
+@param cAno, character, param_description
+@return variant, return_description
+/*/
 User Function PCP90GRMED(cProduto,cAno)
 	Local oChart 		as Object 
 	Local oDlg   		as Object 
     Local cQuery  as character
     Local cAlias  := "PCP_"+getNextAlias() 
+    Local cAlia2  := "PCP_"+getNextAlias() 
+    Local aBrowser := {}
+    Local nI
 
     cQuery := "SELECT PRODUTO AS 'PRODUTO',ANO AS 'ANO',  "+CRLF
     cQuery += "		ISNULL([1],0)  AS 'JAN', "+CRLF
@@ -1297,7 +1395,7 @@ User Function PCP90GRMED(cProduto,cAno)
     cQuery += "					INNER JOIN " + RetSqlName("SF4") + "  SF4 ON F4_FILIAL = SUBSTRING(D2_FILIAL,1,2) AND F4_CODIGO = D2_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '  "+CRLF
     cQuery += "					WHERE SD2.D_E_L_E_T_ = ' '  "+CRLF
     cQuery += "					and D2_FILIAL =  '"+xFilial("SD2")+"'  "+CRLF
-    cQuery += "					AND YEAR(D2_EMISSAO) = '2024'  "+CRLF
+    cQuery += "					AND YEAR(D2_EMISSAO) = '"+cValtoChar(cAno)+"'  "+CRLF
     cQuery += "					GROUP BY D2_COD,YEAR(D2_EMISSAO), MONTH(D2_EMISSAO)) XARQ  "+CRLF
     cQuery += "		           PIVOT ( AVG(QTDE) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT  "+CRLF
     cQuery += "				   WHERE PT.ANO = '"+cValtoChar(cAno)+"'   "+CRLF
@@ -1308,35 +1406,223 @@ User Function PCP90GRMED(cProduto,cAno)
 
     if (cAlias)->(Eof())
         MsgAlert("Sem dados para o Grafico")
+        (cAlias)->(DbCloseArea())
 		Return
     ENDIF
+
+    While (cAlias)->( !Eof() )
+          aAdd(aBrowser, {"Consumo Medio", (cAlias)->ANO, (cAlias)->JAN, (cAlias)->FEV, (cAlias)->MAR, (cAlias)->ABR, (cAlias)->MAI, (cAlias)->JUN, (cAlias)->JUL, (cAlias)->AGO, (cAlias)->SET, (cAlias)->OUT, (cAlias)->NOV, (cAlias)->DEZ})
+            (cAlias)->( dbSkip() )
+    EndDo
+    (cAlias)->(DbCloseArea())
+
+    cQuery := "SELECT PRODUTO AS 'PRODUTO',ANO AS 'ANO',  "+CRLF
+    cQuery += "		ISNULL([1],0)  AS 'JAN', "+CRLF
+    cQuery += "		ISNULL([2],0)  AS 'FEV', "+CRLF
+    cQuery += "		ISNULL([3],0)  AS 'MAR', "+CRLF
+    cQuery += "		ISNULL([4],0)  AS 'ABR', "+CRLF
+    cQuery += "		ISNULL([5],0)  AS 'MAI', "+CRLF
+    cQuery += "		ISNULL([6],0)  AS 'JUN', "+CRLF
+    cQuery += "		ISNULL([7],0)  AS 'JUL', "+CRLF
+    cQuery += "		ISNULL([8],0)  AS 'AGO', "+CRLF
+    cQuery += "		ISNULL([9],0)  AS 'SET', "+CRLF
+    cQuery += "		ISNULL([10],0) AS 'OUT', "+CRLF
+    cQuery += "		ISNULL([11],0) AS 'NOV', "+CRLF
+    cQuery += "		ISNULL([12],0) AS 'DEZ'  "+CRLF
+    cQuery += "		FROM (  "+CRLF
+    cQuery += "					SELECT  "+CRLF
+    cQuery += "							D2_COD PRODUTO, "+CRLF
+    cQuery += "							YEAR(D2_EMISSAO) ANO, "+CRLF
+    cQuery += "	    					MONTH(D2_EMISSAO) MES, "+CRLF
+    cQuery += "							ISNULL(ROUND(STDEVP(D2_QUANT),3),0) QTDE "+CRLF
+    cQuery += "					FROM " + RetSqlName("SD2") + " SD2 "+CRLF
+    cQuery += "					INNER JOIN " + RetSqlName("SF4") + "  SF4 ON F4_FILIAL = SUBSTRING(D2_FILIAL,1,2) AND F4_CODIGO = D2_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					WHERE SD2.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					and D2_FILIAL =  '"+xFilial("SD2")+"'  "+CRLF
+    cQuery += "					AND YEAR(D2_EMISSAO) = '"+cValtoChar(cAno)+"'  "+CRLF
+    cQuery += "					GROUP BY D2_COD,YEAR(D2_EMISSAO), MONTH(D2_EMISSAO)) XARQ  "+CRLF
+    cQuery += "		           PIVOT ( SUM(QTDE) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT  "+CRLF
+    cQuery += "				   WHERE PT.ANO = '"+cValtoChar(cAno)+"'   "+CRLF
+    cQuery += "				   AND PT.PRODUTO = '"+cProduto+"'  "+CRLF
+    cQuery += "				   ORDER BY 1,2  "+CRLF
+
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlia2, .T., .T.)
+
+    if (cAlia2)->(Eof())
+        MsgAlert("Sem dados para o Grafico")
+        (cAlia2)->(DbCloseArea())
+		Return
+    ENDIF
+
+    While (cAlia2)->( !Eof() )
+          aAdd(aBrowser, {"Desvio Padrao", (cAlia2)->ANO, (cAlia2)->JAN, (cAlia2)->FEV, (cAlia2)->MAR, (cAlia2)->ABR, (cAlia2)->MAI, (cAlia2)->JUN, (cAlia2)->JUL, (cAlia2)->AGO, (cAlia2)->SET, (cAlia2)->OUT, (cAlia2)->NOV, (cAlia2)->DEZ})
+            (cAlia2)->( dbSkip() )
+    EndDo
+    (cAlia2)->(DbCloseArea())
+
 
 DEFINE MSDIALOG oDlg PIXEL FROM 10,0 TO 600,600
 		oChart := FWChartLine():New()
 		oChart:init( oDlg, .t.,.t. ) 
-	
-        While (cAlias)->( !Eof() )
-    		oChart:addSerie( cProduto, { {"Jan "+Alltrim(Transform((cAlias)->JAN, "@E 99,999.9999")),(cAlias)->JAN},;
-										 {"Fev "+Alltrim(Transform((cAlias)->FEV, "@E 99,999.9999")),(cAlias)->FEV},;
-										 {"Mar "+Alltrim(Transform((cAlias)->MAR, "@E 99,999.9999")),(cAlias)->MAR},;
-										 {"Abr "+Alltrim(Transform((cAlias)->ABR, "@E 99,999.9999")),(cAlias)->ABR},;
-										 {"Mai "+Alltrim(Transform((cAlias)->MAI, "@E 99,999.9999")),(cAlias)->MAI},;
-										 {"Jun "+Alltrim(Transform((cAlias)->JUN, "@E 99,999.9999")),(cAlias)->JUN},;
-										 {"Jul "+Alltrim(Transform((cAlias)->JUL, "@E 99,999.9999")),(cAlias)->JUL},;
-										 {"Ago "+Alltrim(Transform((cAlias)->AGO, "@E 99,999.9999")),(cAlias)->AGO},;
-										 {"Set "+Alltrim(Transform((cAlias)->SET, "@E 99,999.9999")),(cAlias)->SET},;
-										 {"Out "+Alltrim(Transform((cAlias)->OUT, "@E 99,999.9999")),(cAlias)->OUT},;
-										 {"Nov "+Alltrim(Transform((cAlias)->NOV, "@E 99,999.9999")),(cAlias)->NOV},;
-										 {"Dez "+Alltrim(Transform((cAlias)->DEZ, "@E 99,999.9999")),(cAlias)->DEZ} })
 
-			oChart:setLegend( CONTROL_ALIGN_LEFT ) 
+        For nI := 1 to Len(aBrowser)
+		    oChart:addSerie( aBrowser[nI][1],   { {"Jan "+Alltrim(Transform(aBrowser[nI][3], "@E 99,999.9999")),aBrowser[nI][3] },;
+										        {"Fev "+Alltrim(Transform(aBrowser[nI][4], "@E 99,999.9999")),aBrowser[nI][4]   },;
+										        {"Mar "+Alltrim(Transform(aBrowser[nI][5], "@E 99,999.9999")),aBrowser[nI][5]   },;
+										        {"Abr "+Alltrim(Transform(aBrowser[nI][6], "@E 99,999.9999")),aBrowser[nI][6]   },;
+										        {"Mai "+Alltrim(Transform(aBrowser[nI][7], "@E 99,999.9999")),aBrowser[nI][7]   },;
+										        {"Jun "+Alltrim(Transform(aBrowser[nI][8], "@E 99,999.9999")),aBrowser[nI][8]   },;
+										        {"Jul "+Alltrim(Transform(aBrowser[nI][9], "@E 99,999.9999")),aBrowser[nI][9]   },;
+										        {"Ago "+Alltrim(Transform(aBrowser[nI][10], "@E 99,999.9999")),aBrowser[nI][10] },;
+										        {"Set "+Alltrim(Transform(aBrowser[nI][11], "@E 99,999.9999")),aBrowser[nI][11] },;
+										        {"Out "+Alltrim(Transform(aBrowser[nI][12], "@E 99,999.9999")),aBrowser[nI][12] },;
+										        {"Nov "+Alltrim(Transform(aBrowser[nI][13], "@E 99,999.9999")),aBrowser[nI][13] },;
+										        {"Dez "+Alltrim(Transform(aBrowser[nI][14], "@E 99,999.9999")),aBrowser[nI][14] } })
+
+        next 
+
+        oChart:setLegend( CONTROL_ALIGN_LEFT ) 
 	
-			oChart:Build()
-          (cAlias)->( dbSkip() )	
-	    EndDo
+	    oChart:Build()
 
 ACTIVATE MSDIALOG oDlg
 Return
+
+/*/{Protheus.doc} PCP91GRMED
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 09/01/2025
+@param cProduto, character, param_description
+@param cAno, character, param_description
+@return variant, return_description
+/*/
+User Function PCP91GRMED(cProduto,cAno)
+	Local oChart 		as Object 
+	Local oDlg   		as Object 
+    Local cQuery  as character
+    Local cAlias  := "PCP_"+getNextAlias() 
+    Local cAlia2  := "PCP_"+getNextAlias() 
+    Local aBrowser := {}
+    Local nI
+
+    cQuery := "SELECT PRODUTO AS 'PRODUTO',ANO AS 'ANO',  "+CRLF
+    cQuery += "		ISNULL([1],0)  AS 'JAN', "+CRLF
+    cQuery += "		ISNULL([2],0)  AS 'FEV', "+CRLF
+    cQuery += "		ISNULL([3],0)  AS 'MAR', "+CRLF
+    cQuery += "		ISNULL([4],0)  AS 'ABR', "+CRLF
+    cQuery += "		ISNULL([5],0)  AS 'MAI', "+CRLF
+    cQuery += "		ISNULL([6],0)  AS 'JUN', "+CRLF
+    cQuery += "		ISNULL([7],0)  AS 'JUL', "+CRLF
+    cQuery += "		ISNULL([8],0)  AS 'AGO', "+CRLF
+    cQuery += "		ISNULL([9],0)  AS 'SET', "+CRLF
+    cQuery += "		ISNULL([10],0) AS 'OUT', "+CRLF
+    cQuery += "		ISNULL([11],0) AS 'NOV', "+CRLF
+    cQuery += "		ISNULL([12],0) AS 'DEZ'  "+CRLF
+    cQuery += "		FROM (  "+CRLF
+    cQuery += "					SELECT  "+CRLF
+    cQuery += "							D1_COD PRODUTO, "+CRLF
+    cQuery += "							YEAR(D1_DTDIGIT) ANO, "+CRLF
+    cQuery += "	    					MONTH(D1_DTDIGIT) MES, "+CRLF
+    cQuery += "							ISNULL(ROUND(AVG(D1_QUANT),3),0) QTDE "+CRLF
+    cQuery += "					FROM " + RetSqlName("SD1") + " SD1 "+CRLF
+    cQuery += "					INNER JOIN " + RetSqlName("SF4") + "  SF4 ON F4_FILIAL = SUBSTRING(D1_FILIAL,1,2) AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					WHERE SD1.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					and D1_FILIAL =  '"+xFilial("SD1")+"'  "+CRLF
+    cQuery += "					AND YEAR(D1_DTDIGIT) = '"+cValtoChar(cAno)+"'  "+CRLF
+    cQuery += "					GROUP BY D1_COD,YEAR(D1_DTDIGIT), MONTH(D1_DTDIGIT)) XARQ  "+CRLF
+    cQuery += "		           PIVOT ( AVG(QTDE) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT  "+CRLF
+    cQuery += "				   WHERE PT.ANO = '"+cValtoChar(cAno)+"'   "+CRLF
+    cQuery += "				   AND PT.PRODUTO = '"+cProduto+"'  "+CRLF
+    cQuery += "				   ORDER BY 1,2  "+CRLF
+
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+    if (cAlias)->(Eof())
+        MsgAlert("Sem dados para o Grafico")
+        (cAlias)->(DbCloseArea())
+		Return
+    ENDIF
+
+    While (cAlias)->( !Eof() )
+          aAdd(aBrowser, {"Consumo Medio", (cAlias)->ANO, (cAlias)->JAN, (cAlias)->FEV, (cAlias)->MAR, (cAlias)->ABR, (cAlias)->MAI, (cAlias)->JUN, (cAlias)->JUL, (cAlias)->AGO, (cAlias)->SET, (cAlias)->OUT, (cAlias)->NOV, (cAlias)->DEZ})
+            (cAlias)->( dbSkip() )
+    EndDo
+    (cAlias)->(DbCloseArea())
+
+    cQuery := "SELECT PRODUTO AS 'PRODUTO',ANO AS 'ANO',  "+CRLF
+    cQuery += "		ISNULL([1],0)  AS 'JAN', "+CRLF
+    cQuery += "		ISNULL([2],0)  AS 'FEV', "+CRLF
+    cQuery += "		ISNULL([3],0)  AS 'MAR', "+CRLF
+    cQuery += "		ISNULL([4],0)  AS 'ABR', "+CRLF
+    cQuery += "		ISNULL([5],0)  AS 'MAI', "+CRLF
+    cQuery += "		ISNULL([6],0)  AS 'JUN', "+CRLF
+    cQuery += "		ISNULL([7],0)  AS 'JUL', "+CRLF
+    cQuery += "		ISNULL([8],0)  AS 'AGO', "+CRLF
+    cQuery += "		ISNULL([9],0)  AS 'SET', "+CRLF
+    cQuery += "		ISNULL([10],0) AS 'OUT', "+CRLF
+    cQuery += "		ISNULL([11],0) AS 'NOV', "+CRLF
+    cQuery += "		ISNULL([12],0) AS 'DEZ'  "+CRLF
+    cQuery += "		FROM (  "+CRLF
+    cQuery += "					SELECT  "+CRLF
+    cQuery += "							D1_COD PRODUTO, "+CRLF
+    cQuery += "							YEAR(D1_DTDIGIT) ANO, "+CRLF
+    cQuery += "	    					MONTH(D1_DTDIGIT) MES, "+CRLF
+    cQuery += "							ISNULL(ROUND(STDEVP(D1_QUANT),3),0) QTDE "+CRLF
+    cQuery += "					FROM " + RetSqlName("SD1") + " SD1 "+CRLF
+    cQuery += "					INNER JOIN " + RetSqlName("SF4") + "  SF4 ON F4_FILIAL = SUBSTRING(D1_FILIAL,1,2) AND F4_CODIGO = D1_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					WHERE SD1.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					and D1_FILIAL =  '"+xFilial("SD1")+"'  "+CRLF
+    cQuery += "					AND YEAR(D1_DTDIGIT) = '"+cValtoChar(cAno)+"'  "+CRLF
+    cQuery += "					GROUP BY D1_COD,YEAR(D1_DTDIGIT), MONTH(D1_DTDIGIT)) XARQ  "+CRLF
+    cQuery += "		           PIVOT ( SUM(QTDE) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT  "+CRLF
+    cQuery += "				   WHERE PT.ANO = '"+cValtoChar(cAno)+"'   "+CRLF
+    cQuery += "				   AND PT.PRODUTO = '"+cProduto+"'  "+CRLF
+    cQuery += "				   ORDER BY 1,2  "+CRLF
+
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlia2, .T., .T.)
+
+    if (cAlia2)->(Eof())
+        MsgAlert("Sem dados para o Grafico")
+        (cAlia2)->(DbCloseArea())
+		Return
+    ENDIF
+
+    While (cAlia2)->( !Eof() )
+          aAdd(aBrowser, {"Desvio Padrao", (cAlia2)->ANO, (cAlia2)->JAN, (cAlia2)->FEV, (cAlia2)->MAR, (cAlia2)->ABR, (cAlia2)->MAI, (cAlia2)->JUN, (cAlia2)->JUL, (cAlia2)->AGO, (cAlia2)->SET, (cAlia2)->OUT, (cAlia2)->NOV, (cAlia2)->DEZ})
+            (cAlia2)->( dbSkip() )
+    EndDo
+    (cAlia2)->(DbCloseArea())
+
+
+DEFINE MSDIALOG oDlg PIXEL FROM 10,0 TO 600,600
+		oChart := FWChartLine():New()
+		oChart:init( oDlg, .t.,.t. ) 
+
+        For nI := 1 to Len(aBrowser)
+		    oChart:addSerie( aBrowser[nI][1],   { {"Jan "+Alltrim(Transform(aBrowser[nI][3], "@E 99,999.9999")),aBrowser[nI][3] },;
+										        {"Fev "+Alltrim(Transform(aBrowser[nI][4], "@E 99,999.9999")),aBrowser[nI][4]   },;
+										        {"Mar "+Alltrim(Transform(aBrowser[nI][5], "@E 99,999.9999")),aBrowser[nI][5]   },;
+										        {"Abr "+Alltrim(Transform(aBrowser[nI][6], "@E 99,999.9999")),aBrowser[nI][6]   },;
+										        {"Mai "+Alltrim(Transform(aBrowser[nI][7], "@E 99,999.9999")),aBrowser[nI][7]   },;
+										        {"Jun "+Alltrim(Transform(aBrowser[nI][8], "@E 99,999.9999")),aBrowser[nI][8]   },;
+										        {"Jul "+Alltrim(Transform(aBrowser[nI][9], "@E 99,999.9999")),aBrowser[nI][9]   },;
+										        {"Ago "+Alltrim(Transform(aBrowser[nI][10], "@E 99,999.9999")),aBrowser[nI][10] },;
+										        {"Set "+Alltrim(Transform(aBrowser[nI][11], "@E 99,999.9999")),aBrowser[nI][11] },;
+										        {"Out "+Alltrim(Transform(aBrowser[nI][12], "@E 99,999.9999")),aBrowser[nI][12] },;
+										        {"Nov "+Alltrim(Transform(aBrowser[nI][13], "@E 99,999.9999")),aBrowser[nI][13] },;
+										        {"Dez "+Alltrim(Transform(aBrowser[nI][14], "@E 99,999.9999")),aBrowser[nI][14] } })
+
+        next 
+
+        oChart:setLegend( CONTROL_ALIGN_LEFT ) 
+	
+	    oChart:Build()
+
+ACTIVATE MSDIALOG oDlg
+Return
+
 //===================================================================================================================================//
 //===============[ FINAL DO PROGRAMA]================================================================================================//
 //===================================================================================================================================//
