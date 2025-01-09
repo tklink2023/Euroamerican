@@ -156,7 +156,8 @@ Static Function PCP100SQL(cProduto)
         FwRestArea(aArea)
         Return(nRetorno)
    endif
-   DbSelectArea(cAlias)
+
+    DbSelectArea(cAlias)
     While (cAlias)->( !EoF() )
             aAdd(aArray,{(cAlias)->Mes,(cAlias)->Produzido,(cAlias)->Media})
             (cAlias)->(DbSkip())

@@ -1108,15 +1108,21 @@ User Function PCP80AVG(cProduto,DTINICIO,DTFIM)
   cQuery+="AND D2_FILIAL = '"+xFilial("SD2")+"'   "+CRLF
   cQuery+="AND D2_EMISSAO BETWEEN '"+DtoS(DTINICIO)+"' AND '"+DtoS(DTFIM)+"'   "+CRLF
   cQuery+="AND D2_COD = '"+cProduto+"'   "+CRLF
+  DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
 
-  If TCSqlExec(cQuery) < 0
-         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
-  else
-	  (calias)->(DbCloseArea()) 
-	  FwRestArea(aArea)
-	  Return(0) 
-  EndIf
-  nResult := (cAlias)->MEDIA
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return(0)
+   endif
+
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+        	  nResult := (cAlias)->MEDIA
+     		(cAlias)->( dbSkip() )
+    EndDo			 
+
   (calias)->(DbCloseArea()) 
   FwRestArea(aArea)
 Return(nResult)
@@ -1146,13 +1152,19 @@ User Function PCP80DVP(cProduto,DTINICIO,DTFIM)
   cQuery+="AND D2_EMISSAO BETWEEN '"+DtoS(DTINICIO)+"' AND '"+DtoS(DTFIM)+"'   "+CRLF
   cQuery+="AND D2_COD = '"+cProduto+"'   "+CRLF
 
-  If TCSqlExec(cQuery) < 0
-         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
-		 (calias)->(DbCloseArea()) 
-	     FwRestArea(aArea)
-	   Return(0) 
-  EndIf
-   nResult := (cAlias)->DESVIO 
+  DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return(0)
+   endif
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+   			nResult := (cAlias)->DESVIO
+     		(cAlias)->( dbSkip() )
+    EndDo			 
   (calias)->(DbCloseArea()) 
   FwRestArea(aArea)
 Return(nResult)
@@ -1172,15 +1184,23 @@ description
 User Function PCP80SEG(nDesvio,nLeadTime,nMedia,nPercent)
   Local aArea   := FwgetArea()
   Local cQuery  as character 
+  Local cAlias  := "PCP_"+getNextAlias() 
   Local nResult := 0
-  cQuery:="select round(SQRT(POWER("+nDesvio+", 2) * "+nLeadTime+" + POWER("+nMedia+", 2))*"+nPercent+") result  "+CRLF
-  If TCSqlExec(cQuery) < 0
-         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
-		 (calias)->(DbCloseArea()) 
-	     FwRestArea(aArea)
-	   Return(0) 
-  EndIf
-  nResult := (cAlias)->result
+  cQuery:="select SQRT(POWER("+cValtochar(nDesvio)+", 2) * "+cValtochar(nLeadTime)+" + POWER("+cValtochar(nMedia)+", 2))*"+cValtochar(nPercent)+" result  "+CRLF
+
+ DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return(0)
+   endif
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+   			nResult := (cAlias)->result
+     		(cAlias)->( dbSkip() )
+    EndDo			 
   (calias)->(DbCloseArea()) 
   FwRestArea(aArea)
 Return(nResult)
@@ -1197,6 +1217,7 @@ description
 User Function PCP80SLDINI(cProduto)
 Local aArea   := FwgetArea()
 Local cQuery  as character
+Local cAlias  := "PCP_"+getNextAlias() 
 Local nResult := 0
 
 cQuery:="Select B9_QINI SLDINI "+CRLF
@@ -1208,16 +1229,21 @@ cQuery+="AND B9_COD = '"+cProduto+"' "+CRLF
 cQuery+="AND B9_LOCAL = B1_LOCPAD  "+CRLF
 cQuery+="AND B9_DATA = ( Select MAX(B9_DATA) from SB9100 SB9 Where SB9.D_E_L_E_T_ = ' ' AND B9_FILIAL = '"+xFilial("SD2")+"' AND B9_COD = B1_COD AND B9_LOCAL = B1_LOCPAD) "+CRLF
 
-If TCSqlExec(cQuery) < 0
-         FWAlertInfo("Falha: " + TCSQLError(), "Teste 1 TCSQLExec e TCSQLError")
-		 (calias)->(DbCloseArea()) 
-	     FwRestArea(aArea)
-	   Return(0) 
-EndIf
+DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
 
-nResult := (cAlias)->SLDINI 
-(calias)->(DbCloseArea()) 
-FwRestArea(aArea)
+   IF (cAlias)->(Eof())
+        (cAlias)->(DbCloseArea())   
+        FwRestArea(aArea)
+        Return(0)
+   endif
+    dbselectArea(cAlias)
+    (cAlias)->( dbGoTop() )
+    While (cAlias)->( !Eof())
+   			nResult := (cAlias)->SLDINI 
+     		(cAlias)->( dbSkip() )
+    EndDo			 
+  (calias)->(DbCloseArea()) 
+  FwRestArea(aArea)
 Return(nResult)
 /*/{Protheus.doc} PCP80PERC
 description
@@ -1231,17 +1257,86 @@ description
 User Function PCP80PERC(cPerc)
 Local aArea   := FwgetArea()
 Local aDadosSX5 := FWGetSX5("XY") 
-Local nReult := 0
+Local nReult := "0"
 if len(aDadosSX5) > 0
-   aScan(aArray,{|x| x[1] == Month(dDataBase) } )
-   nPos := aScan(aDadosSX5,{|x| x[1] == Alltrim(cPerc) })
+   nPos := aScan(aDadosSX5,{|x| Alltrim(x[3]) == Alltrim(cPerc) })
    if nPos > 0
-	  nReult := aDadosSX5[nPos][2]
+	  nReult := aDadosSX5[nPos][4]
    endif
 Endif   
 FwRestArea(aArea)
 Return(nReult)
 
+
+User Function PCP90GRMED(cProduto,cAno)
+	Local oChart 		as Object 
+	Local oDlg   		as Object 
+    Local cQuery  as character
+    Local cAlias  := "PCP_"+getNextAlias() 
+
+    cQuery := "SELECT PRODUTO AS 'PRODUTO',ANO AS 'ANO',  "+CRLF
+    cQuery += "		ISNULL([1],0)  AS 'JAN', "+CRLF
+    cQuery += "		ISNULL([2],0)  AS 'FEV', "+CRLF
+    cQuery += "		ISNULL([3],0)  AS 'MAR', "+CRLF
+    cQuery += "		ISNULL([4],0)  AS 'ABR', "+CRLF
+    cQuery += "		ISNULL([5],0)  AS 'MAI', "+CRLF
+    cQuery += "		ISNULL([6],0)  AS 'JUN', "+CRLF
+    cQuery += "		ISNULL([7],0)  AS 'JUL', "+CRLF
+    cQuery += "		ISNULL([8],0)  AS 'AGO', "+CRLF
+    cQuery += "		ISNULL([9],0)  AS 'SET', "+CRLF
+    cQuery += "		ISNULL([10],0) AS 'OUT', "+CRLF
+    cQuery += "		ISNULL([11],0) AS 'NOV', "+CRLF
+    cQuery += "		ISNULL([12],0) AS 'DEZ'  "+CRLF
+    cQuery += "		FROM (  "+CRLF
+    cQuery += "					SELECT  "+CRLF
+    cQuery += "							D2_COD PRODUTO, "+CRLF
+    cQuery += "							YEAR(D2_EMISSAO) ANO, "+CRLF
+    cQuery += "	    					MONTH(D2_EMISSAO) MES, "+CRLF
+    cQuery += "							ISNULL(ROUND(AVG(D2_QUANT),3),0) QTDE "+CRLF
+    cQuery += "					FROM " + RetSqlName("SD2") + " SD2 "+CRLF
+    cQuery += "					INNER JOIN " + RetSqlName("SF4") + "  SF4 ON F4_FILIAL = SUBSTRING(D2_FILIAL,1,2) AND F4_CODIGO = D2_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					WHERE SD2.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery += "					and D2_FILIAL =  '"+xFilial("SD2")+"'  "+CRLF
+    cQuery += "					AND YEAR(D2_EMISSAO) = '2024'  "+CRLF
+    cQuery += "					GROUP BY D2_COD,YEAR(D2_EMISSAO), MONTH(D2_EMISSAO)) XARQ  "+CRLF
+    cQuery += "		           PIVOT ( AVG(QTDE) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT  "+CRLF
+    cQuery += "				   WHERE PT.ANO = '"+cValtoChar(cAno)+"'   "+CRLF
+    cQuery += "				   AND PT.PRODUTO = '"+cProduto+"'  "+CRLF
+    cQuery += "				   ORDER BY 1,2  "+CRLF
+
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+    if (cAlias)->(Eof())
+        MsgAlert("Sem dados para o Grafico")
+		Return
+    ENDIF
+
+DEFINE MSDIALOG oDlg PIXEL FROM 10,0 TO 600,600
+		oChart := FWChartLine():New()
+		oChart:init( oDlg, .t.,.t. ) 
+	
+        While (cAlias)->( !Eof() )
+    		oChart:addSerie( cProduto, { {"Jan "+Alltrim(Transform((cAlias)->JAN, "@E 99,999.9999")),(cAlias)->JAN},;
+										 {"Fev "+Alltrim(Transform((cAlias)->FEV, "@E 99,999.9999")),(cAlias)->FEV},;
+										 {"Mar "+Alltrim(Transform((cAlias)->MAR, "@E 99,999.9999")),(cAlias)->MAR},;
+										 {"Abr "+Alltrim(Transform((cAlias)->ABR, "@E 99,999.9999")),(cAlias)->ABR},;
+										 {"Mai "+Alltrim(Transform((cAlias)->MAI, "@E 99,999.9999")),(cAlias)->MAI},;
+										 {"Jun "+Alltrim(Transform((cAlias)->JUN, "@E 99,999.9999")),(cAlias)->JUN},;
+										 {"Jul "+Alltrim(Transform((cAlias)->JUL, "@E 99,999.9999")),(cAlias)->JUL},;
+										 {"Ago "+Alltrim(Transform((cAlias)->AGO, "@E 99,999.9999")),(cAlias)->AGO},;
+										 {"Set "+Alltrim(Transform((cAlias)->SET, "@E 99,999.9999")),(cAlias)->SET},;
+										 {"Out "+Alltrim(Transform((cAlias)->OUT, "@E 99,999.9999")),(cAlias)->OUT},;
+										 {"Nov "+Alltrim(Transform((cAlias)->NOV, "@E 99,999.9999")),(cAlias)->NOV},;
+										 {"Dez "+Alltrim(Transform((cAlias)->DEZ, "@E 99,999.9999")),(cAlias)->DEZ} })
+
+			oChart:setLegend( CONTROL_ALIGN_LEFT ) 
+	
+			oChart:Build()
+          (cAlias)->( dbSkip() )	
+	    EndDo
+
+ACTIVATE MSDIALOG oDlg
+Return
 //===================================================================================================================================//
 //===============[ FINAL DO PROGRAMA]================================================================================================//
 //===================================================================================================================================//
