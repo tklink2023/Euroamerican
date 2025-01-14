@@ -48,6 +48,7 @@ Static Function PCP90Scren()
     Private aSize := MsAdvSize(.F.)
     Private nJanLarg := aSize[5]
     Private nJanAltu := aSize[6]
+    Private nUltLinha := nJanAltu - 30
     //Fontes
     Private cFontUti    := "Tahoma"
     Private oFontMod    := TFont():New(cFontUti, , -38)
@@ -107,20 +108,22 @@ Static Function PCP90Scren()
   
         //Adicionando as colunas das linhas
         oFWLayer:addCollumn("HEADERTEXT",   050, .T., "TITULO")
-        oFWLayer:addCollumn("BLANKBTN",     040, .T., "TITULO")
+        oFWLayer:addCollumn("BLANKBTN",     030, .T., "TITULO")
+        oFWLayer:addCollumn("BLANKPLAN",    010, .T., "TITULO")
         oFWLayer:addCollumn("BTNSAIR",      010, .T., "TITULO")
  
         oFWLayer:addCollumn("BLANKANTES",  001, .T., "CORPO")
         oFWLayer:addCollumn("COLDADOS",    039, .T., "CORPO")
         oFWLayer:addCollumn("COLGRIDS",    059, .T., "CORPO")
         oFWLayer:addCollumn("BLANKDEPOIS", 001, .T., "CORPO")
+
   
         //Criando os paineis
         oPanHeader := oFWLayer:GetColPanel("HEADERTEXT", "TITULO")
         oPanSair   := oFWLayer:GetColPanel("BTNSAIR",    "TITULO")
         oPanDados  := oFWLayer:GetColPanel("COLDADOS",   "CORPO")
-        oPanGrid   := oFWLayer:GetColPanel("COLGRIDS",    "CORPO")
-
+        oPanGrid   := oFWLayer:GetColPanel("COLGRIDS",   "CORPO")
+        oPanPlan   := oFWLayer:GetColPanel("BLANKPLAN",  "TITULO")
   
         //Títulos e SubTítulos
         oSayModulo := TSay():New(004, 003, {|| cSayModulo}, oPanHeader, "", oFontMod,  , , , .T., RGB(149, 179, 215), , 200, 30, , , , , , .F., , )
@@ -129,7 +132,8 @@ Static Function PCP90Scren()
   
         //Criando os botões
         oBtnSair := TButton():New(006, 001, "Fechar",             oPanSair, {|| oDlg:End()}, nLargBtn, 018, , oFontBtn, , .T., , , , , , )
-  
+
+        oBtnPlan := TButton():New(006, 001, "Planilha",            oPanPlan, {|| PCP90PLAN(),oDlg:End()}, nLargBtn, 018, , oFontBtn, , .T., , , , , , )
         
  
         //Cria os componentes da segunda coluna
@@ -156,7 +160,7 @@ Static Function PCP90Scren()
         oSayPerc  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "% Segurança"},         oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
         oGetPerc  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetPerc := u, nGetPerc)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)   
         oGetPerc:bValid := {|| fVldPerc()}
-        oGetPerc:cF3 := "XXY"
+        oGetPerc:cF3 := "FATOR"
         oGetPerc:bHelp := {|| ShowHelpcpo('Ajuda',{"Digite o Percentual de Seguranca"},0)}
 
         nLinhaObj += 15
@@ -214,6 +218,9 @@ Static Function PCP90Scren()
         oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Grafico", oPanDados, {||IIF(cOperacao=="1", U_PCP90GRMED(cGetProd,Year(dGetDtFim)),U_PCP91GRMED(cGetProd,Year(dGetDtFim)))}, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
         
         oBtnProc:SetCSS("TButton { font: bold;     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #0D9CBF);    color: #FFFFFF;     border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:focus {    padding:0px; outline-width:1px; outline-style:solid; outline-color: #51DAFC; outline-radius:3px; border-color:#369CB5;}TButton:hover {    color: #FFFFFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #1188A6);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:pressed {    color: #FFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #1188A6, stop: 1 #3DAFCC);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:disabled {    color: #FFFFFF;     background-color: #4CA0B5; }")
+        
+        
+        
 
     Activate MsDialog oDlg Centered
     oTempTable:Delete()
@@ -732,6 +739,72 @@ Static Function fEntrada()
   (calias)->(DbCloseArea()) 
   FwRestArea(aArea)
 Return
+
+/*/{Protheus.doc} PCP90PLAN
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 09/01/2025
+@return variant, return_description
+/*/
+Static Function PCP90PLAN()
+ Local aArea         := GetArea()
+ Local oFWMsExcel
+ Local oExcel
+ Local cArquivo      := GetTempPath()+'PCP90PLAN.xml'
+
+
+    oFWMsExcel := FWMSExcel():New()
+    oFWMsExcel:AddworkSheet("Movimentacao")
+    oFWMsExcel:AddTable("Movimentacao","Produtos")
+    oFWMsExcel:AddColumn("Movimentacao","Produtos","Emissao",1)
+    oFWMsExcel:AddColumn("Movimentacao","Produtos","Quantidade",2,2)
+    oFWMsExcel:AddColumn("Movimentacao","Produtos","Entrada",2,2)
+    oFWMsExcel:AddColumn("Movimentacao","Produtos","Saldo",2,2)
+    oFWMsExcel:AddColumn("Movimentacao","Produtos","Entrega",1)
+    oFWMsExcel:AddColumn("Movimentacao","Produtos","Previsao",2,2)
+    oFWMsExcel:SetTitleHAlign(2)
+    oFWMsExcel:SetLineVAlign(2)
+
+    DbSelectArea(cAliasTmp)
+        //Criando as Linhas... Enquanto não for fim da query
+    While (cAliasTmp)->( !EoF() )
+
+            oFWMsExcel:AddRow("Movimentacao","Produtos",{(cAliasTmp)->EMISSAO,(cAliasTmp)->QUANTIDADE,(cAliasTmp)->ENTRADA,(cAliasTmp)->SALDO,;
+            (cAliasTmp)->ENTREGA,(cAliasTmp)->PREVISTO })
+            (cAliasTmp)->(DbSkip())
+
+    EndDo
+
+       //Aba 02 - Percentuais
+    oFWMsExcel:AddworkSheet("Configuracao") //Não utilizar número junto com sinal de menos. Ex.: 1-
+    oFWMsExcel:AddTable("Configuracao","Parametros")
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Media",2,2) //1 = Modo Texto
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Desvio",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Est.Negativo",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Saldo Inicial",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Ponto Ressuprimento",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Est.Maximo",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Est.Medio",2,2) //2 = Valor sem R$
+
+    oFWMsExcel:AddRow("Configuracao","Parametros",{ ngetmedia,ngetdesvio,ngetestseg,ngetsldini,ngetressup,ngetstokmax,ngetstkmedio } )
+   
+
+    oFWMsExcel:Activate()
+    oFWMsExcel:GetXMLFile(cArquivo)
+         
+    //Abrindo o excel e abrindo o arquivo xml
+    oExcel := MsExcel():New()             //Abre uma nova conexão com Excel
+    oExcel:WorkBooks:Open(cArquivo)     //Abre uma planilha
+    oExcel:SetVisible(.T.)                 //Visualiza a planilha
+    oExcel:Destroy()                        //Encerra o processo do gerenciador de tarefas
+     
+    FwRestArea(aArea)   
+
+
+RETURN
+
 //---------------------------------------------------------------------------------------------------------------------------------------//
 // FINAL DO PROGRAMA
 //---------------------------------------------------------------------------------------------------------------------------------------//
