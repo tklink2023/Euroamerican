@@ -26,9 +26,10 @@ Static Function RunProc()
     Local oExcel
     Local cArquivo      := GetTempPath()+'PCPR100.xml'
 
-    cQuery:="Select B2_COD,B1_DESC,B1_TIPO,B2_LOCAL,B2_QATU,B2_QEMP,B2_QPEDVEN,B2_CM1,B1_LE,B1_LOTVEN     "+CRLF
+    cQuery:="Select B2_COD,B1_DESC,B1_TIPO,B2_LOCAL,B2_QATU,B2_QEMP,B2_QPEDVEN,B2_CM1,B1_LE,B1_LOTVEN,B5_XTPCOMP     "+CRLF
     cQuery+="From " + RetSqlName("SB2") + " SB2   "+CRLF
     cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = B2_COD AND B1_TIPO IN ( 'MP','EM' )  AND SB1.D_E_L_E_T_ = ' '   "+CRLF
+    cQuery+="INNER JOIN " + RetSqlName("SB5") + " SB5 ON B5_FILIAL = B2_FILIAL AND B5_COD = B2_COD  AND SB1.D_E_L_E_T_ = ' '   "+CRLF    
     cQuery+="Where SB2.D_E_L_E_T_ = ' '   "+CRLF
     cQuery+="AND B2_FILIAL =  '"+xFilial("SB2")+"'    "+CRLF
     cQuery+="AND B2_LOCAL = B1_LOCPAD   "+CRLF
@@ -75,6 +76,11 @@ Static Function RunProc()
     DbSelectArea(cAlias)
         //Criando as Linhas... Enquanto não for fim da query
     While (cAlias)->( !EoF() )
+            IF (cAlias)->B5_XTCOMP <> 'P'
+                    DbSelectArea(cAlias)
+                    (cAlias)->(DbSkip())
+                    Loop       
+            ENDIF
             lRet :=  PCP100SQL((cAlias)->B2_COD)
             nConsumo := 0
             nDemanda := 0
@@ -85,6 +91,7 @@ Static Function RunProc()
             nSobra  := 0
             nCompraMes := 0
             nCustoMes := 0
+            nPontoFor := (cAlias)->B1_LE
             if len(lRet) > 0
                    nConsumo     := lRet[1]
                    nDemanda     := lRet[2]
@@ -96,6 +103,9 @@ Static Function RunProc()
                    nSobra       := nFalta - (cAlias)->B2_QATU //IIF((nFalta - (cAlias)->B2_QATU)<0,0,nFalta - (cAlias)->B2_QATU)
                    nEstSeg      := (nDemanda/30) * MV_PAR02
                    nCompraMes   := nSobra + nEstSeg  //IIF((nSobra+nEstSeg)<0,0,nSobra + nEstSeg)
+                   if nCompraMes < nPontoFor
+                      nCompraMes :=  nPontoFor
+                   endif
 
                    nCustoMes    := IIF(nCompraMes<=0,0,nCompraMes * (cAlias)->B2_CM1)  //nCompraMes * (cAlias)->B2_CM1
                    nCompraPox   := VlrReduz

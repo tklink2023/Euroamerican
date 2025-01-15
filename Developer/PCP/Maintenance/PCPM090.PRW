@@ -133,7 +133,7 @@ Static Function PCP90Scren()
         //Criando os botões
         oBtnSair := TButton():New(006, 001, "Fechar",             oPanSair, {|| oDlg:End()}, nLargBtn, 018, , oFontBtn, , .T., , , , , , )
 
-        oBtnPlan := TButton():New(006, 001, "Planilha",            oPanPlan, {|| PCP90PLAN(),oDlg:End()}, nLargBtn, 018, , oFontBtn, , .T., , , , , , )
+        oBtnPlan := TButton():New(006, 001, "Planilha",            oPanPlan, {|| PCP90PLAN()}, nLargBtn, 018, , oFontBtn, , .T., , , , , , )
         
  
         //Cria os componentes da segunda coluna
