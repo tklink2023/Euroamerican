@@ -1623,6 +1623,155 @@ DEFINE MSDIALOG oDlg PIXEL FROM 10,0 TO 600,600
 ACTIVATE MSDIALOG oDlg
 Return
 
+
+User Function PCP180CMedia()
+    Local cProduto      := PARAMIXB[1]
+    Local cQuery  as character
+    Local cAlias        := "PCP_"+getNextAlias() 
+    Local cAlia2        := "PCP_"+getNextAlias() 
+    Local cAnoAtual     := cvaltochar(Year(dDataBase))
+    Local cAnoAnterior  := cvaltochar(Year(dDataBase)-1)
+    Local nNumeroMeses  := 12
+    Local nSomatoria    := 0
+    Local nResultado    := 0
+
+    cQuery := "SELECT PRODUTO AS 'PRODUTO',ANO AS 'ANO', "+CRLF
+    cQuery += "		ISNULL([1],0)  AS 'JAN', "+CRLF
+    cQuery += "		ISNULL([2],0)  AS 'FEV', "+CRLF
+    cQuery += "		ISNULL([3],0)  AS 'MAR', "+CRLF
+    cQuery += "		ISNULL([4],0)  AS 'ABR', "+CRLF
+    cQuery += "		ISNULL([5],0)  AS 'MAI', "+CRLF
+    cQuery += "		ISNULL([6],0)  AS 'JUN', "+CRLF
+    cQuery += "		ISNULL([7],0)  AS 'JUL', "+CRLF
+    cQuery += "		ISNULL([8],0)  AS 'AGO', "+CRLF
+    cQuery += "		ISNULL([9],0)  AS 'SETE', "+CRLF
+    cQuery += "		ISNULL([10],0) AS 'OUT', "+CRLF
+    cQuery += "		ISNULL([11],0) AS 'NOV', "+CRLF
+    cQuery += "		ISNULL([12],0) AS 'DEZ'  "+CRLF
+    cQuery += "		FROM ( 	Select "+CRLF
+    cQuery += "					D4_COD PRODUTO, "+CRLF
+    cQuery += "					YEAR(D4_DATA) ANO, "+CRLF
+    cQuery += "					MONTH(D4_DATA) MES, "+CRLF
+    cQuery += "				    CASE WHEN MONTH(D4_DATA) <= MONTH(GETDATE()) THEN 0 ELSE ROUND(AVG(ISNULL(D4_QTDEORI,0)),3) END MEDIA "+CRLF
+    cQuery += "				from SD4100 SD4 "+CRLF
+    cQuery += "				Where SD4.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery += "				AND D4_FILIAL = '"+xFilial("SD1")+"' "+CRLF
+    cQuery += "				AND D4_COD = '"+cProduto+"' "+CRLF
+    cQuery += "				AND YEAR(D4_DATA) = '"+cAnoAnterior+"' "+CRLF
+    cQuery += "				GROUP BY D4_COD,YEAR(D4_DATA),MONTH(D4_DATA) "+CRLF
+    cQuery += "				 ) ARQ "+CRLF
+    cQuery += " PIVOT ( SUM(MEDIA) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT "+CRLF
+    cQuery += " WHERE PT.ANO = '"+cAnoAnterior+"' "+CRLF
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+    if (cAlias)->(Eof())
+        MsgAlert("Sem dados para o Grafico")
+        (cAlias)->(DbCloseArea())
+		Return(nResultado)
+    ENDIF
+
+    While (cAlias)->( !Eof() )
+          nSomatoria := (cAlias)->JAN 
+          nSomatoria += (cAlias)->FEV 
+          nSomatoria += (cAlias)->MAR 
+          nSomatoria += (cAlias)->ABR 
+          nSomatoria += (cAlias)->MAI 
+          nSomatoria += (cAlias)->JUN 
+          nSomatoria += (cAlias)->JUL 
+          nSomatoria += (cAlias)->AGO 
+          nSomatoria += (cAlias)->SETE 
+          nSomatoria += (cAlias)->OUT 
+          nSomatoria += (cAlias)->NOV 
+          nSomatoria += (cAlias)->DEZ
+          (cAlias)->( dbSkip() )
+    EndDo
+    (cAlias)->(DbCloseArea())
+
+
+    cQuery := "SELECT PRODUTO AS 'PRODUTO',ANO AS 'ANO', "+CRLF
+    cQuery += "		ISNULL([1],0)  AS 'JAN', "+CRLF
+    cQuery += "		ISNULL([2],0)  AS 'FEV', "+CRLF
+    cQuery += "		ISNULL([3],0)  AS 'MAR', "+CRLF
+    cQuery += "		ISNULL([4],0)  AS 'ABR', "+CRLF
+    cQuery += "		ISNULL([5],0)  AS 'MAI', "+CRLF
+    cQuery += "		ISNULL([6],0)  AS 'JUN', "+CRLF
+    cQuery += "		ISNULL([7],0)  AS 'JUL', "+CRLF
+    cQuery += "		ISNULL([8],0)  AS 'AGO', "+CRLF
+    cQuery += "		ISNULL([9],0)  AS 'SETE', "+CRLF
+    cQuery += "		ISNULL([10],0) AS 'OUT', "+CRLF
+    cQuery += "		ISNULL([11],0) AS 'NOV', "+CRLF
+    cQuery += "		ISNULL([12],0) AS 'DEZ'  "+CRLF
+    cQuery += "		FROM ( 	Select "+CRLF
+    cQuery += "					D4_COD PRODUTO, "+CRLF
+    cQuery += "					YEAR(D4_DATA) ANO, "+CRLF
+    cQuery += "					MONTH(D4_DATA) MES, "+CRLF
+    cQuery += "				    CASE WHEN MONTH(D4_DATA) > MONTH(GETDATE()) THEN 0 ELSE ROUND(AVG(ISNULL(D4_QTDEORI,0)),3) END MEDIA "+CRLF
+    cQuery += "				from SD4100 SD4 "+CRLF
+    cQuery += "				Where SD4.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery += "				AND D4_FILIAL = '"+xFilial("SD4")+"' "+CRLF
+    cQuery += "				AND D4_COD = '"+cProduto+"' "+CRLF
+    cQuery += "				AND YEAR(D4_DATA) = '"+cAnoAtual+"' "+CRLF
+    cQuery += "				GROUP BY D4_COD,YEAR(D4_DATA),MONTH(D4_DATA) "+CRLF
+    cQuery += "				 ) ARQ "+CRLF
+    cQuery += " PIVOT ( SUM(MEDIA) FOR MES IN ( [1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12]  ) ) AS  PT "+CRLF
+    cQuery += " WHERE PT.ANO = '"+cAnoAtual+"' "+CRLF
+
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlia2, .T., .T.)
+
+    if (cAlia2)->(Eof())
+    ENDIF
+
+    While (cAlia2)->( !Eof() )
+          nSomatoria += (cAlia2)->JAN 
+          nSomatoria += (cAlia2)->FEV 
+          nSomatoria += (cAlia2)->MAR 
+          nSomatoria += (cAlia2)->ABR 
+          nSomatoria += (cAlia2)->MAI 
+          nSomatoria += (cAlia2)->JUN 
+          nSomatoria += (cAlia2)->JUL 
+          nSomatoria += (cAlia2)->AGO 
+          nSomatoria += (cAlia2)->SETE 
+          nSomatoria += (cAlia2)->OUT 
+          nSomatoria += (cAlia2)->NOV 
+          nSomatoria += (cAlia2)->DEZ
+          (cAlia2)->( dbSkip() )
+    EndDo
+    (cAlia2)->(DbCloseArea())
+
+    nResultado := round((nSomatoria / nNumeroMeses ),3) 
+    
+
+Return(nResultado)
+
+
+User Function PCP180LEADTIME()
+    Local cProduto      := PARAMIXB[1]
+    Local cQuery  as character
+    Local cAlias        := "PCP_"+getNextAlias() 
+    Local nResultado := 0
+
+    cQuery := "Select C7_PRODUTO, AVG(DATEDIFF( DAY , C7_EMISSAO , D1_DTDIGIT )) LEADTIME "+CRLF
+    cQuery += "from SC7100 SC7 "+CRLF
+    cQuery += "INNER JOIN SD1100 SD1 ON D1_FILIAL = C7_FILIAL AND D1_COD = C7_PRODUTO AND D1_FORNECE = C7_FORNECE AND D1_LOJA = C7_LOJA AND D1_PEDIDO = C7_NUM AND D1_ITEM = C7_ITEM AND SD1.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery += "WHERE SC7.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery += "AND C7_FILIAL = '"+xFilial("SC7")+"' "+CRLF
+    cQuery += "AND C7_PRODUTO =  '"+cProduto+"' "+CRLF
+    cQuery += "GROUP BY C7_PRODUTO "+CRLF
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+    if (cAlias)->(Eof())
+        MsgAlert("Sem dados para o Grafico")
+        (cAlias)->(DbCloseArea())
+		Return(nResultado)
+    ENDIF
+
+    While (cAlias)->( !Eof() )
+           nResultado := (cAlias)->LEADTIME
+          (cAlias)->( dbSkip() )
+    EndDo
+    (cAlias)->(DbCloseArea())
+
+Return(nResultado)
 //===================================================================================================================================//
 //===============[ FINAL DO PROGRAMA]================================================================================================//
 //===================================================================================================================================//

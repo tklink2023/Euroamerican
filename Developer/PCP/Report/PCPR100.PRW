@@ -17,11 +17,7 @@ Static Function RunProc()
     Local cQuery        as character 
     Local cAlias        := "PCP_"+getNextAlias()     
     Local lRet          := {}
-    Local nConsumo      := nDemanda := VlrReduz := 0
-    Local nProducao     := nFalta :=  nEstSeg := 0
-    Local nSobra        := nCompraMes := nCustoMes := 0
-    Local nCompraPox    := nCustoProx := 0
-
+  
     Local oFWMsExcel
     Local oExcel
     Local cArquivo      := GetTempPath()+'PCPR100.xml'
@@ -53,74 +49,115 @@ Static Function RunProc()
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Local",1)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Saldo",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Empenho",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Pedidos",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Lote Econ",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Custo Medio",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Consumo",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Demanda",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Consumido até Hoje",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","% Previsto",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Projecao Consumo",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Producao",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Falta",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Saldo Final",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Dias Estoque",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Estoque Seg",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Lote Econom",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Quebra Compra",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Estoque Segur",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Necessidade",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Compra Mes",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Custo Mes",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Valor Mes",2,2)
     oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Compra Prevista",2,2)
-    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Custo Previsto",2,2)
+    oFWMsExcel:AddColumn("Relacao Produtos","Produtos","Valor Previsto",2,2)
     oFWMsExcel:SetTitleHAlign(2)
     oFWMsExcel:SetLineVAlign(2)
 
     DbSelectArea(cAlias)
         //Criando as Linhas... Enquanto não for fim da query
     While (cAlias)->( !EoF() )
-            IF (cAlias)->B5_XTCOMP <> 'P'
+            IF (cAlias)->B5_XTPCOMP <> 'P'
                     DbSelectArea(cAlias)
                     (cAlias)->(DbSkip())
                     Loop       
             ENDIF
-            lRet :=  PCP100SQL((cAlias)->B2_COD)
-            nConsumo := 0
-            nDemanda := 0
-            VlrReduz := 0
+            // Variaveis de Calculo dentro do Mes
+            
+            nConsMes := 0
+            nMediaDemanda := 0
+            nDiferença := 0
+            nSldFinal  := 0
+            nNecessidade := 0
+            nCalcFalta:= 0
             nProducao := 0
-            nFalta := 0
-            nEstSeg := 0
-            nSobra  := 0
-            nCompraMes := 0
-            nCustoMes := 0
-            nPontoFor := (cAlias)->B1_LE
+            nReposicao:= 0
+            nSldMesCompra := 0
+            nPontoSegur := 0
+
+            // Variaveis para projecao de compras
+            nProjecaoEstoque := 0
+            
+            // Variaveis de Valorizacao
+              nVlrEst := 0
+              nVlrPro := 0
+    
+            
+            lRet :=  PCP100SQL((cAlias)->B2_COD)
             if len(lRet) > 0
-                   nConsumo     := lRet[1]
-                   nDemanda     := lRet[2]
-                   VlrReduz     := nDemanda - ((nDemanda*MV_PAR01)/100)
-                   nProducao    := nConsumo + (cAlias)->B2_QEMP
+                   
+                   // Calculo dentro do Mes 
+                   nConsMes          := lRet[1]
+                   nMediaDemanda     := lRet[2]
+                   nDiferenca        := nMediaDemanda - nConsMes
+                   nSldFinal         :=  nDiferenca - (cAlias)->B2_QATU
+                   nPontoSegur       := ((nMediaDemanda/30) * MV_PAR02)
+                   nNecessidade      := nSldFinal + nPontoSegur
+                   nProducao         := nConsMes + (cAlias)->B2_QEMP
+                   nSldMesCompra     := nSldFinal + nPontoSegur
 
-                   nFalta       := nDemanda - nConsumo //IIF((nDemanda - nConsumo)<0,0,nDemanda - nConsumo)
+                   IF nSldMesCompra < 0
+                      nSldMesCompra := 0
+                   else
+                       if nSldMesCompra < (cAlias)->B1_LE
+                            nSldMesCompra := (cAlias)->B1_LE
+                       endif
+                   endif  
 
-                   nSobra       := nFalta - (cAlias)->B2_QATU //IIF((nFalta - (cAlias)->B2_QATU)<0,0,nFalta - (cAlias)->B2_QATU)
-                   nEstSeg      := (nDemanda/30) * MV_PAR02
-                   nCompraMes   := nSobra + nEstSeg  //IIF((nSobra+nEstSeg)<0,0,nSobra + nEstSeg)
-                   if nCompraMes < nPontoFor
-                      nCompraMes :=  nPontoFor
-                   endif
+                   nVlrEst := nSldMesCompra * (cAlias)->B2_CM1
+                   
+                    // Calculo para Projecao de Compras
 
-                   nCustoMes    := IIF(nCompraMes<=0,0,nCompraMes * (cAlias)->B2_CM1)  //nCompraMes * (cAlias)->B2_CM1
-                   nCompraPox   := VlrReduz
-                   nCustoProx   := nCompraPox * (cAlias)->B2_CM1
+                   nProjecaoEstoque     := nMediaDemanda - ((nMediaDemanda*MV_PAR01)/100)                   
+                   nVlrPro := nProjecaoEstoque * (cAlias)->B2_CM1
             else
                   DbSelectArea(cAlias)
                   (cAlias)->(DbSkip())
                   Loop       
             Endif
             
-            oFWMsExcel:AddRow("Relacao Produtos","Produtos",{(cAlias)->B2_COD,(cAlias)->B1_DESC,(cAlias)->B1_TIPO,(cAlias)->B2_LOCAL,;
-            (cAlias)->B2_QATU,(cAlias)->B2_QEMP,(cAlias)->B2_QPEDVEN,(cAlias)->B2_CM1,nDemanda,nConsumo,MV_PAR01,VlrReduz,nProducao,;
-            nFalta,nSobra,MV_PAR02,nEstSeg,(cAlias)->B1_LE,(cAlias)->B1_LOTVEN,nCompraMes,nCustoMes,nCompraPox,nCustoProx})
+            oFWMsExcel:AddRow("Relacao Produtos","Produtos",{   (cAlias)->B2_COD,;
+                                                                (cAlias)->B1_DESC,;
+                                                                (cAlias)->B1_TIPO,;
+                                                                (cAlias)->B2_LOCAL,;
+                                                                (cAlias)->B2_QATU,;
+                                                                (cAlias)->B2_QEMP,;
+                                                                (cAlias)->B1_LE,;
+                                                                (cAlias)->B2_CM1,;
+                                                                nMediaDemanda,;
+                                                                nConsMes,;
+                                                                nDiferenca,;
+                                                                nSldFinal,;
+                                                                nPontoSegur,;
+                                                                nNecessidade,;
+                                                                nSldMesCompra,;
+                                                                nVlrEst,;
+                                                                nProjecaoEstoque,;
+                                                                nVlrPro})
             (cAlias)->(DbSkip())
     EndDo
+
+    oFWMsExcel:AddworkSheet("Configuracao") //Não utilizar número junto com sinal de menos. Ex.: 1-
+    oFWMsExcel:AddTable("Configuracao","Parametros")
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Percentual",2,2) //1 = Modo Texto
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Lead Time",2,2) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Produto inicial",1) //2 = Valor sem R$
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Produto Final",1) //2 = Valor sem R$    
+    oFWMsExcel:AddColumn("Configuracao","Parametros","Data Emissao",1) //2 = Valor sem R$   
+
+    oFWMsExcel:AddRow("Configuracao","Parametros",{ MV_PAR01,MV_PAR02,MV_PAR03,MV_PAR04,Dtoc(ddatabase) } )
+
+
     oFWMsExcel:Activate()
     oFWMsExcel:GetXMLFile(cArquivo)
          
