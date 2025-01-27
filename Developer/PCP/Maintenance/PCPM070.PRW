@@ -204,7 +204,7 @@ Static Function RunProc()
          dbSelectArea("SZB")
          ("SZB")->( dbSetOrder(1) )
 
-         if  ("SZB")->( !dbSeek(xFilial("SZB")+(cAlias)->C5_CLIENT+(cAlias)->C5_LOJACLI+(cAlias)->Pedido+(cAlias)->Produto,.T.))
+         if  ("SZB")->( !dbSeek(xFilial("SZB")+(cAlias)->C5_CLIENT+(cAlias)->C5_LOJACLI+(cAlias)->Pedido+(cAlias)->Produto+(cAlias)->Item,.T.))
 
             IF RECLOCK("SZB",.T.)
 

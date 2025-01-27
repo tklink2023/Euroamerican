@@ -1772,6 +1772,63 @@ User Function PCP180LEADTIME()
     (cAlias)->(DbCloseArea())
 
 Return(nResultado)
+
+User Function PCP180OPS(cProduto,cAno,cMes,cDia)
+    Local cArea 	:= FWGetArea()
+    Local oDlgNew 	as Object 
+    Local oBrowse 	as Object 
+    Local aBrowse 	as Array 
+    local aButtons := {}
+    Local aSize   	:= MsAdvSize()
+
+    Local cQuery  as character
+    Local cAlias        := "PCP_"+getNextAlias() 
+
+    oMainWnd:ReadClientCoors()
+    nHeight := oMainWnd:nHeight-50
+    nWidth  := oMainWnd:nWidth-15
+    AAdd(aButtons,{"SAIR",{|| oDlg:End()},"Sair","Sair"})
+    aInfo := { aSize[1], aSize[2], aSize[3], aSize[4], 0, 0 } 
+
+
+    cQuery := "SELECT	SUBSTRING(D4_OP,1,6) LOTE,D4_PRODUTO,D4_QTDEORI  "+CRLF          
+	cQuery += "FROM " + RetSqlName("SD4") + " SD4             "+CRLF
+	cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = D4_COD AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' '  "+CRLF
+	cQuery += "INNER JOIN " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = D4_FILIAL AND B2_COD = D4_COD AND  B2_LOCAL = D4_LOCAL AND B2_QATU > 0 AND  SB2.D_E_L_E_T_ = ' ' "+CRLF
+	cQuery += "Where SD4.D_E_L_E_T_ = ' '  "+CRLF                   
+	cQuery += "AND D4_FILIAL =  '"+xFilial("SD4")+"'      "+CRLF     
+	cQuery += "AND YEAR(D4_DATA) = '"+cValtoChar(cAno)+"' "+CRLF         
+	cQuery += "AND MONTH(D4_DATA)= "+cValtoChar(cMes)+"  "+CRLF
+	cQuery += "and DAY(D4_DATA) = "+cValtoChar(cDia)+"  "+CRLF
+	cQuery += "AND D4_COD = '"+cProduto+"' "+CRLF
+     DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+    if (cAlias)->(Eof())
+        MsgAlert("Sem dados ")
+        (cAlias)->(DbCloseArea())
+		Return
+    ENDIF     
+    aBrowse :={}
+    While (cAlias)->( !Eof() )
+           aAdd(aBrowse, {(cAlias)->LOTE, (cAlias)->D4_PRODUTO, (cAlias)->D4_QTDEORI})
+          (cAlias)->( dbSkip() )
+    EndDo
+    (cAlias)->(DbCloseArea())
+
+    oDlgNew := MSDialog():New(aSize[7],0, nHeight,nWidth,"Ordens de Producao",,,.F.,,,,,,.T.,,,.T. )
+    oDlgNew:bInit := {||EnchoiceBar(oDlgNew,{||oDlgNew:End()},{|| oDlgNew:End()},,aButtons)}
+
+    oBrowse := TCBrowse():New( aSize[7]+35,5,nWidth, nHeight,,;
+                              {'Lote', 'Produto', 'Quantidade'},;
+	                          {  030,     050,          050,},;
+                            oDlgNew,,,,,{||},,,,,,,.F.,,.T.,,.T.,,, )
+    oBrowse:SetArray(aBrowse)                            
+
+    oBrowse:bLine := {||{ aBrowse[oBrowse:nAt,01],;   							// Lote
+                          aBrowse[oBrowse:nAt,02],;	    						// Produto
+					      Transform(aBrowse[oBrowse:nAt,03],"@E 999999,999")} }	// Quantidade
+    oDlgNew:Activate(,,,.T.)
+    FwSetArea(cArea)
+Return
 //===================================================================================================================================//
 //===============[ FINAL DO PROGRAMA]================================================================================================//
 //===================================================================================================================================//

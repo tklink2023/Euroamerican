@@ -7,12 +7,28 @@
 #include "topconn.ch"
 #Include "PRCONST.ch"
 
+/*/{Protheus.doc} PCPM180
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
 User Function PCPM180()
     Local aArea := FwGetArea()
     PCP080Screen() 
     FwRestArea(aArea)
 Return
 
+/*/{Protheus.doc} PCP080Screen
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
 Static Function PCP080Screen()  
  Local aArea := FwGetArea()
     Local nLargBtn := 50
@@ -52,6 +68,7 @@ Static Function PCP080Screen()
     Private cAliasTmp := "PCP_" + RetCodUsr()
     Private aColunas := {}
     Private cMascara := "@E 99,999,999,999.999"
+    Private cMask    := "@E 9,999.999 %"
     Private oMarkBrowse
 
     // Variaveis da Tela
@@ -68,14 +85,22 @@ Static Function PCP080Screen()
     Private nGetLead  := 0
 
     //Adiciona as colunas que serão criadas na temporária
-    aAdd(aCampos, { "MES"           , "C", 10    , 0 })
+    aAdd(aCampos, { "OK"            , "C", 02    , 0 })
+    aAdd(aCampos, { "CODIGO"        , "C", 15    , 0 })
+    aAdd(aCampos, { "ANO"           , "C", 04    , 0 })
+    aAdd(aCampos, { "MES"           , "C", 02    , 0 })
     aAdd(aCampos, { "Dia"           , "C", 02    , 0 })
-    aAdd(aCampos, { "QUANTIDADE"    , "N", 18    , 3 })
-
+    aAdd(aCampos, { "ENTRADA"       , "N", 18    , 3 })
+    aAdd(aCampos, { "SAIDA"         , "N", 18    , 3 })
+    aAdd(aCampos, { "SALDO"         , "N", 18    , 3 })
+    aAdd(aCampos, { "PROJECAO"      , "N", 09    , 0 })
+    aAdd(aCampos, { "ESTOQUE"       , "N", 09    , 0 })
+    aAdd(aCampos, { "DTDISPO"       , "D", 08    , 0 })
+    
     //Cria a tabela temporária
     oTempTable:= FWTemporaryTable():New(cAliasTmp)
     oTempTable:SetFields( aCampos )
-    oTempTable:AddIndex("ind1",{"MES","DIA"} )
+    oTempTable:AddIndex("ind1",{"CODIGO","ANO","MES","DIA"} )
     oTempTable:Create()  
 
     //Busca as colunas do browse
@@ -175,7 +200,7 @@ Static Function PCP080Screen()
 
         nLinhaObj += 25
         nPosLinha := nLinhaObj  += 15
-        oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Processar", oPanDados, {|| PCP180USADO()}, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
+        oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Processar", oPanDados, {|| fPopula()}, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
         oBtnProc:SetCSS("TButton { font: bold;     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #0D9CBF);    color: #FFFFFF;     border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:focus {    padding:0px; outline-width:1px; outline-style:solid; outline-color: #51DAFC; outline-radius:3px; border-color:#369CB5;}TButton:hover {    color: #FFFFFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #3DAFCC, stop: 1 #1188A6);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:pressed {    color: #FFF;     background-color : qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,stop: 0 #1188A6, stop: 1 #3DAFCC);    border-width: 1px;     border-style: solid;     border-radius: 3px;     border-color: #369CB5; }TButton:disabled {    color: #FFFFFF;     background-color: #4CA0B5; }")
        
     Activate MsDialog oDlg Centered
@@ -184,7 +209,14 @@ Static Function PCP080Screen()
  FwRestArea(aArea)
 Return
 
-
+/*/{Protheus.doc} fCriaCols
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
 Static Function fCriaCols()
     Local nAtual   := 0 
     Local aColunas := {}
@@ -198,10 +230,19 @@ Static Function fCriaCols()
     //[4] - Tamanho
     //[5] - Decimais
     //[6] - Máscara
-    aAdd(aEstrut, {"MES", "Mes",             "C", 10,   0, ""})
-    aAdd(aEstrut, {"DIA", "Dia",             "C", 02,   0, ""})
-    aAdd(aEstrut, {"QUANTIDADE", "Quantidade",       "N", 18,   3, cMascara})
+    aAdd(aEstrut, {"OK", "Ok",             "C", 02,   0, ""})
+    aAdd(aEstrut, {"CODIGO", "Codigo",     "C", 15,   0, ""})
+    aAdd(aEstrut, {"ANO", "Ano",           "C", 04,   0, ""})
+    aAdd(aEstrut, {"MES", "Mes",           "C", 02,   0, ""})
+    aAdd(aEstrut, {"DIA", "Dia",           "C", 02,   0, ""})
+    aAdd(aEstrut, {"ENTRADA", "Entrada",   "N", 18,   3, cMascara})
+    aAdd(aEstrut, {"SAIDA", "Saida",       "N", 18,   3, cMascara})
+    aAdd(aEstrut, {"SALDO", "Saldo",       "N", 18,   3, cMascara})
+    aAdd(aEstrut, {"PROJECAO", "Projecao", "N", 09,   0, ""})
+    aAdd(aEstrut, {"ESTOQUE", "Estoque",   "N", 09,   0, ""})
+    aAdd(aEstrut, {"DTDISPO", "Data",      "D", 08,   0, ""})
     
+
     //Percorrendo todos os campos da estrutura
     For nAtual := 1 To Len(aEstrut)
         //Cria a coluna
@@ -218,7 +259,14 @@ Static Function fCriaCols()
     Next
 Return aColunas
 
-
+/*/{Protheus.doc} fVldProd
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
 Static Function fVldProd()
     Local lRet := .T.
     Local dDataFim := dDataBase
@@ -239,7 +287,7 @@ Static Function fVldProd()
 
               nGetSld    := round(aSaldos[1],3) // SB2->B2_QATU
               nGetEmp    := SB2->B2_QEMP
-              nGetDisp   := round(SaldoSB2(),3) //SB2->B2_QATU - SB2->B2_QEMP
+              nGetDisp   := round((nGetSld - SB2->B2_QEMP) ,3) //SB2->B2_QATU - SB2->B2_QEMP
               nGetMedia  := PCP180MEDIA()
               nGetLead   := PCP180LEADTIME()
               nGetMedDia := round((nGetMedia / nDiasMes),3)
@@ -256,6 +304,14 @@ Static Function fVldProd()
     endif
 Return lRet
 
+/*/{Protheus.doc} PCP180MEDIA
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
 Static Function PCP180MEDIA()
  Local aArea := FwGetArea()
  Local nRetorno := 0
@@ -267,6 +323,14 @@ Static Function PCP180MEDIA()
  FwRestArea(aArea)
 Return(nRetorno)
 
+/*/{Protheus.doc} PCP180LEADTIME
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
 Static Function PCP180LEADTIME()
  Local aArea := FwGetArea()
  Local nRetorno := 0
@@ -278,31 +342,44 @@ Static Function PCP180LEADTIME()
  FwRestArea(aArea)
 Return(nRetorno)
 
-
-Static Function PCP180USADO()
+/*/{Protheus.doc} PCP180USADO
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
+Static Function PCP180ORDENS(cProduto,cAno,cMes,cDia)
  Local aArea        := FwGetArea()
  lOCAL cAliasTmp    := "TMP_" + RetCodUsr()
- Local oBrowse
- Local aHeader := {'Produto','Descricao'}
+ Local aHeader := {'Lote','Produto','Quantidade'}
  local aFields as array
  Local aCols   as array
  local oColumn as object
+ Local dtProd := dtoc(cTod(cDia+"/"+cMes+"/"+cAno))
 
- if oBrowse != nil
-        oBrowse:DeActivate()
+ if oMarkBrowse != nil
+        oMarkBrowse:DeActivate()
  endif
 
  aFields := {}
 
+ Aadd( aFields, { "LOTE","LOTE","C",06,0,""} )
  Aadd( aFields, { "PRODUTO","PRODUTO","C",15,0,""} )
- Aadd( aFields, { "DESCRICAO","DESCRICAO","C",40,0,""} )
+ Aadd( aFields, { "QUANTIDADE","QUANTIDADE","N",15,3,""} )
 
- cQuery:="Select DISTINCT G1_COD, B1_DESC "+CRLF
- cQuery+="from SG1100 SG1 "+CRLF
- cQuery+="INNER JOIN SB1100 SB1 ON B1_COD = G1_COD AND SB1.D_E_L_E_T_ = ' ' "+CRLF
- cQuery+="WHERE SG1.D_E_L_E_T_ = ' ' "+CRLF
- cQuery+="AND G1_FILIAL =  '"+xFilial("SG1")+"'  "+CRLF
- cQuery+="AND G1_COMP = '"+cGetProd+"' "+CRLF
+ cQuery := "SELECT	SUBSTRING(D4_OP,1,6) LOTE,D4_PRODUTO,D4_QTDEORI  "+CRLF          
+ cQuery += "FROM " + RetSqlName("SD4") + " SD4             "+CRLF
+ cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = D4_COD AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' '  "+CRLF
+ cQuery += "INNER JOIN " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = D4_FILIAL AND B2_COD = D4_COD AND  B2_LOCAL = D4_LOCAL AND B2_QATU > 0 AND  SB2.D_E_L_E_T_ = ' ' "+CRLF
+ cQuery += "Where SD4.D_E_L_E_T_ = ' '  "+CRLF                   
+ cQuery += "AND D4_FILIAL =  '"+xFilial("SD4")+"'      "+CRLF     
+ cQuery += "AND YEAR(D4_DATA) = '"+cValtoChar(cAno)+"' "+CRLF         
+ cQuery += "AND MONTH(D4_DATA)= "+cValtoChar(cMes)+"  "+CRLF
+ cQuery += "and DAY(D4_DATA) = "+cValtoChar(cDia)+"  "+CRLF
+ cQuery += "AND D4_COD = '"+cProduto+"' "+CRLF
+
  DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAliasTmp, .T., .T.)
 
  IF (cAliasTmp)->(Eof())
@@ -315,8 +392,7 @@ Static Function PCP180USADO()
  dbSelectArea(cAliasTmp)
  (cAliasTmp)->( dbgotop())
   DO WHILE !(cAliasTmp)->(Eof())
-        aAdd(aCols, {(cAliasTmp)->G1_COD,;
-                     (cAliasTmp)->B1_DESC})
+        aAdd(aCols,  {(cAliasTmp)->LOTE, (cAliasTmp)->D4_PRODUTO, (cAliasTmp)->D4_QTDEORI})
         (cAliasTmp)->(dbskip())
   ENDDO
   (cAliasTmp)->(DbCloseArea()) 
@@ -324,60 +400,97 @@ Static Function PCP180USADO()
   @ nPosLinha, 001 SCROLLBOX oScroll VERTICAL HORIZONTAL SIZE (oPanDados:nHeight / 2) / 2, oPanDados:nWidth / 2 OF oPanDados
 
     //Criando o browse da temporária
-   oBrowse := FwBrowse():New()
-   oBrowse:SetOwner(oScroll)
-   oBrowse:SetDataArray()
-   oBrowse:SetArray(aCols)
-   oBrowse:SetFieldFilter(aFields)
-   oBrowse:SetUseFilter()
-   oBrowse:SetDescription("Onde é usado")
-   oBrowse:DisableSeek()
-   oBrowse:DisableReport()
-   oBrowse:DisableConfig()
-   oBrowse:DisableLocate()
+   oMarkBrowse := FwBrowse():New()
+   oMarkBrowse:SetOwner(oScroll)
+   oMarkBrowse:SetDataArray()
+   oMarkBrowse:SetArray(aCols)
+   oMarkBrowse:SetFieldFilter(aFields)
+   oMarkBrowse:SetUseFilter()
+   oMarkBrowse:SetDescription("Lotes Producao do Dia : " + dtProd)
+   oMarkBrowse:DisableSeek()
+   oMarkBrowse:DisableReport()
+   oMarkBrowse:DisableConfig()
+   oMarkBrowse:DisableLocate()
 
   oColumn := FWBrwColumn():New()
-  oColumn:SetData( &(" { || aCols[oBrowse:At(),1]}"))
+  oColumn:SetData( &(" { || aCols[oMarkBrowse:At(),1]}"))
   oColumn:SetTitle(aHeader[1])
-  oColumn:SetSize(2)
-  oBrowse:SetColumns({oColumn})
+  oColumn:SetSize(6)
+  oMarkBrowse:SetColumns({oColumn})
 
   oColumn := FWBrwColumn():New()
-  oColumn:SetData( &(" { || aCols[oBrowse:At(),2]}"))
+  oColumn:SetData( &(" { || aCols[oMarkBrowse:At(),2]}"))
   oColumn:SetTitle(aHeader[2])
-  oColumn:SetSize(40)
-  oBrowse:SetColumns({oColumn})
+  oColumn:SetSize(15)
+  oMarkBrowse:SetColumns({oColumn})
 
-  oBrowse:Activate()
+  oColumn := FWBrwColumn():New()
+  oColumn:SetData( &(" { || aCols[oMarkBrowse:At(),3]}"))
+  oColumn:SetTitle(aHeader[3])
+  oColumn:SetSize(20)
+  oMarkBrowse:SetColumns({oColumn})
+
+  oMarkBrowse:Activate()
 
  FwRestArea(aArea)
 Return
 
 
+/*/{Protheus.doc} fPopula
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 21/01/2025
+@return variant, return_description
+/*/
 Static Function fPopula()
     Local aArea   := FwgetArea()
     Local cQuery  as character 
     Local cAlias  := "PCP_"+getNextAlias() 
-    Local afields := {} ; aDados := {}
-    Local AB
-    Local XY
-    Local nPos := 0
+    Local cAnoAtual     := cvaltochar(Year(dDataBase))
+    Local cMesAtual     := cvaltochar(Month(dDataBase))
+    Local aDados        := {}
+    Local AB            := 0
+    Local dDtRecuperada := cTod(" /  /   ")  //cToD("01/"+cMesAtual+"/"+cAnoAtual)  
 
-    Local nSldProc    := nGetsldini
-    Local nQtdRessupr := nGetRessup
-    Local nQtdStokMax := nGetStokMax
-    Local nQtdAbast   := 0
-    Local nQtdSoma    := 0
+    cQuery:="SELECT CODIGO,ANO,MES,DIA,ENTRADA, SAIDA "+CRLF
+    cQuery+="FROM ( "+CRLF
+    cQuery+="SELECT CODIGO,ANO,MES,DIA,ENTRADA, SAIDA "+CRLF
+    cQuery+="FROM( "+CRLF
+    cQuery+="Select C7_PRODUTO AS CODIGO, "+CRLF
+    cQuery+="       DAY(C7_DATPRF) AS DIA, "+CRLF
+    cQuery+="	   MONTH(C7_DATPRF) AS MES, "+CRLF
+    cQuery+="	   YEAR(C7_DATPRF) AS ANO, "+CRLF
+    cQuery+="	   SUM(C7_QUANT) AS ENTRADA, "+CRLF
+    cQuery+="	   0 SAIDA "+CRLF
+    cQuery+="from " + RetSqlName("SC7") + " SC7 "+CRLF
+    cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C7_PRODUTO AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery+="Where SC7.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery+="AND C7_FILIAL = '"+xFilial("SC7")+"' "+CRLF
+    cQuery+="AND C7_PRODUTO = '"+cGetProd+"' "+CRLF
+    cQuery+="AND YEAR(C7_DATPRF) = '"+cAnoAtual+"' "+CRLF
+    cQuery+="AND MONTH(C7_DATPRF) >= "+cMesAtual+" "+CRLF
+    cQuery+="GROUP BY C7_PRODUTO, YEAR(C7_DATPRF), MONTH(C7_DATPRF), DAY(C7_DATPRF)) ARQ "+CRLF
+    cQuery+="UNION ALL "+CRLF
+    cQuery+="SELECT CODIGO,ANO,MES,DIA,ENTRADA, SAIDA "+CRLF
+    cQuery+="FROM ( SELECT	D4_COD			   AS CODIGO, "+CRLF           
+    cQuery+="				DAY(D4_DATA)	   AS DIA, "+CRLF                 
+    cQuery+="				MONTH(D4_DATA)	AS MES, "+CRLF                   
+    cQuery+="				YEAR(D4_DATA)	AS ANO, "+CRLF                   
+    cQuery+="				0 ENTRADA, "+CRLF
+    cQuery+="				Sum(D4_QTDEORI) as SAIDA "+CRLF                   
+    cQuery+="		FROM " + RetSqlName("SD4") + " SD4 "+CRLF             
+    cQuery+="		INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = D4_COD AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery+="		INNER JOIN " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = D4_FILIAL AND B2_COD = D4_COD AND  B2_LOCAL = D4_LOCAL AND B2_QATU > 0 AND  SB2.D_E_L_E_T_ = ' '  "+CRLF
+    cQuery+="		Where SD4.D_E_L_E_T_ = ' ' "+CRLF                    
+    cQuery+="		AND D4_FILIAL = '"+xFilial("SC7")+"'  "+CRLF          
+    cQuery+="		AND YEAR(D4_DATA) = '"+cAnoAtual+"'  "+CRLF          
+    cQuery+="		AND MONTH(D4_DATA) >= "+cMesAtual+"  "+CRLF     
+    cQuery+="		AND D4_COD = '"+cGetProd+"' "+CRLF
+    cQuery+="		GROUP BY D4_COD,YEAR(D4_DATA), MONTH(D4_DATA), DAY(D4_DATA) ) tmp ) ARQ "+CRLF
+    cQuery+="ORDER BY CODIGO,ANO,MES,DIA "+CRLF
 
-    cQuery:="Select D2_COD,D2_EMISSAO,SUM(D2_QUANT) QTD   "+CRLF
-    cQuery+="From " + RetSqlName("SD2") + " SD2   "+CRLF
-    cQuery+="INNER JOIN " + RetSqlName("SF4") + " SF4 ON F4_FILIAL = SUBSTRING(D2_FILIAL,1,2) AND F4_CODIGO = D2_TES AND F4_ESTOQUE = 'S' AND F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '   "+CRLF
-    cQuery+="Where SD2.D_E_L_E_T_ = ' '   "+CRLF
-    cQuery+="AND D2_FILIAL = '"+xFilial("SD2")+"'   "+CRLF
-    cQuery+="AND D2_EMISSAO BETWEEN '"+DtoS(dGetDtIni)+"' AND '"+DtoS(dGetDtFim)+"'   "+CRLF
-    cQuery+="AND D2_COD = '"+cGetProd+"'   "+CRLF
-    cQuery+="GROUP BY D2_COD,D2_EMISSAO   "+CRLF
-    cQuery+="ORDER BY D2_COD,D2_EMISSAO   "+CRLF
     DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
     TCSetField(cAlias, "D2_EMISSAO", "D")
 
@@ -394,35 +507,13 @@ Static Function fPopula()
     dbSelectArea(cAlias)
     (cAlias)->( dbgotop())
     DO WHILE !(cAlias)->(Eof())
-
-        nQtdAbast := 0
-        DtPrevisto:= Ctod("  /  /  ") 
-
-        nSldAnt  := nSldProc
-        if nSldAnt < 0
-               nSldAnt := (nSldAnt * -1) 
-        endif
-
-
-        nSldProc := (nSldProc - (cAlias)->QTD ) 
-    
-
-        nQtdSoma := nQtdSoma + (cAlias)->QTD
-
-        if nSldProc <= nQtdRessupr 
-         
-            nQtdAbast  :=  (nQtdStokMax - nSldAnt ) - nQtdSoma
-            DtPrevisto :=  DataValida((cAlias)->D2_EMISSAO + nGetDias)
-            aAdd(afields, { (cAlias)->D2_EMISSAO, (cAlias)->QTD, 0, nSldProc, DtPrevisto, nQtdAbast})
-            nQtdSoma   := 0
-            aAdd(aDados, { DtPrevisto, 0, nQtdAbast, 0, Ctod("  /  /  "), 0})
-            
-             (cAlias)->(dbskip())
-             Loop
-
-        Endif
-
-        aAdd(afields, { (cAlias)->D2_EMISSAO, (cAlias)->QTD, 0, nSldProc, DtPrevisto, nQtdAbast})
+        aAdd(aDados, {(cAlias)->CODIGO,;    // 1 Codigo do Produto
+                      (cAlias)->ANO,;       // 2 Ano
+                      (cAlias)->MES,;       // 3 Mês
+                      (cAlias)->DIA,;       // 4 Dia
+                      (cAlias)->ENTRADA,;   // 5 Entrada
+                      (cAlias)->SAIDA,;     // 6 Saída
+                      0})                   // 7 Saldo
         (cAlias)->(dbskip())
     ENDDO
 
@@ -430,79 +521,54 @@ Static Function fPopula()
     // Ajustando as Datas de Entrada no Movimento de Saída
     //----------------------------------------- 
 
- 
     if len(aDados) > 0
        FOR AB:= 1 TO LEN(aDados)
-       
-          nPos := aScan(afields,{|x| x[1] == aDados[AB][1] })
-          if nPos > 0
-            afields[nPos][3] := afields[nPos][3] + aDados[AB][3]
-            nSldProc := (afields[nPos-1][4] - afields[nPos][2]) + afields[nPos][2] 
-            afields[nPos][4] := nSldProc
-          else
-
-            FOR XY:= 1 TO 10
-              nPos := aScan(afields,{|x| x[1] == (aDados[AB][1])+xy })
-              if nPos > 0
-                 afields[nPos][3] := afields[nPos][3] + aDados[AB][3]
-                 nSldProc := (afields[nPos-1][4] - afields[nPos][2]) + afields[nPos][2] 
-                 afields[nPos][4] := nSldProc
-                 exit
-              endif                  
-            NEXT
-
-          endif
-
+            if AB = 1
+               aDados[AB][7] := aDados[AB][5]
+            else
+               aDados[AB][7] := (aDados[AB-1][7] + aDados[AB][5]) - aDados[AB][6]
+            endif           
        NEXT  
     endif
 
-    //-------------------------------------------
-    // Ajustando Saldo dos movimento de Saída
-    //----------------------------------------- 
-
-    nSldProc := nGetsldini
-    if len(afields) > 0
-       FOR AB:= 1 TO LEN(afields)
-
-            nSldProc := (nSldProc - afields[AB][2] )  + afields[AB][3]
-
-            afields[AB][4] := nSldProc
-
-            if afields[AB][4] > nGetRessup
-               aFields[AB][5] := Ctod("  /  /  ")                
-               afields[AB][6] := 0              
-            endif    
-
-       NEXT  
-    endif
 
    //-------------------------------------------
     // Gravando os dados na Temporária
     //----------------------------------------- 
 
-    if len(afields) > 0
-       FOR AB:= 1 TO LEN(afields)
+    if len(aDados) > 0
+       FOR AB:= 1 TO LEN(aDados)
            dbSelectArea(cAliasTmp)
            (cAliasTmp)->( dbSetOrder(1))
-           if (cAliasTmp)->( !dbSeek( afields[AB][1] ),.T.)
-        
+           if (cAliasTmp)->( !dbSeek( aDados[AB][1]+cvaltochar(aDados[AB][2])+strZero(aDados[AB][3],2)+StrZero(aDados[AB][4],2) ),.T.)
+                dDtRecuperada := cTod(strZero(aDados[AB][4],2)+"/"+strZero(aDados[AB][3],2)+"/"+cvaltochar(aDados[AB][2]))
                 IF RecLock(cAliasTmp, .T.)
-                    (cAliasTmp)->OK     := ""
-                    (cAliasTmp)->EMISSAO    := afields[AB][1]
-                    (cAliasTmp)->QUANTIDADE := afields[AB][2]
-                    (cAliasTmp)->ENTRADA    := afields[AB][3]
-                    (cAliasTmp)->SALDO      := afields[AB][4]
-                    (cAliasTmp)->ENTREGA    := afields[AB][5]  
-                    (cAliasTmp)->PREVISTO   := afields[AB][6]
+                    (cAliasTmp)->OK         := ""
+                    (cAliasTmp)->CODIGO     := aDados[AB][1]
+                    (cAliasTmp)->ANO        := cvaltochar(aDados[AB][2])
+                    (cAliasTmp)->MES        := strZero(aDados[AB][3],2)
+                    (cAliasTmp)->DIA        := StrZero(aDados[AB][4],2)
+                    (cAliasTmp)->ENTRADA    := aDados[AB][5]
+                    (cAliasTmp)->SAIDA      := aDados[AB][6]
+                    (cAliasTmp)->SALDO      := aDados[AB][7]
+                    (cAliasTmp)->PROJECAO   := round(aDados[AB][7] / nGetMedDia,0)
+                    (cAliasTmp)->ESTOQUE    := (cAliasTmp)->PROJECAO - nGetLead
+                    (cAliasTmp)->DTDISPO    := iif((cAliasTmp)->ESTOQUE > 0, dDtRecuperada + (cAliasTmp)->ESTOQUE, dDtRecuperada)
+                    
                     (cAliasTmp)->(MsUnlock())
                 Endif         
             else
                 IF RecLock(cAliasTmp, .F.)
-                    (cAliasTmp)->QUANTIDADE := afields[AB][2]
-                    (cAliasTmp)->ENTRADA    := afields[AB][3]
-                    (cAliasTmp)->SALDO      := afields[AB][4]
-                    (cAliasTmp)->ENTREGA    := afields[AB][5]  
-                    (cAliasTmp)->PREVISTO   := afields[AB][6]
+                    (cAliasTmp)->ANO        := cvaltochar(aDados[AB][2])
+                    (cAliasTmp)->MES        := strZero(aDados[AB][3],2)
+                    (cAliasTmp)->DIA        := StrZero(aDados[AB][4],2)
+                    (cAliasTmp)->ENTRADA    := aDados[AB][5]
+                    (cAliasTmp)->SAIDA      := aDados[AB][6]
+                    (cAliasTmp)->SALDO      := aDados[AB][7]
+                    (cAliasTmp)->PROJECAO   := round(aDados[AB][7] / nGetMedDia,0)
+                    (cAliasTmp)->ESTOQUE    := (cAliasTmp)->PROJECAO - nGetLead
+                    (cAliasTmp)->DTDISPO    := iif((cAliasTmp)->ESTOQUE > 0, dDtRecuperada + (cAliasTmp)->ESTOQUE, dDtRecuperada)
+                    
                     (cAliasTmp)->(MsUnlock())
                 Endif   
             endif    
@@ -523,6 +589,9 @@ Static Function fPopula()
         oMarkBrowse:SetTemporary(.T.)
         oMarkBrowse:SetColumns(aColunas)
         oMarkBrowse:SetOwner(oPanGrid)
+
+        oMarkBrowse:AddButton("Ordens Producao"   ,{||PCP180ORDENS((cAliasTmp)->CODIGO,(cAliasTmp)->ANO,(cAliasTmp)->MES,(cAliasTmp)->DIA), oMarkBrowse:Refresh(), oMarkBrowse:Refresh()},,2,,.F.)
+
         oMarkBrowse:Activate()
 
   (calias)->(DbCloseArea()) 
