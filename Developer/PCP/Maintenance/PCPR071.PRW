@@ -75,6 +75,10 @@ Static Function ReportDef()
 
     TRCell():New(oSection3,'NOME'		,'SZB', GetSx3Cache("ZB_NOME","X3_TITULO")     		   	,PesqPict('SZB',"ZB_NOME")	,TamSX3("ZB_NOME") [1]+1,,) 
     TRCell():New(oSection3,'QUANT'		,'SZB', GetSx3Cache("ZB_QTD","X3_TITULO")     		   	,PesqPict('SZB',"ZB_QTD")	,TamSX3("ZB_QTD") [1]+1,,) 
+
+    TRCell():New(oSection3,'SLDE'		,'SZB', GetSx3Cache("ZB_SLDE","X3_TITULO")      	   	,PesqPict('SZB',"ZB_SALDO")	,TamSX3("ZB_SALDO") [1]+1,,) 
+    TRCell():New(oSection3,'SLDA'		,'SZB', GetSx3Cache("ZB_SLDA","X3_TITULO")      	   	,PesqPict('SZB',"ZB_SALDO")	,TamSX3("ZB_SALDO") [1]+1,,) 
+
     TRCell():New(oSection3,'SALDO'		,'SZB', GetSx3Cache("ZB_SALDO","X3_TITULO")     	   	,PesqPict('SZB',"ZB_SALDO")	,TamSX3("ZB_SALDO") [1]+1,,) 
     TRCell():New(oSection3,'Total'		,'SZB', GetSx3Cache("ZB_TOTAL","X3_TITULO")     	   	,PesqPict('SZB',"ZB_TOTAL")	,TamSX3("ZB_TOTAL") [1]+1,,) 
     TRCell():New(oSection3,'Dispo'     ,'SZB', GetSx3Cache("ZB_QTAPU","X3_TITULO")     	      ,PesqPict('SZB',"ZB_QTAPU")	,TamSX3("ZB_QTAPU") [1]+1,,) 
@@ -159,6 +163,10 @@ Static Function ReportPrint(oReport)
         //----------------//
         oSection3:Cell("NOME"):SetValue((SZB->ZB_NOME))	
         oSection3:Cell("QUANT"):SetValue((SZB->ZB_QTD))	
+
+        oSection3:Cell("SLDE"):SetValue((SZB->ZB_SLDE))	
+        oSection3:Cell("SLDA"):SetValue((SZB->ZB_SLDA))	
+
         oSection3:Cell("SALDO"):SetValue((SZB->ZB_SALDO))	
         oSection3:Cell("Total"):SetValue((SZB->ZB_TOTAL))	
         oSection3:Cell("Dispo"):SetValue((SZB->ZB_QTAPU))	

@@ -1256,7 +1256,7 @@ description
 /*/
 User Function PCP80PERC(cPerc)
 Local aArea   := FwgetArea()
-Local aDadosSX5 := FWGetSX5("XY") 
+Local aDadosSX5 := FWGetSX5("96") 
 Local nReult := "0"
 if len(aDadosSX5) > 0
    nPos := aScan(aDadosSX5,{|x| Alltrim(x[3]) == Alltrim(cPerc) })
