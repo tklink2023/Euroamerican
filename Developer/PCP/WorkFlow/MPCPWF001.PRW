@@ -6,8 +6,10 @@
 #DEFINE cEof  CHAR(13)+CHAR(10)
 
 User Function MPCPWF001()
-   Ambiente()
-   RunProc()
+  If !IsBlind()
+        Ambiente()
+  Endif      
+  RunProc()
 Return
 
 Static Function RunProc()
@@ -46,6 +48,8 @@ Static Function RunProc()
     TCSetField(cAlias, "C2_QUANT"   , "N",9,3)	
 
     if (cAlias)->( Eof())
+                RegLog("Nao existem Ordens de Producao Paradas")
+                CONOUT("Nao existem Ordens de Producao Paradas")
                 FwRestArea(cArea)
                 RETURN
     Endif

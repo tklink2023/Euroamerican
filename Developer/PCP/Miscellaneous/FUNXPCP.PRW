@@ -1829,6 +1829,53 @@ User Function PCP180OPS(cProduto,cAno,cMes,cDia)
     oDlgNew:Activate(,,,.T.)
     FwSetArea(cArea)
 Return
+
+/*/{Protheus.doc} Ambiente
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 03/02/2025
+@return variant, return_description
+/*/
+User Function Ambiente()
+    Local cAutoEmp := "10"
+    Local cAutoFil := "0803"
+    RpcClearEnv()  //Limpa o Ambiente
+	RpcSetType(3)
+    If Select("SX2") <= 0
+	    RpcSetEnv( cAutoEmp, cAutoFil )
+    Endif    
+Return
+
+/*/{Protheus.doc} RegLog
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 03/02/2025
+@param cFuncao, character, param_description
+@param cMensagem, character, param_description
+@return variant, return_description
+/*/
+User Function RegLog(cFuncao,cMensagem)
+    Local cArea := FwGetArea()
+
+        dbSelectArea("CV8")
+        If RecLock("CV8",.T.)
+                CV8->CV8_FILIAL:= xFilial("CV8")
+                CV8->CV8_DATA 	:= MsDate()
+                CV8->CV8_HORA 	:= SubStr(Time(),1,TamSx3("CV8_HORA")[1])
+                CV8->CV8_PROC	:= cFuncao
+                CV8->CV8_USER	:= 'ADMINISTRADOR            '
+                CV8->CV8_INFO   := '2'
+                CV8->CV8_MSG 	:= cMensagem
+                CV8->(MsUnlock())
+          EndIf
+
+     FwRestArea(cArea)
+Return
+
 //===================================================================================================================================//
 //===============[ FINAL DO PROGRAMA]================================================================================================//
 //===================================================================================================================================//
