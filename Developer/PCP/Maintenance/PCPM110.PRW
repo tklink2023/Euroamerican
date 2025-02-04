@@ -20,14 +20,40 @@ User Function PCPM110()
     Local cArea    := FwGetArea()
     Local cAlias   := GetNextAlias()
     Local cQuery   := ''
+    Local aRet  	:= 	{}
+    Local aPergs	:= 	{}
+    local aCombo    := {"Faturamento","Media"}    
     Private nTotal   := 0
-   
+    Private nTipoFlt := 2
+    aAdd( aPergs ,{2,"Qual a forma:"          , 01            ,aCombo                        ,50   ,"",.T.})
+    
+    If ParamBox(aPergs ,"Parametros para o Processamento",aRet)     
+		nTipoFlt := iif(valtype(aRet[1])="N",aRet[1], iif(aRet[1]="Media",2,1))
+	Else
+		MsgAlert("Encerrado")
+		Return
+	EndIf	                       
+
     MsgRun("Limpando o arquivo.    Aguarde.....", "Processando", {|| PCP110CLEAN() })
 
-    cQuery := "SELECT C6_PRODUTO,B1_DESC, SUM(C6_QTDVEN) QTD, SUM(C6_PRCVEN) UNITARIO, SUM(C6_PRCVEN * C6_QTDVEN ) TOTAL "+CRLF
+    cQuery := "SELECT "+CRLF
+    IF nTipoFlt = 1
+        cQuery += "      C6_PRODUTO     CODIGO "+CRLF
+        cQuery += "		,B1_DESC        DESCRICAO "+CRLF
+        cQuery += "		,SUM(C6_QTDVEN) QTD "+CRLF
+        cQuery += "		,ROUND((ROUND(SUM(C6_VALOR),2) / SUM(C6_QTDVEN)),2) UNITARIO "+CRLF
+        cQuery += "		,(ROUND((ROUND(SUM(C6_VALOR),2) / SUM(C6_QTDVEN)),2) * SUM(C6_QTDVEN)) TOTAL "+CRLF
+    else 
+        cQuery += "      C6_PRODUTO  CODIGO "+CRLF
+        cQuery += "		,B1_DESC DESCRICAO "+CRLF
+        cQuery += "		,round((SUM(C6_QTDVEN)/6),3) QTD "+CRLF
+        cQuery += "		,ROUND((ROUND((SUM(C6_VALOR)/6),2) / round((SUM(C6_QTDVEN)/6),3) ),2) UNITARIO "+CRLF
+        cQuery += "		,ROUND(((ROUND((ROUND((SUM(C6_VALOR)/6),2) / round((SUM(C6_QTDVEN)/6),3) ),2)) * round((SUM(C6_QTDVEN)/6),3)),2) TOTAL "+CRLF
+    Endif    
+
     cQuery += "FROM " + RetSqlName("SC6") + " SC6 "+CRLF
     cQuery += "INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND C5_CLIENTE = C6_CLI AND C5_LOJACLI = C6_LOJA AND SC5.D_E_L_E_T_ = ' ' "+CRLF
-    cQuery += "INNER JOIN SB1100 SB1 ON B1_COD = C6_PRODUTO AND SB1.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND B1_TIPO IN ( 'PA' ) AND B1_XCLASSI = 'L' AND SB1.D_E_L_E_T_ = ' ' "+CRLF
     cQuery += "AND C6_FILIAL = '"+xFilial("SC6")+"' "+CRLF
     cQuery += "AND C5_EMISSAO BETWEEN dateadd(month, -6, getdate()) AND GetDate() "+CRLF
     cQuery += "GROUP BY C6_PRODUTO, B1_DESC "+CRLF
@@ -43,11 +69,11 @@ User Function PCPM110()
     While (cAlias)->( !Eof() )
             dbSelectArea("SZ3")
             SZ3->( dbSetOrder(1) )
-            IF SZ3->( !dbseek(xFilial("SZ3")+(cAlias)->C6_PRODUTO,.T. ) )
+            IF SZ3->( !dbseek(xFilial("SZ3")+(cAlias)->CODIGO,.T. ) )
               if    SZ3->( Reclock("SZ3",.T.) )
                     SZ3->Z3_FILIAL   := xFilial("SZ3")
-                    SZ3->Z3_COD      := (cAlias)->C6_PRODUTO
-                    SZ3->Z3_DESC     := (cAlias)->B1_DESC
+                    SZ3->Z3_COD      := (cAlias)->CODIGO
+                    SZ3->Z3_DESC     := (cAlias)->DESCRICAO
                     SZ3->Z3_QUANT    := (cAlias)->QTD
                     SZ3->Z3_VALOR    := (cAlias)->UNITARIO
                     SZ3->Z3_TOTAL    := (cAlias)->TOTAL
@@ -86,10 +112,14 @@ Static Function PCP150FAT()
     Local cArea    := FwGetArea()
     Local cAlias   := GetNextAlias()
     Local cQuery   := ''
-
-    cQuery := "SELECT round(SUM((C6_PRCVEN * C6_QTDVEN )),2) AS TOTAL "+CRLF
+    if nTipoFlt = 1
+        cQuery := "SELECT (ROUND((ROUND(SUM(C6_VALOR),2) / SUM(C6_QTDVEN)),2)) * SUM(C6_QTDVEN)  AS TOTAL  "+CRLF
+    else
+        cQuery := " SELECT round(((ROUND((ROUND(SUM(C6_VALOR),2) / SUM(C6_QTDVEN)),2)) * SUM(C6_QTDVEN))/6 ,2) AS TOTAL  "+CRLF
+    Endif        
     cQuery += "FROM " + RetSqlName("SC6") + " SC6 "+CRLF
     cQuery += "INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND C5_CLIENTE = C6_CLI AND C5_LOJACLI = C6_LOJA AND SC5.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND B1_TIPO IN ( 'PA' ) AND B1_XCLASSI = 'L' AND SB1.D_E_L_E_T_ = ' ' "+CRLF
     cQuery += "Where SC6.D_E_L_E_T_ = ' ' "+CRLF
     cQuery += "AND C6_FILIAL = '"+xFilial("SC6")+"' "+CRLF
     cQuery += "AND C5_EMISSAO BETWEEN dateadd(month, -6, getdate()) AND GetDate() "+CRLF
@@ -184,7 +214,7 @@ Static Function PCP110RES()
     Local xy       := NCont := 0
     Local oFWMsExcel
     Local oExcel
-    Local cArquivo    := GetTempPath()+'PCPE070.xml'    
+    Local cArquivo    := GetTempPath()+'PCPE110_'+IIF(nTipoFlt=1,'Faturados','Media')+'.xml'    
 
     cQuery := "Select  Z3_CURVA, COUNT(*) QTDE From SZ3100 SZ3 WHERE SZ3.D_E_L_E_T_ = ' ' GROUP BY Z3_CURVA ORDER BY Z3_CURVA "+CRLF 
 
