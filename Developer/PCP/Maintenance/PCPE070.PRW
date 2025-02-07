@@ -5,7 +5,14 @@
 //Constantes
 #Define cEof    Chr(13)+Chr(10)
  
- 
+/*/{Protheus.doc} PCPE070
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 05/02/2025
+@return variant, return_description
+/*/
 User Function PCPE070()
       Local aArea        := GetArea()
       Private cPerg 		:= PADR("PCPR070",10)
@@ -13,7 +20,14 @@ User Function PCPE070()
       MsgRun("Gerando a Planilha.    Aguarde.....", "Processando", {|| RunProc() })
       RestArea(aArea)
 Return
-
+/*/{Protheus.doc} RunProc
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 05/02/2025
+@return variant, return_description
+/*/
 Static Function RunProc()
     Local aArea        := GetArea()
     Local cQuery       := ""
@@ -56,8 +70,6 @@ Static Function RunProc()
  
     TCQuery cQry New Alias "QRYSZB"   
 
-
-
     cQuery :="Select *  "+cEof
     cQuery +="From "+RetSqlName("SZB")+" SZB  "+cEof
     cQuery +="Where SZB.D_E_L_E_T_ = ' '  "+cEof
@@ -73,7 +85,6 @@ Static Function RunProc()
 
    TCQuery cQuery New Alias "QRYPRO"
      
-
     cQry3:= "Select ZB_SITUA,ISNULL(SUM(ZB_QTD),0) QUANT "+cEof
     cQry3+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQry3+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
@@ -249,7 +260,14 @@ Static Function RunProc()
     RestArea(aArea)
 Return
 
-
+/*/{Protheus.doc} CalcTotal
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 05/02/2025
+@return variant, return_description
+/*/
 Static Function CalcTotal()
     Local aArea        := GetArea()
     Local cQuery       := ""
@@ -275,7 +293,14 @@ Static Function CalcTotal()
     RestArea(aArea)
 Return(lRet)
 
-
+/*/{Protheus.doc} CalcBloq
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 05/02/2025
+@return variant, return_description
+/*/
 Static Function CalcBloq()
     Local aArea        := GetArea()
     Local cQuery       := ""
@@ -301,3 +326,7 @@ Static Function CalcBloq()
 
     RestArea(aArea)
 Return(lRet)
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------//
+// FIM DO PROGRAMA
+//--------------------------------------------------------------------------------------------------------------------------------------------------------//

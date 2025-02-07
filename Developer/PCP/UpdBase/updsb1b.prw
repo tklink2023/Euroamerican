@@ -413,7 +413,7 @@ aAdd( aSX3, { ;
 	''																		, ; //X3_WHEN
 	''																		, ; //X3_INIBRW
 	''																		, ; //X3_GRPSXG
-	''																		, ; //X3_FOLDER
+	'1'																		, ; //X3_FOLDER
 	''																		, ; //X3_CONDSQL
 	''																		, ; //X3_CHKSQL
 	''																		, ; //X3_IDXSRV

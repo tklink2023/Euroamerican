@@ -5,7 +5,7 @@
 #Include 'TbiConn.Ch'
 #DEFINE cEof  CHAR(13)+CHAR(10)
 
-User Function MPCPWF001()
+User Function PCPJ010()
   If !IsBlind()
         Ambiente()
   Endif      
