@@ -16,7 +16,7 @@ description
 User Function PCPE070()
       Local aArea        := GetArea()
       Private cPerg 		:= PADR("PCPR070",10)
-      Pergunte(cPerg,.T.)	 
+      Pergunte(cPerg,.F.)	 
       MsgRun("Gerando a Planilha.    Aguarde.....", "Processando", {|| RunProc() })
       RestArea(aArea)
 Return
@@ -74,7 +74,7 @@ Static Function RunProc()
     cQuery +="From "+RetSqlName("SZB")+" SZB  "+cEof
     cQuery +="Where SZB.D_E_L_E_T_ = ' '  "+cEof
     cQuery +="AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
-    cQuery +="AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    //cQuery +="AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
     cQuery +="AND ZB_SITUA = 'BARRADO' "+cEof
     cQuery +="order by ZB_COD,ZB_STATUS  "+cEof
 
@@ -89,7 +89,7 @@ Static Function RunProc()
     cQry3+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQry3+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQry3+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
-    cQry3+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    //cQry3+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
     cQry3+= "GROUP BY ZB_SITUA "+cEof
     cQry3+= "ORDER BY ZB_SITUA "+cEof
 
@@ -104,7 +104,7 @@ Static Function RunProc()
     cQry4+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQry4+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQry4+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
-    cQry4+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    //cQry4+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
     cQry4+= "and RTRIM(ZB_SITUA) = 'BARRADO'  "+cEof
     cQry4+= "GROUP BY ZB_CLASSE "+cEof
     cQry4+= "ORDER BY ZB_CLASSE "+cEof
@@ -277,7 +277,7 @@ Static Function CalcTotal()
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
-    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    //cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
 
     If  Select("QRYCAL") > 0
             DbSelectArea("QRYCAL")
@@ -311,7 +311,7 @@ Static Function CalcBloq()
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '"+xFilial("SZB")+"' "+cEof
     cQuery+= "and RTRIM(ZB_SITUA) = 'BARRADO'  "+cEof
-    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
+    //cQuery+= "AND RTRIM(ZB_PERIODO) = '"+MV_PAR01+"'  "+cEof
 
     If  Select("QRYCAL") > 0
             DbSelectArea("QRYCAL")

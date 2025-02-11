@@ -46,6 +46,8 @@ User Function PCPM070()
     Private dDataIni
     Private dDataFim
     Private nPosicao    := 2
+
+    PCP070CLEAR()
        
     bSair  := {|| Iif(MsgYesNo('Deseja realmente sair?','Gerenciamento'),(oDlgMark:End()),NIL)}
     bGrava := {|| PM070FIL(aBrowse[oBrowse:nAt][nPosPro]) }
@@ -175,11 +177,14 @@ Static Function RunProc()
    cQuery+="		DataEntrega, "+CRLF
    cQuery+="		SaldoEnderecado, "+CRLF
    cQuery+="		SaldoEnderecar, "+CRLF
-   cQuery+="		SaldoEnderecado + SaldoEnderecar AS SaldoEstoque, "+CRLF
-   cQuery+="		TotalLiberado, "+CRLF
-   cQuery+="      SaldoEnderecado + SaldoEnderecar - TotalLiberado AS SaldoDisponivel, "+CRLF
-   cQuery+="		CASE WHEN (SaldoEnderecado + SaldoEnderecar) - TotalLiberado < 0 THEN 'Barrado' ELSE 'Liberado' END AS Status "+CRLF
-   cQuery+="FROM            "+CRLF
+   cQuery+="		SaldoEnderecado + SaldoEnderecar AS SaldoEstoque,                                                              "+CRLF
+   cQuery+="		TotalLiberado,                                                                                                 "+CRLF
+   cQuery+="      SaldoEnderecado + SaldoEnderecar - TotalLiberado AS SaldoDisponivel,                                           "+CRLF
+   cQuery+="		CASE WHEN (SaldoEnderecado + SaldoEnderecar) - TotalLiberado < 0 THEN 'Barrado' ELSE 'Liberado' END AS Status, "+CRLF
+   cQuery+="      LEADTIME,                                                                                                      "+CRLF
+   cQuery+="      CLASSE,                                                                                                        "+CRLF
+   cQuery+="      TIPO                                                                                                           "+CRLF
+   cQuery+="FROM                                                                                                                 "+CRLF
    cQuery+="	(SELECT CASE WHEN LEFT(SC9.C9_FILIAL, 2) = '02' THEN 'EURO' WHEN LEFT(SC9.C9_FILIAL, 2) = '08' THEN 'QUALYCRIL' ELSE 'PHOENIX' END AS Empresa, "+CRLF
    cQuery+="		     SC9.C9_FILIAL AS Filial, "+CRLF
    cQuery+="			  SA1.A1_NOME AS Cliente, "+CRLF
@@ -194,7 +199,14 @@ Static Function RunProc()
    cQuery+="			  SC9.C9_DATENT AS DataEntrega, "+CRLF
    cQuery+="			  SC9.C9_CLIENTE as CodCli,  "+CRLF
    cQuery+="			  SC9.C9_LOJA as LojaCli,    "+CRLF
-   cQuery+="           DATEDIFF(DD,C5_EMISSAO, GETDATE())  LEAD,  "+CRLF
+   cQuery+="           DATEDIFF(DD,C5_EMISSAO, GETDATE())  LEADTIME,  "+CRLF
+   cQuery+="  	        CASE WHEN SB1.B1_XCLASSI = 'L' THEN 'LINHA' ELSE 'ESPECIAL' END AS CLASSE,  "+CRLF
+   cQuery+="	        CASE	WHEN SB1.B1_XTPBASE = 'A' THEN 'Agua'   "+CRLF
+   cQuery+="				      WHEN SB1.B1_XTPBASE = 'S' THEN 'Solvente'   "+CRLF
+   cQuery+="				      WHEN SB1.B1_XTPBASE = 'C' THEN 'Acrilico'   "+CRLF
+   cQuery+="				      WHEN SB1.B1_XTPBASE = 'V' THEN 'Viniculo'   "+CRLF
+   cQuery+="				      WHEN SB1.B1_XTPBASE = 'O' THEN 'Outros'   "+CRLF
+   cQuery+="				      else 'Sem Tipo' end AS TIPO,  "+CRLF
    cQuery+="			  ISNULL ((SELECT SUM(BF_QUANT - BF_EMPENHO) AS Expr1 "+CRLF
    cQuery+="                    FROM  "+RetSqlName("SBF")+"  AS SBF WITH (NOLOCK) "+CRLF
    cQuery+="                    WHERE (D_E_L_E_T_ = '')  "+CRLF
@@ -244,6 +256,7 @@ Static Function RunProc()
          dbSelectArea("SZB")
          ("SZB")->( dbSetOrder(1) )
 
+
          if  ("SZB")->( !dbSeek(xFilial("SZB")+(cAlias)->CodCli+(cAlias)->LojaCli+(cAlias)->Pedido+(cAlias)->Produto+(cAlias)->Item,.T.))
 
             IF RECLOCK("SZB",.T.)
@@ -259,7 +272,7 @@ Static Function RunProc()
                SZB->ZB_DTLIB   := stod((cAlias)->DataLiberacao)
                SZB->ZB_DTENT   := stod((cAlias)->DataEntrega)
 
-               SZB->ZB_LEAD    := (cAlias)->LEAD
+               SZB->ZB_LEAD    := (cAlias)->LEADTIME
 
                SZB->ZB_COD     := (cAlias)->Produto
                SZB->ZB_DESC    := (cAlias)->Descricao
@@ -285,6 +298,7 @@ Static Function RunProc()
                   SZB->ZB_SALDO   := (cAlias)->SaldoEstoque
                   SZB->ZB_TOTAL   := (cAlias)->TotalLiberado
                   SZB->ZB_QTAPU   := (cAlias)->SaldoDisponivel
+
                   IF alltrim(Upper((cAlias)->Status)) = "LIBERADO"
                      SZB->ZB_STATUS  := alltrim(Upper((cAlias)->Status))
                   ENDIF   
@@ -364,6 +378,7 @@ Static Function PM070FIL(cCodProd)
   Local cProduto  := cCodProd
   Local cObserv   := ' '
   Local cQuery    := ""
+  Local nPontoRet := SZB->(Recno())
 
   aAdd(aPergs, {1, "Produto De" ,  cProduto,  "", ".T.", "SB1", ".T.", 80,  .F.})
   aAdd( aPergs ,{1,"Digite:   " , Upper(Space(100))    ,"","","","",110,.T.})
@@ -382,7 +397,7 @@ Static Function PM070FIL(cCodProd)
    cQuery += "from  "+RetSqlName("SZB")+" SZB  "+cEof
    cQuery += "WHERE SZB.D_E_L_E_T_ = ' '  "+cEof
    cQuery += "AND ZB_FILIAL = '"+xFilial("SZB")+"'  "+cEof
-   cQuery += "AND ZB_PERIODO = '"+AnoMes(dDataBase)+"'  "+cEof
+   //cQuery += "AND ZB_PERIODO = '"+AnoMes(dDataBase)+"'  "+cEof
    cQuery += "AND ZB_COD = '"+cProduto+"'  "+cEof
 
    If TCSqlExec(cQuery) < 0
@@ -393,7 +408,7 @@ Static Function PM070FIL(cCodProd)
   
   oBrowse:Refresh(.T.)	
   FWRestArea(aArea)
-
+  Goto nPontoRet
 Return
 
 /*/{Protheus.doc} RemoveChar
@@ -431,7 +446,7 @@ Static Function CallBase()
    cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
    cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
    cQuery+= "AND ZB_FILIAL = '0803' "+cEof
-   cQuery+= "AND RTRIM(ZB_PERIODO) = '"+AnoMes(dDataBase)+"'  "+cEof
+   //cQuery+= "AND RTRIM(ZB_PERIODO) = '"+AnoMes(dDataBase)+"'  "+cEof
 
   DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
  
@@ -483,7 +498,13 @@ Static Function CallBase()
 Return
 
 Static Function PCP070CLEAR()
-
+    Local cArea    := FwGetArea()
+    Local cQuery   := ''
+    cQuery := "DELETE FROM " + RetSqlName("SZB") + " "+CRLF
+    If TCSqlExec(cQuery) < 0
+         CONOUT("Erro ao limpar a tabela SZB")
+     EndIf    
+    FwRestArea(cArea)
 Return
 //-====================================================================================================================================================//
 // FIM DO PROGRAMA

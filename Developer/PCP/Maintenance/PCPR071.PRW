@@ -40,7 +40,7 @@ Static Function ReportDef()
     Local aOrdem 	:={}
     Local cDesc 	:= cTitulo
 
-    Pergunte(cPerg,.T.)	 
+    Pergunte(cPerg,.F.)	 
 
     oReport:= TReport():New("PCPR071",cTitulo,cPerg, {|oReport| ReportPrint(oReport)},cDesc)
     oReport:SetLandscape() 
@@ -108,12 +108,13 @@ Static Function ReportPrint(oReport)
   
     dbSelectArea("SZB")
     ("SZB")->( dbSetOrder(2) )
-    IF ("SZB")->( dbSeek( xFilial("SZB")+Alltrim(MV_PAR01) ) )
+    ("SZB")->( dbGoTop() )
+    //IF ("SZB")->( dbSeek( xFilial("SZB")+Alltrim(MV_PAR01) ) )
 
-       oReport:SetMeter(SZB->(LastRec()))
+     oReport:SetMeter(SZB->(LastRec()))
     
-       While ("SZB")->( !Eof() ) .and. SZB->ZB_PERIODO = Alltrim(MV_PAR01) .AND. !oReport:Cancel()
-
+      // While ("SZB")->( !Eof() ) .and. SZB->ZB_PERIODO = Alltrim(MV_PAR01) .AND. !oReport:Cancel()
+       While ("SZB")->( !Eof() )  .AND. !oReport:Cancel()
              oReport:IncMeter()
              If oReport:Cancel()
                     Exit
@@ -177,7 +178,7 @@ Static Function ReportPrint(oReport)
 
         ("SZB")->( dbSkip() )
        EndDo
-    ENDIF 
+    
 
    nQuant := CalcTotal()
 
@@ -244,7 +245,7 @@ Static Function ReportPrint(oReport)
     cQuer2+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuer2+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuer2+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuer2+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
+    //cQuer2+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
     cQuer2+= "AND upper(ZB_SITUA) = 'BARRADO'   "+cEof
     cQuer2+= "GROUP BY ZB_CLASSE "+cEof
     cQuer2+= "ORDER BY ZB_CLASSE "+cEof
@@ -292,7 +293,7 @@ Static Function CalcTotal()
     cQuery+= "from "+RetSqlName("SZB")+" SZB "+cEof
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '0803' "+cEof
-    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
+    //cQuery+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
 
     If  Select("QRYCAL") > 0
             DbSelectArea("QRYCAL")
@@ -318,7 +319,7 @@ Static Function CalcBloq()
     cQuery+= "Where SZB.D_E_L_E_T_ = ' ' "+cEof
     cQuery+= "AND ZB_FILIAL = '0803' "+cEof
     cQuery+= "AND upper(ZB_SITUA) = 'BARRADO'   "+cEof
-    cQuery+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
+    //cQuery+= "AND RTRIM(ZB_PERIODO) = '"+Alltrim(MV_PAR01)+"'  "+cEof
 
     If  Select("QRYCAL") > 0
             DbSelectArea("QRYCAL")
