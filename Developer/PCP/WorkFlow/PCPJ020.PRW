@@ -50,7 +50,7 @@ Static Function RunProc()
     Local cArea       := FwGetArea()
     Local cAlias      := GetNextAlias()
     Local cQuery      := ''
-    Private nTotal    := 0
+    Private nTotal    := 0  
 
     PCP110CLEAN()
 
@@ -59,7 +59,7 @@ Static Function RunProc()
     cQuery += "		,B1_DESC DESCRICAO                                                                                                      "+CRLF
     cQuery += "		,round((SUM(C6_QTDVEN)/6),3) QTD                                                                                        "+CRLF
     cQuery += "		,ROUND((ROUND((SUM(C6_VALOR)/6),2) / round((SUM(C6_QTDVEN)/6),3) ),2) UNITARIO                                          "+CRLF
-    cQuery += "		,ROUND(((ROUND((ROUND((SUM(C6_VALOR)/6),2) / round((SUM(C6_QTDVEN)/6),3) ),2)) * round((SUM(C6_QTDVEN)/6),3)),2) TOTAL  "+CRLF
+    cQuery += "		,ROUND(((ROUND((ROUND((SUM(C6_VALOR)/6),2) / round((SUM(C6_QTDVEN)/6),3) ),2)) * round((SUM(C6_QTDVEN)/6),3)),2) TOTALFAT  "+CRLF
     cQuery += "FROM " + RetSqlName("SC6") + " SC6                                                                                         "+CRLF
     cQuery += "INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND C5_CLIENTE = C6_CLI AND C5_LOJACLI = C6_LOJA AND SC5.D_E_L_E_T_ = ' ' "+CRLF
     cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND B1_TIPO IN ( 'PA' ) AND B1_XCLASSI = 'L' AND SB1.D_E_L_E_T_ = ' ' "+CRLF
@@ -87,15 +87,15 @@ Static Function RunProc()
                     SZ3->Z3_DESC     := (cAlias)->DESCRICAO
                     SZ3->Z3_QUANT    := (cAlias)->QTD
                     SZ3->Z3_VALOR    := (cAlias)->UNITARIO
-                    SZ3->Z3_TOTAL    := (cAlias)->TOTAL
-                    SZ3->Z3_PERC     := ((cAlias)->TOTAL / nTotal) * 100
+                    SZ3->Z3_TOTAL    := (cAlias)->TOTALFAT
+                    SZ3->Z3_PERC     := ((cAlias)->TOTALFAT / nTotal) * 100
                     SZ3->( MsUnlock() )
               ELSE
                     SZ3->( Reclock("SZ3",.F.) )
                     SZ3->Z3_QUANT    := (cAlias)->QTD
                     SZ3->Z3_VALOR    := (cAlias)->UNITARIO
-                    SZ3->Z3_TOTAL    := (cAlias)->TOTAL
-                    SZ3->Z3_PERC     := ((cAlias)->TOTAL / nTotal) * 100
+                    SZ3->Z3_TOTAL    := (cAlias)->TOTALFAT
+                    SZ3->Z3_PERC     := ((cAlias)->TOTALFAT / nTotal) * 100
                     SZ3->( MsUnlock() )
               ENDIF
             ENDIF  
@@ -120,7 +120,7 @@ Static Function PCP150FAT()
     Local cArea    := FwGetArea()
     Local cAlias   := GetNextAlias()
     Local cQuery   := ''
-    cQuery := " SELECT round(((ROUND((ROUND(SUM(C6_VALOR),2) / SUM(C6_QTDVEN)),2)) * SUM(C6_QTDVEN))/6 ,2) AS TOTAL  "+CRLF
+    cQuery := " SELECT round(((ROUND((ROUND(SUM(C6_VALOR),2) / SUM(C6_QTDVEN)),2)) * SUM(C6_QTDVEN))/6 ,2) AS TOTALFAT  "+CRLF
     cQuery += "FROM " + RetSqlName("SC6") + " SC6 "+CRLF
     cQuery += "INNER JOIN " + RetSqlName("SC5") + " SC5 ON C5_FILIAL = C6_FILIAL AND C5_NUM = C6_NUM AND C5_CLIENTE = C6_CLI AND C5_LOJACLI = C6_LOJA AND SC5.D_E_L_E_T_ = ' ' "+CRLF
     cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = C6_PRODUTO AND B1_TIPO IN ( 'PA' ) AND B1_XCLASSI = 'L' AND SB1.D_E_L_E_T_ = ' ' "+CRLF
@@ -135,7 +135,7 @@ Static Function PCP150FAT()
     ENDIF
 
     While (cAlias)->( !Eof() )
-            nTotal := (cAlias)->TOTAL
+            nTotal := (cAlias)->TOTALFAT
             (cAlias)->( dbSkip() )
     EndDo
     (cAlias)->(DbCloseArea())
@@ -157,7 +157,10 @@ Static Function PCP110ACUM()
     Local cQuery   := ''
     Local nPerc    := 0
 
-    cQuery := "select * from  " + RetSqlName("SZ3") + "  WHERE D_E_L_E_T_ =' ' ORDER BY Z3_TOTAL DESC  "+CRLF
+    cQuery := " SELECT SZ3.* "+CRLF
+    cQuery += "FROM " + RetSqlName("SZ3") + " SZ3 "+CRLF
+    cQuery += "WHERE D_E_L_E_T_ =' '   "+CRLF
+    cQuery += "ORDER BY Z3_TOTAL DESC  "+CRLF
     DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
     if (cAlias)->(Eof())
         (cAlias)->(DbCloseArea())
@@ -172,6 +175,7 @@ Static Function PCP110ACUM()
             if SZ3->( dbseek(xFilial("SZ3")+(cAlias)->Z3_COD,.T. ) )
                     SZ3->( Reclock("SZ3",.F.) )
                     SZ3->Z3_ACUM:= nPerc
+                    
                     if SZ3->Z3_ACUM >= 0 .and. SZ3->Z3_ACUM <= 80
                         SZ3->Z3_CURVA := "A"
                     elseif SZ3->Z3_ACUM > 80 .and. SZ3->Z3_ACUM <= 95
@@ -179,6 +183,7 @@ Static Function PCP110ACUM()
                     else
                         SZ3->Z3_CURVA := "C"
                     ENDIF    
+
                     SZ3->( MsUnlock() )
             ENDIF
             
