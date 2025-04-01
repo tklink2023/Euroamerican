@@ -27,13 +27,15 @@ User Function PCPG020()
     Local cLocal        := ""
     Local dtValid       := CtoD("01/01/1900")                                                                                                   
     Local nQtdEmp       := 0
+    Local nQtdSC2       := 0
+    Local nQtdSD3       := 0
 
     Static oTMsgItem1 // Objeto para exibir o total atualizado
 
     Private nTotal := 0
-    Private cLotePrincipal := cLote
-    Private nQtdePrincial := nQtde
-    Private nSldPrincial := nQtdEmp
+    Private cLotePrincipal  := cLote
+    Private nQtdePrincial   := nQtde
+    Private nSldPrincial    := nQtdEmp
 
     IF FWCodFil() <> "0803"
        Return(lRet)
@@ -46,17 +48,19 @@ User Function PCPG020()
 
     cCodTm        := CTM
     cCodProd      := AllTrim(aCols[n][nposcod])
-    cLote         := AllTrim(aCols[n][nposlotctl])
+    cLote         := IIF(Empty(AllTrim(aCols[n][nposlotctl])),M->D3_LOTECTL,AllTrim(aCols[n][nposlotctl]))
     nQtde         := aCols[n][nposquant]
     cLocal        := AllTrim(aCols[n][nposlocal])
     dtValid       := aCols[n][nposdvalid]                                                                                                   
-    nQtdEmp       := PCP20Call(cCodProd,cLote,cLocal)
 
+    nQtdSC2       := PCP20SC2(cCodProd,cLote,cLocal) 
+    nQtdSD3       := PCP20SD3(cCodProd,cLote,cLocal)    
+ 
     cLotePrincipal := cLote
     nQtdePrincial := nQtde
-    nSldPrincial := nQtdEmp
-
-
+    
+    nQtdSD3 := nQtdSD3 + nQtde
+    
     IF cCodTm == "400"
 
         if dtValid < DATE()
@@ -64,14 +68,26 @@ User Function PCPG020()
             lRet := .F.
         endif    
 
-        IF nQtde > nQtdEmp
-            MsgStop("Quantidade maior que a disponível no Lote : "+cValtoChar(nQtdEmp))
+        if nQtde = 0
+            MsgStop("Campo Quantidade zerado")
+            lRet := .F.
+        endif
+
+
+        if Empty(cLote)
+            MsgStop("Campo Lote não preenchido")
+            lRet := .F.
+        endif
+
+        IF nQtdSD3 > nQtdSC2
+            nQtdLimite := nQtdSC2 - (nQtdSD3 - nQtde)
+            MsgStop("Quantidade Movimentação "+cValtoChar(nQtdSD3)+"  maior que a disponível no Lote : "+cValtoChar(nQtdSC2)+" "+ Chr(13) + Chr(10) +"Limite de "+cValtoChar(nQtdLimite)+" para completar a Quantidade do Lote : "+cValtoChar(nQtdSC2))
             lRet := .F.
         Endif
     endif
     if lRet
         if ExistBlock("PCP020Saldo")
-                   aDados:= {cCodProd,nQtdEmp}
+                   aDados:= {cCodProd,nQtdSC2}
                    lRet:=ExecBlock("PCP020Saldo",.F.,.F.,aDados)   
         Endif           
     endif    
@@ -79,38 +95,87 @@ User Function PCPG020()
     FwRestArea(aArea)
 Return(lRet)
 
-/*/{Protheus.doc} PCP20Call
+/*/{Protheus.doc} PCP20SC2
 description
 @type function
 @version 1.0
 @author Paulo Lenzi
-@since 25/02/2025
+@since 28/03/2025
 @param cProduto, character, param_description
 @param cLote, character, param_description
 @param cLocal, character, param_description
 @return variant, return_description
 /*/
-Static Function PCP20Call(cProduto,cLote,cLocal)
+Static Function PCP20SC2(cProduto,cLote,cLocal)
     Local aArea   := FwgetArea()
     Local cAlias := "PCP_"+getNextAlias() 
     Local cQuery := ""
     Local lRet   := 0
 
-    cQuery:= "Select B8_SALDO "+cEof
-    cQuery+= "from " + RetSqlName("SB8") + " SB8 "+cEof
-    cQuery+= "Where SB8.D_E_L_E_T_ = ' ' "+cEof
-    cQuery+= "AND B8_FILIAL = '"+xFilial("SB8")+"' "+cEof
-    cQuery+= "AND B8_PRODUTO = '"+Alltrim(cProduto)+"' "+cEof
-    cQuery+= "AND B8_LOTECTL = '"+Alltrim(cLote)+"' "+cEof
-    cQuery+= "AND B8_LOCAL = '"+Alltrim(cLocal)+"' "+cEof
+    cQuery:= "Select C2_QUANT  "+cEof
+    cQuery+= "from " + RetSqlName("SC2") + "  SC2  "+cEof
+    cQuery+= "Where SC2.D_E_L_E_T_ = ' '  "+cEof
+    cQuery+= "AND C2_FILIAL ='"+xFilial("SC2")+"' "+cEof
+    cQuery+= "AND C2_PRODUTO =  '"+Alltrim(cProduto)+"' "+cEof
+    cQuery+= "AND C2_LOCAL = '"+Alltrim(cLocal)+"' "+cEof
+    cQuery+= "AND C2_NUM = '"+Alltrim(cLote)+"' "+cEof
+    cQuery+= "AND C2_DATRF = ' '  "+cEof
+
     DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
     IF (cAlias)->(Eof())
             (cAlias)->(DbCloseArea())   
             FwRestArea(aArea)
             Return(lRet)
     endif  
 
-    lRet := (cAlias)->(B8_SALDO)
+    lRet := (cAlias)->(C2_QUANT)
+
+    (cAlias)->(DbCloseArea()) 
+    FwRestArea(aArea)
+Return(lRet)
+
+/*/{Protheus.doc} PCP20SD3
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 28/03/2025
+@param cProduto, character, param_description
+@param cLote, character, param_description
+@param cLocal, character, param_description
+@return variant, return_description
+/*/
+Static Function PCP20SD3(cProduto,cLote,cLocal)
+    Local aArea   := FwgetArea()
+    Local cAlias := "PCP_"+getNextAlias() 
+    Local cQuery := ""
+    Local lRet   := 0
+
+    cQuery:= "SELECT D3_TM,D3_QUANT  "+cEof
+    cQuery+= "FROM " + RetSqlName("SD3") + "  SD3  "+cEof
+    cQuery+= "WHERE SD3.D_E_L_E_T_ = ' '  "+cEof
+    cQuery+= "AND D3_FILIAL = '"+xFilial("SD3")+"' "+cEof
+    cQuery+= "AND D3_COD =  '"+Alltrim(cProduto)+"' "+cEof
+    cQuery+= "AND D3_LOCAL ='"+Alltrim(cLocal)+"' "+cEof
+    cQuery+= "AND D3_LOTECTL = '"+Alltrim(cLote)+"' "+cEof
+
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
+
+    IF (cAlias)->(Eof())
+            (cAlias)->(DbCloseArea())   
+            FwRestArea(aArea)
+            Return(lRet)
+    endif  
+
+    While !(cAlias)->(Eof())
+        IF (cAlias)->D3_TM <= '499'
+           lRet:= lRet + (cAlias)->D3_QUANT
+         else
+           lRet:= lRet - (cAlias)->D3_QUANT            
+        Endif    
+        (cAlias)->( dbSkip() )
+    Enddo
 
     (cAlias)->(DbCloseArea()) 
     FwRestArea(aArea)
@@ -158,6 +223,8 @@ User Function PCP020Saldo()
             cProduto := (cAlias)->(Codigo)
             cLocal   := (cAlias)->(Almox)
             nSaldo   := (cAlias)->(Saldo)
+            nEmpenho := (cAlias)->(Empenho)
+            nDispon  := (cAlias)->(Disponivel)
             lRet := .F.
          ENDIF    
         (cAlias)->(DbSkip())
@@ -166,7 +233,7 @@ User Function PCP020Saldo()
 
     if  !lRet
         if ExistBlock("PCP020Emp")
-                   aDados:= {cProduto,cLocal,nSaldo,nSldLote}    
+                   aDados:= {cProduto,cLocal,nSaldo,nEmpenho,nDispon,nSldLote}    
                    lRet:=ExecBlock("PCP020Emp",.F.,.F.,aDados)   
         Endif       
     Endif
@@ -189,7 +256,9 @@ User Function PCP020Emp()
     Local cProduto  :=  PARAMIXB[1]
     Local cLocal    :=  PARAMIXB[2]
     Local nSaldo    :=  PARAMIXB[3]
-    Local nSldLote  :=  PARAMIXB[4]
+    Local nEmpenho  :=  PARAMIXB[4]
+    Local nDispon   :=  PARAMIXB[5]
+    Local nSldLote  :=  PARAMIXB[6]
     Local lRet      := .T.
 
     Local oDlgMark   as Object 
@@ -198,12 +267,13 @@ User Function PCP020Emp()
     Local oNo        := LoadBitmap( GetResources(), "LBNO" )
     Local aSize      := MsAdvSize()
 
-    Local bOk 		:= {|| ,oDlgMark:End()  }
+    Local bOk 		:= {|| PCP020GRV(aBrowse),oDlgMark:End()  }
     Local bCancel	:= {|| lRet:=Saidosistema()	,oDlgMark:End() }
 
     Private aBrowse    := {}
     Private oBrwMark as Object 
     Private nTotalSaldo := (nSaldo - nSldLote )
+    Private nTotalMark  := 0
 
     
     oMainWnd:ReadClientCoors()
@@ -220,6 +290,7 @@ User Function PCP020Emp()
     cQuery+= "		,B1_DESC DESCRICAO "+cEof
     cQuery+= "		,D4_LOCAL ALMOX "+cEof
     cQuery+= "      ,C2_DATRF PREVISTO "+cEof
+    cQuery+= "      ,D4_OP OP "+cEof
     cQuery+= "from  " + RetSqlName("SD4") + "   SD4  "+cEof
     cQuery+= "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = D4_PRODUTO  AND SB1.D_E_L_E_T_ = ' '  "+cEof
     cQuery+= "INNER JOIN " + RetSqlName("SC2") + "  SC2 ON C2_FILIAL = D4_FILIAL AND C2_NUM+C2_ITEM+C2_SEQUEN = D4_OP  AND SC2.D_E_L_E_T_ = ' ' "+cEof
@@ -228,6 +299,7 @@ User Function PCP020Emp()
     cQuery+= "AND D4_QUANT > 0  "+cEof
     cQuery+= "AND D4_LOCAL = '"+Alltrim(cLocal)+"'  "+cEof
     cQuery+= "AND D4_COD = '"+Alltrim(cProduto)+"'   "+cEof
+    cQuery+= "AND D4_XDOC = ' '   "+cEof
     DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
 
     IF (cAlias)->(Eof())
@@ -237,7 +309,7 @@ User Function PCP020Emp()
             FwRestArea(aArea)
             Return(lRet)
     endif  
-If (cAlias)->(!EOF())
+    If (cAlias)->(!EOF())
           While (cAlias)->(!EOF())
 
                  aAdd( aBrowse, { .F.,;
@@ -247,19 +319,24 @@ If (cAlias)->(!EOF())
                             (cAlias)->PRODUTO,;
                             (cAlias)->DESCRICAO,; 
                             (cAlias)->ALMOX,;
-                            Dtoc(SToD((cAlias)->PREVISTO)) } )
+                            Dtoc(SToD((cAlias)->PREVISTO)),;
+                            (cAlias)->OP } )
 
                (cAlias)->(dbSkip() )
           End
-  Endif
-  (cAlias)->(DbCloseArea())       
+    Endif
+   (cAlias)->(DbCloseArea())       
+
+   nTotalMark  := PCP020CALCEMP(cProduto,cLocal)
+
+   nTotalSaldo := nTotalSaldo - nTotalMark
 
    oDlgMark := MSDialog():New(aSize[7],0, nHeight,nWidth,"Selecione o Empenho",,,.F.,,,,,,.T.,,,.T. )
 
    oDlgMark:bInit := {||EnchoiceBar(oDlgMark,{|| FWMsgRun(, {|oDlgMark| U_PCP20CALC(oDlgMark) }, "Processando", "Processando a rotina...") ,oDlgMark:End()},{|| oDlgMark:End()},,)}
   
 
-   oBrwMark := TCBrowse():New( aSize[7]+35,5, nHeight,nWidth,,{' ','Lote','Embalagem', 'Quantidade','Produto','Descricao','Local','Previsto'},{010,050,100,010,050,050,050,050},oDlgMark,,,,,{||},,,,,,,.F.,,.T.,,.T.,,, )
+   oBrwMark := TCBrowse():New( aSize[7]+35,5, nHeight,nWidth,,{' ','Lote','Embalagem', 'Quantidade','Produto','Descricao','Local','Previsto','Numero OP'},{010,050,100,010,050,050,050,050,050},oDlgMark,,,,,{||},,,,,,,.F.,,.T.,,.T.,,, )
    
    oBrwMark:SetArray( aBrowse )
    oBrwMark:bLine := {||{ iIf( aBrowse[oBrwMark:nAt][01], oOK, oNO ) ,;  	                // 1 Marcação
@@ -269,7 +346,8 @@ If (cAlias)->(!EOF())
                                aBrowse[oBrwMark:nAt,05],;							        // 5 Produto  
                                aBrowse[oBrwMark:nAt,06],;                                   // 6 Descricao
                                aBrowse[oBrwMark:nAt,07],;                                   // 7 Local
-                               aBrowse[oBrwMark:nAt,08] } }                                 // 8 Data Prevista
+                               aBrowse[oBrwMark:nAt,08],;                                   // 8 Data Prevista
+                               aBrowse[oBrwMark:nAt,09]} }                                  // 9 Numero da OP
 
    oBrwMark:GoTop()
    oBrwMark:bLDblClick := { || fLDblClick() }
@@ -277,11 +355,21 @@ If (cAlias)->(!EOF())
   
    oTMsgBar := TMsgBar():New(oDlgMark, 'Totais',.F.,.F.,.F.,.F., RGB(88,24,69),,,.F.)   //RGB(116,116,116)
 
-   oTMsgItem1 := TMsgItem():New( oTMsgBar,"Disponivel "+transform((nSaldo - nSldLote),"@E 999,999,999.99"), 100,,,,.T., {|| } )
-   oTMsgItem2 := TMsgItem():New( oTMsgBar,"Qtde Lote Principal "+transform(nSldLote,"@E 999,999,999.99"), 100,,,,.T., {||} ) 
-   oTMsgItem3 := TMsgItem():New( oTMsgBar,"Saldo "+transform(nSaldo,"@E 999,999,999.99"), 100,,,,.T., {||} )
+   if nTotalMark > 0
+        oTMsgItem1 := TMsgItem():New( oTMsgBar,"Saldo "+transform(nTotalSaldo,"@E 999,999,999.99"), 100,,,,.T., {|| } ) 
+   else
+        oTMsgItem1 := TMsgItem():New( oTMsgBar,"Saldo "+transform((nSaldo - nSldLote),"@E 999,999,999.99"), 100,,,,.T., {|| } )
+   endif    
 
+   oTMsgItem2 := TMsgItem():New( oTMsgBar,"Qtde Lote "+transform(nSldLote,"@E 999,999,999.99"), 100,,,,.T., {||} ) 
+
+   oTMsgItem3 := TMsgItem():New( oTMsgBar,"Disponivel "+transform(nDispon,"@E 999,999,999.99"), 100,,,,.T., {||} )
+
+   oTMsgItem4 := TMsgItem():New( oTMsgBar,"Empenho "+transform(nEmpenho,"@E 999,999,999.99"), 100,,,,.T., {||} )
+
+   oTMsgItem5 := TMsgItem():New( oTMsgBar,"Saldo Estoque "+transform(nSaldo,"@E 999,999,999.99"), 100,,,,.T., {||} )
  
+   oTMsgItem6 := TMsgItem():New( oTMsgBar,"Selecionados "+transform(nTotalMark,"@E 999,999,999.99"), 100,,,,.T., {||} )
 
    ACTIVATE MSDIALOG oDlgMark ON INIT EnchoiceBar(oDlgMark, bOk , bCancel) CENTERED
    //oDlgMark:Activate(,,,.T.)
@@ -339,12 +427,14 @@ Static Function MarcaLinha()
     IF nStatus
         oBrwMark:GetBrowse():AARRAY[nLinha][1] := .T.
         nTotal += nQtde
+        nTotalMark += nQtde
     Else
         oBrwMark:GetBrowse():AARRAY[nLinha][1] := .F.
         nTotal -= nQtde
+        nTotalMark -= nQtde
     Endif     
 
-    oTMsgItem1:Refresh() // Atualiza a exibição do total na tela
+    oTMsgItem6:Refresh() // Atualiza a exibição do total na tela
 
     if nTotalSaldo > nTotal
         oBrwMark:Refresh()
@@ -385,9 +475,10 @@ description
 User Function PCP020Ord()
     Local aArea         := FWGetArea()
     Local cEmbalagem    := PARAMIXB[1]
-    Local cPara         := "alex.blasques@qualyvinil.com.br" +";"+ UsrRetMail( RetCodUsr() )
+    Local cPara         := UsrRetMail( RetCodUsr() )  //"alex.blasques@qualyvinil.com.br" +";"+ UsrRetMail( RetCodUsr() )
     Local lExibeHelp    := .F.
     Local ny            := 0
+    Local nCtaLin       := 0
 
     Private oDlg
     Private cMotivo     := ""
@@ -397,7 +488,9 @@ User Function PCP020Ord()
     Private cMensagem  := ""
 
     Private aCabec      as Array
+    Private aCabec2     as Array
     Private aColunas    as Array
+    Private cMark       := ' '
 
    
 
@@ -433,6 +526,8 @@ User Function PCP020Ord()
     EndDo
   
     aCabec := {}
+    aCabec2:= {}
+
 	aAdd( aCabec, {{'<B><Font Size=4 color=white>Movimento 400</Font></B>', '6', 100, 6, 'C'}})
 
 	aAdd( aCabec, {{'<B><Font Size=2 color=black>Evento</Font></B>', '2', 10, 0, 'L'}, {'<Font Size=2 color=black>' +"Registro Movimentacao 400"+'</Font>', '1', 40, 2, 'L'},{'<B><Font Size=2 color=black>Tipo</Font></B>', '2', 10, 0, 'L'}, {'<Font Size=2 color=black>' + "Empenho" + '</Font>', '1', 40, 2, 'L'}})
@@ -442,6 +537,8 @@ User Function PCP020Ord()
 	aAdd( aCabec, {{'<B><Font Size=2 color=black>Motivo</Font></B>', '2', 10, 0, 'L'}, {'<Font Size=2 color=black>' + AllTrim( cMotivo ) + '</Font>', '1', 90, 5, 'L'}})
 
     aAdd( aCabec, {{'<B><Font Size=4 color=white>MOVIMENTO 400</Font></B>', '6', 100, 6, 'C'}})
+
+    aAdd( aCabec2, {{'<B><Font Size=4 color=white>DETALHAMENTO MOVIMENTO 400</Font></B>', '6', 100, 6, 'C'}})
 
     aColsPrinc := {}
     aAdd( aColsPrinc, {'Lote'			    , 06	, 'C'})
@@ -463,17 +560,34 @@ User Function PCP020Ord()
 	aAdd( aColunas, {'Embalagem'			, 15	, 'C'})
 	aAdd( aColunas, {'Quantidade'			, 13	, 'N'})
 	aAdd( aColunas, {'Produto'			    , 15	, 'C'})
-    aAdd( aColunas, {'Descricao'			, 50	, 'C'})
+    aAdd( aColunas, {'Descricao'			, 100	, 'C'})
     aAdd( aColunas, {'Local'				, 02	, 'C'})
     aAdd( aColunas, {'Data Prevista'		, 08	, 'C'})
+    aAdd( aColunas, {'Ordem Producao'		, 11	, 'C'})
+    aAdd( aColunas, {'ID'	            	, 01	, 'C'})
 
-	cMensagem += U_BeHtmDet( aColunas, .F. , .F. )
+	cMensagem += U_BeHtmHead( '',.T.,aCabec2, aColunas ) //U_BeHtmDet( aColunas, .F. , .F. )
+
 
 	aColunas := {}
+
+    cMark    := ' '
+    
+    if len(aBrowse) > 0
+       for ny:=1 to len(aBrowse)
+           if aBrowse[ny][1]
+               nCtaLin := nCtaLin + 1
+           Endif
+       next 
+    Endif
+
 
     if len(aBrowse)>0
        for ny:=1 to len(aBrowse)
            if aBrowse[ny][1]
+
+                cMark := iif(ny == nCtaLin,"X"," " )
+
                 aAdd( aColunas, {AllTrim(aBrowse[ny][2])	        , 06	, 'C'})
                 aAdd( aColunas, {AllTrim(aBrowse[ny][3])	        , 15	, 'C'})
                 aAdd( aColunas, {cvaltochar(aBrowse[ny][4])         , 13	, 'C'})
@@ -481,7 +595,11 @@ User Function PCP020Ord()
                 aAdd( aColunas, {AllTrim(aBrowse[ny][6])	    	, 50	, 'C'})
                 aAdd( aColunas, {AllTrim(aBrowse[ny][7])	    	, 02	, 'C'})
                 aAdd( aColunas, {Dtoc(SToD(aBrowse[ny][8]))         , 08	, 'C'})
+                aAdd( aColunas, {Alltrim(aBrowse[ny][9])            , 11	, 'C'})
+                aAdd( aColunas, {cMark                              , 01	, 'C'})
+
                 cMensagem += U_BeHtmDet( aColunas, .F. , .F. )
+                
                 aColunas := {}
            endif 
        Next
@@ -502,19 +620,82 @@ User Function PCP020Ord()
         FWAlertError("Falha no disparo do e-Mail", "Atenção (Erro)")
     EndIf
 
+    FwRestArea(aArea)
+Return
+
+/*/{Protheus.doc} fGat
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 31/03/2025
+@param nOp, numeric, param_description
+@return variant, return_description
+/*/
+Static Function fGat( nOp )
+If nOp == 1
+	@ C(014),C(088) Say Tabela("Z3", cJust) Size C(162),C(008) COLOR CLR_HBLUE PIXEL OF oDlg
+EndIf
+Return .T.
+
+/*/{Protheus.doc} PCP020GRV
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 31/03/2025
+@param aBrowse, array, param_description
+@return variant, return_description
+/*/
+Static Function PCP020GRV(aBrowse)
+    Local aArea         := FWGetArea()
+    Local nLinhas       := Len(aBrowse)
+    Local Ny            := 0
+    if nLinhas > 0
+       For Ny :=1 to nLinhas
+          if aBrowse[nY][1]
+             DbSelectArea("SD4")
+             SD4->( dbSetOrder(1))
+             if SD4->( dbSeek(xFilial("SD4")+aBrowse[Ny][3]+aBrowse[Ny][9],.T. ))
+                if Reclock("SD4",.F.)
+                   SD4->D4_XDOC = CDOCUMENTO
+                   SD4->( MsUnlock() )
+                Endif
+             Endif
+          Endif   
+       Next 
+    Endif
 
     FwRestArea(aArea)
 Return
 
-Static Function fGat( nOp )
+Static Function PCP020CALCEMP(cProduto,cLocal)
+    Local aArea     := FWGetArea()
+    Local cAlias    := "PCP_"+getNextAlias() 
+    Local cQuery    := ""
+    Local lRet      := 0
 
-If nOp == 1
-	@ C(014),C(088) Say Tabela("Z3", cJust) Size C(162),C(008) COLOR CLR_HBLUE PIXEL OF oDlg
-EndIf
+    cQuery:= "Select sum(D4_QUANT) D4_QUANT "+cEof
+    cQuery+= "from   " + RetSqlName("SD4") + "    SD4   "+cEof
+    cQuery+= "WHERE SD4.D_E_L_E_T_ = ' '  "+cEof 
+    cQuery+= "AND D4_FILIAL =  '"+xFilial("SG1")+"'  "+cEof
+    cQuery+= "AND D4_QUANT > 0   "+cEof
+    cQuery+= "AND D4_LOCAL = '"+Alltrim(cLocal)+"'   "+cEof
+    cQuery+= "AND D4_COD = '"+Alltrim(cProduto)+"'   "+cEof
+    cQuery+= "AND D4_XDOC != ' ' "+cEof
+    DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
 
-Return .T.
+    IF (cAlias)->(Eof())
+            (cAlias)->(DbCloseArea())   
+            FwRestArea(aArea)
+            Return(lRet)
+    endif  
+    If (cAlias)->(!EOF())
+        lRet := (cAlias)->D4_QUANT
+    ENDIF
 
-
+    FwRestArea(aArea)
+Return(lRet)
 //---------------------------------------------------------------------------//
 // Final do Programa
 //---------------------------------------------------------------------------//
