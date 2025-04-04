@@ -53,10 +53,10 @@ Static Function RUNPROC()
     Private nTotalGeral := 0
     Private aBrowse     := {}
      
-    aAdd(aIndicadores,{"MP",0,0,0}) 
-    aAdd(aIndicadores,{"EM",0,0,0})
-    aAdd(aIndicadores,{"PI",0,0,0})
-    aAdd(aIndicadores,{"PA",0,0,0})
+    aAdd(aIndicadores,{"MP",0,0}) 
+    aAdd(aIndicadores,{"EM",0,0})
+    aAdd(aIndicadores,{"PI",0,0})
+    aAdd(aIndicadores,{"PA",0,0})
 
     //Pegando os dados
    
@@ -70,15 +70,24 @@ Static Function RUNPROC()
     cQuery +="		,CASE WHEN (B2_QATU - B2_QEMP) < 0 THEN 0 ELSE ROUND((B2_QATU - B2_QEMP),3) END DISPONIVEL  "+cEof
     cQuery +="		,B2_CM1	    CUSTO  "+cEof
     cQuery +="		,ROUND((B2_CM1 * B2_QATU),2) TOTAL "+cEof  
-    cQuery +="	    ,ISNULL((Select SUM(D4_QTDEORI) / DATEDIFF(Month,  '"+DtoS(MV_PAR01)+"','"+DtoS(MV_PAR02)+"')  QTDE "+cEof  
+    cQuery +="	    ,ISNULL((Select SUM(D4_QTDEORI) / NULLIF(DATEDIFF(Month,  '"+DtoS(MV_PAR01)+"','"+DtoS(MV_PAR02)+"'),0)  QTDE "+cEof  
     cQuery +="		            from  "+RetSqlName("SD4")+"   SD4 "+cEof  
     cQuery +="		            WHERE SD4.D_E_L_E_T_ = ' '"+cEof    
     cQuery +="		            AND D4_FILIAL = B2_FILIAL "+cEof  
     cQuery +="		            AND D4_DATA BETWEEN '"+DtoS(MV_PAR01)+"' AND '"+DtoS(MV_PAR02)+"' "+cEof  
     cQuery +="		            AND D4_LOCAL = B2_LOCAL  "+cEof  
-    cQuery +="		            AND D4_COD IN (SB1.B1_COD,(SELECT Z4_CODDES FROM  "+RetSqlName("SZ4")+"  SZ4 WHERE Z4_FILIAL = B2_FILIAL AND Z4_COD = B2_COD AND SZ4.D_E_L_E_T_ = ' ') ) ),0)  CONSUMO "+cEof  
+    cQuery +="	               AND D4_COD IN (SELECT Z.CODIGO "+cEof 
+    cQuery +="									FROM ( "+cEof 
+    cQuery +="										SELECT SB1.B1_COD AS CODIGO "+cEof 
+    cQuery +="										UNION "+cEof 
+    cQuery +="										SELECT Z4.Z4_CODDES  "+cEof 
+    cQuery +="										FROM "+RetSqlName("SZ4")+" Z4 "+cEof 
+    cQuery +="										WHERE Z4.Z4_FILIAL = SB2.B2_FILIAL  "+cEof 
+    cQuery +="										  AND Z4.Z4_COD = SB2.B2_COD  "+cEof 
+    cQuery +="										  AND Z4.D_E_L_E_T_ = ' ' "+cEof 
+    cQuery +="									) AS Z ) ),0)  CONSUMO  "+cEof 
     cQuery +="      ,B1_XTPCOMP  COMPRA "+cEof
-	cQuery +="      ,ISNULL((SELECT SUM(SC6_1.C6_QTDVEN)/ DATEDIFF(Month, '"+DtoS(MV_PAR01)+"','"+DtoS(MV_PAR02)+"') FROM  "+RetSqlName("SC6")+" AS SC6_1 WITH (NOLOCK)   "+cEof
+	cQuery +="      ,ISNULL((SELECT SUM(SC6_1.C6_QTDVEN)/ NULLIF(DATEDIFF(Month, '"+DtoS(MV_PAR01)+"','"+DtoS(MV_PAR02)+"'),0) FROM  "+RetSqlName("SC6")+" AS SC6_1 WITH (NOLOCK)   "+cEof
     cQuery +="					WHERE SC6_1.D_E_L_E_T_ = ''   "+cEof
     cQuery +="					  AND SC6_1.C6_FILIAL = SB2.B2_FILIAL  "+cEof
     cQuery +="					  AND SC6_1.C6_LOCAL = SB2.B2_LOCAL   "+cEof
@@ -138,11 +147,36 @@ Static Function RUNPROC()
         nEstoque := IIF(QRYPRO->SALDO > 0 .and. nConsumo > 0, QRYPRO->SALDO / nConsDia, 0 )
         nDiasDisp := IIF(QRYPRO->DISPONIVEL > 0 .and. nConsumo > 0 ,QRYPRO->DISPONIVEL/nConsDia,0)
         nPosicao  := (QRYPRO->TOTAL * nDiasDisp)  //IIF(QRYPRO->COMPRA = 'P' .AND. QRYPRO->TIPO = 'EM' , (QRYPRO->TOTAL * nDiasDisp),0)
+        
         // Calculo do SlowMoving passa a ser considerado 2 vezes o consumo
-        nQtSlow   := IIF(QRYPRO->SALDO - (nConsumo * 2 ) < 0,0, QRYPRO->SALDO - (nConsumo * 2) )  // conforme orientações Alex o consumo passa a ser 2 vezes o consumo
-        nVlrSlow  := ( nQtSlow *  QRYPRO->CUSTO )
-        nDiaSlow  := (nQtSlow / 30 )
-        nPerct    := (nQtSlow / QRYPRO->SALDO ) * 100
+        IF  QRYPRO->TIPO == "PA" .AND. QRYPRO->ARMAZEM = '08'
+            nQtSlow   := IIF(QRYPRO->SALDO - (nConsumo * 3 ) < 0,0, QRYPRO->SALDO - (nConsumo * 3) )  // conforme orientações Alex o consumo passa a ser 2 vezes o consumo
+            nVlrSlow  := ( nQtSlow *  QRYPRO->CUSTO )
+            nDiaSlow  := (nQtSlow / 30 )
+            nPerct    := (nQtSlow / QRYPRO->SALDO ) * 100
+        ELSEIF  QRYPRO->TIPO == "PI" .AND. QRYPRO->ARMAZEM = '04'   
+            nQtSlow   := IIF(QRYPRO->SALDO - (nConsumo * 3 ) < 0,0, QRYPRO->SALDO - (nConsumo * 3) )  // conforme orientações Alex o consumo passa a ser 2 vezes o consumo
+            nVlrSlow  := ( nQtSlow *  QRYPRO->CUSTO )
+            nDiaSlow  := (nQtSlow / 30 )
+            nPerct    := (nQtSlow / QRYPRO->SALDO ) * 100
+        ELSEIF  QRYPRO->TIPO == "EM" .AND. QRYPRO->ARMAZEM = '02'   
+            nQtSlow   := IIF(QRYPRO->SALDO - (nConsumo * 3 ) < 0,0, QRYPRO->SALDO - (nConsumo * 3) )  // conforme orientações Alex o consumo passa a ser 2 vezes o consumo
+            nVlrSlow  := ( nQtSlow *  QRYPRO->CUSTO )
+            nDiaSlow  := (nQtSlow / 30 )
+            nPerct    := (nQtSlow / QRYPRO->SALDO ) * 100
+        ELSEIF  QRYPRO->TIPO == "MP" .AND. QRYPRO->ARMAZEM = '02'   
+            nQtSlow   := IIF(QRYPRO->SALDO - (nConsumo * 3 ) < 0,0, QRYPRO->SALDO - (nConsumo * 3) )  // conforme orientações Alex o consumo passa a ser 2 vezes o consumo
+            nVlrSlow  := ( nQtSlow *  QRYPRO->CUSTO )
+            nDiaSlow  := (nQtSlow / 30 )
+            nPerct    := (nQtSlow / QRYPRO->SALDO ) * 100
+        else
+            nQtSlow   := 0
+            nVlrSlow  := 0
+            nDiaSlow  := 0
+            nPerct    := 0
+        ENDIF        
+
+
 
         n90Dias   := IIF( (QRYPRO->SALDO - (nConsumo * 3)) < 0, 0 , QRYPRO->SALDO - (nConsumo * 3) ) 
         nVlr90Dias:= IIF(n90Dias = 0,0,(n90Dias * QRYPRO->CUSTO ) )
@@ -178,11 +212,11 @@ Static Function RUNPROC()
         
         nTotalGeral += QRYPRO->TOTAL
 
+
         nPos := aScan(aIndicadores,{ |x| x[1] == QRYPRO->TIPO } ) 
         if nPos > 0
             aIndicadores[nPos][2] += QRYPRO->TOTAL
             aIndicadores[nPos][3] += nVlrSlow  
-            aIndicadores[nPos][4] += nVlr90Dias 
         endif
 
         IF QRYPRO->TIPO = 'MP' // Materia Prima
@@ -314,8 +348,8 @@ Static Function RUNPROC()
     oFWMsExcel:AddColumn("Percentual","Indicadores","Total",2,2)        //1 = Modo Texto
     oFWMsExcel:AddColumn("Percentual","Indicadores","SlowMoving",2,2)   //2 = Valor sem R$
     oFWMsExcel:AddColumn("Percentual","Indicadores","Percente",2,2)     //2 = Valor sem R$
-    oFWMsExcel:AddColumn("Percentual","Indicadores","Cons 90Dias",2,2)  //2 = Valor sem R$
-    oFWMsExcel:AddColumn("Percentual","Indicadores","%Perc",2,2)        //2 = Valor sem R$
+    //oFWMsExcel:AddColumn("Percentual","Indicadores","Cons 90Dias",2,2)  //2 = Valor sem R$
+    //oFWMsExcel:AddColumn("Percentual","Indicadores","%Perc",2,2)        //2 = Valor sem R$
 
     
     if len(aIndicadores) > 0
@@ -323,12 +357,12 @@ Static Function RUNPROC()
            oFWMsExcel:AddRow("Percentual","Indicadores",{aIndicadores[Ny][1],;                              // 1 - Tipo
                                                         aIndicadores[Ny][2],;                               // 2 - Total
                                                         aIndicadores[Ny][3],;                               // 3 - SlowMoving
-                                                        ((aIndicadores[Ny][3]/aIndicadores[Ny][2])*100),;   // 4 - Percente
-                                                        aIndicadores[Ny][4],;                               // 5 - Cons 60Dias
-                                                        ((aIndicadores[Ny][4]/aIndicadores[Ny][2])*100)} )  // 6 - %Perc
+                                                        ((aIndicadores[Ny][3]/aIndicadores[Ny][2])*100)} )   // 4 - Percente
+                                                        //aIndicadores[Ny][4],;                               // 5 - Cons 60Dias
+                                                        //((aIndicadores[Ny][4]/aIndicadores[Ny][2])*100)} )  // 6 - %Perc
        next
     Endif
-    oFWMsExcel:AddRow("Percentual","Indicadores",{"Geral",nTotalGeral,nTotalSlow,(nTotalSlow/nTotalGeral)*100,nTotalCons,(nTotalCons/nTotalGeral)*100})
+    oFWMsExcel:AddRow("Percentual","Indicadores",{"Geral",nTotalGeral,nTotalSlow,(nTotalSlow/nTotalGeral)*100})
 
     oFWMsExcel:AddworkSheet("MATERIA PRIMA") //Não utilizar número junto com sinal de menos. Ex.: 1-
 

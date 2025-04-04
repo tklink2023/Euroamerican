@@ -669,6 +669,16 @@ Static Function PCP020GRV(aBrowse)
     FwRestArea(aArea)
 Return
 
+/*/{Protheus.doc} PCP020CALCEMP
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 02/04/2025
+@param cProduto, character, param_description
+@param cLocal, character, param_description
+@return variant, return_description
+/*/
 Static Function PCP020CALCEMP(cProduto,cLocal)
     Local aArea     := FWGetArea()
     Local cAlias    := "PCP_"+getNextAlias() 

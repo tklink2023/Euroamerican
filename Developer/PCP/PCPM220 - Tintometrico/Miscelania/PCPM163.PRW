@@ -19,11 +19,16 @@ User Function PCPM163()
 
  
  BeginSQL Alias cAlias
-		SELECT   D4_FILIAL,D4_COD,B1_DESC,D4_LOCAL,D4_QUANT,ISNULL(BF_LOCALIZ,' ') BF_LOCALIZ, ISNULL(BF_LOTECTL,' ') BF_LOTECTL,  B8_DTVALID
+		SELECT    D4_FILIAL
+               ,D4_COD
+               ,B1_DESC
+               ,D4_LOCAL
+               ,D4_QUANT
+//               ,ISNULL(BF_LOCALIZ,' ') BF_LOCALIZ, ISNULL(BF_LOTECTL,' ') BF_LOTECTL,  B8_DTVALID
 		FROM %Table:SD4% SD4
 		INNER JOIN %Table:SB1%  SB1 ON B1_COD = D4_COD AND SB1.D_E_L_E_T_ = ' '
-      LEFT JOIN %Table:SBF% SBF ON BF_FILIAL = D4_FILIAL AND BF_PRODUTO = D4_COD AND BF_LOCAL = D4_LOCAL AND SBF.D_E_L_E_T_ = ' '
-      LEFT JOIN %Table:SB8% SB8 ON B8_FILIAL = D4_FILIAL AND B8_PRODUTO = D4_COD AND B8_LOCAL = D4_LOCAL AND B8_LOTECTL = BF_LOTECTL AND SB8.D_E_L_E_T_ = ' '
+//      LEFT JOIN %Table:SBF% SBF ON BF_FILIAL = D4_FILIAL AND BF_PRODUTO = D4_COD AND BF_LOCAL = D4_LOCAL AND SBF.D_E_L_E_T_ = ' '
+//      LEFT JOIN %Table:SB8% SB8 ON B8_FILIAL = D4_FILIAL AND B8_PRODUTO = D4_COD AND B8_LOCAL = D4_LOCAL AND B8_LOTECTL = BF_LOTECTL AND SB8.D_E_L_E_T_ = ' '
 
 		WHERE SD4.%NotDel%
 		and D4_FILIAL =  %xFilial:SD4%
@@ -51,9 +56,9 @@ User Function PCPM163()
                   SZ5->Z5_DESCR  := (cAlias)->B1_DESC
                   SZ5->Z5_LOCAL  := (cAlias)->D4_LOCAL
                   SZ5->Z5_QUANT  := (cAlias)->D4_QUANT
-                  SZ5->Z5_LOCALIZ := (cAlias)->BF_LOCALIZ
-                  SZ5->Z5_LOTECTL := (cAlias)->BF_LOTECTL
-                  SZ5->Z5_DTVALID := (cAlias)->B8_DTVALID
+  //                SZ5->Z5_LOCALIZ := (cAlias)->BF_LOCALIZ
+  //                SZ5->Z5_LOTECTL := (cAlias)->BF_LOTECTL
+  //                SZ5->Z5_DTVALID := (cAlias)->B8_DTVALID
                   SZ5->Z5_ARMAZ   := "TT"
                   SZ5->Z5_DATA   := MsDate()
                   SZ5->Z5_HORA   := Time()
