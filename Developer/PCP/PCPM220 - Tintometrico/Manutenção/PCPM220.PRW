@@ -128,6 +128,7 @@ Static Function PCPM220TRA()
     Local Nx        := 0
     Local cEndTnt   := GetMv("ES_ENDTNT")
     Local lRet      := .T.
+    Local cEndereco := "GERAL"
     
     Private lMsErroAuto := .F.
 
@@ -165,7 +166,7 @@ Static Function PCPM220TRA()
                         {"D3_COD",SZ5->Z5_COD           ,Nil},;  // Destino 6
                         {"D3_DESCRI",SZ5->Z5_DESCR      ,Nil},;  // Destino 7
                         {"D3_UM",cUm                    ,Nil},;  // Destino 8
-                        {"D3_LOCAL",SZ5->Z5_ARMAZ       ,Nil},;  // Destino 9  
+                        {"D3_LOCAL",cEndereco          ,Nil},;  // Destino 9  
                         {"D3_LOCALIZ",cEndTnt           ,Nil},;  // Destino 10
                         {"D3_NUMSERI",""                ,Nil},;  // Geral 11
                         {"D3_LOTECTL",SZ5->Z5_LOTECTL   ,Nil},;  // Geral 12
