@@ -128,7 +128,9 @@ Static Function PCPM220TRA()
     Local Nx        := 0
     Local cEndTnt   := GetMv("ES_ENDTNT")
     Local lRet      := .T.
-    Local cEndereco := "GERAL"
+    //Local cEndereco := "GERAL"
+    Local cProduto  := ""
+    Local CprodDest := ""
     
     Private lMsErroAuto := .F.
 
@@ -147,6 +149,8 @@ Static Function PCPM220TRA()
 
         //Numero sequencial
         nSeqNum:=nextnumero("SD3",2,"D3_DOC",.t.)
+        cProduto := AvKey(SZ5->Z5_COD, "B1_COD")
+        CprodDest:= AvKey(SZ5->Z5_COD, "B1_COD")
 
         //Cabecalho a Incluir
         aadd(aAuto,{nSeqNum,dDataBase}) //Cabecalho
@@ -157,16 +161,16 @@ Static Function PCPM220TRA()
                         {"D3_ITEM",cValtoChar(Nx)       ,Nil},;
                         {"D3_FILIAL",xFilial("SD3")     ,Nil},;   
                         {"D3_TM","499"                  ,Nil},;   
-                        {"D3_COD",SZ5->Z5_COD           ,Nil},;  // Original 1
+                        {"D3_COD",cProduto              ,Nil},;  // Original 1
                         {"D3_DESCRI",SZ5->Z5_DESCR      ,Nil},;  // Original 2
                         {"D3_UM",cUm                    ,Nil},;  // Original 3
                         {"D3_LOCAL",SZ5->Z5_LOCAL       ,Nil},;  // Original 4
                         {"D3_LOCALIZ",SZ5->Z5_LOCALIZ   ,Nil},;  // Original 5
                         {"D3_EMISSAO",dDataBase         ,Nil},;  // Original 5
-                        {"D3_COD",SZ5->Z5_COD           ,Nil},;  // Destino 6
+                        {"D3_COD",CprodDest             ,Nil},;  // Destino 6
                         {"D3_DESCRI",SZ5->Z5_DESCR      ,Nil},;  // Destino 7
                         {"D3_UM",cUm                    ,Nil},;  // Destino 8
-                        {"D3_LOCAL",cEndereco          ,Nil},;  // Destino 9  
+                        {"D3_LOCAL","TT"                ,Nil},;  // Destino 9  
                         {"D3_LOCALIZ",cEndTnt           ,Nil},;  // Destino 10
                         {"D3_NUMSERI",""                ,Nil},;  // Geral 11
                         {"D3_LOTECTL",SZ5->Z5_LOTECTL   ,Nil},;  // Geral 12

@@ -132,20 +132,26 @@ Static function PCP80FS01(datainicio,datafim)
   Local nVrlSlow := 0
 
   cQuery:="SELECT  B2_FILIAL "+CRLF
-  cQuery+="		,B2_COD "+CRLF
-  cQuery+="		,B1_TIPO "+CRLF
-  cQuery+="		,B2_LOCAL "+CRLF
-  cQuery+="		,B2_QATU "+CRLF
-  cQuery+="		,B2_CM1 "+CRLF
-  cQuery+="   ,ROUND((B2_CM1 * B2_QATU),2) TOTAL "+CRLF
-  cQuery+="		,ISNULL(((Select SUM(D4_QTDEORI)/ DATEDIFF(Month,  '"+DtoS(datainicio)+"','"+DtoS(datafim)+"')  QTDE "+cEof  
+  cQuery+="		    ,B2_COD "+CRLF
+  cQuery+="		    ,B1_TIPO "+CRLF
+  cQuery+="		    ,B2_LOCAL "+CRLF
+  cQuery+="		    ,ISNULL((Select SUM(D4_QTDEORI)/ DATEDIFF(Month,  '"+DtoS(datainicio)+"','"+DtoS(datafim)+"')  QTDE "+cEof  
   cQuery+="		            from  " + RetSqlName("SD4") + "   SD4  "+CRLF
   cQuery+="		            WHERE SD4.D_E_L_E_T_ = ' ' "+CRLF
   cQuery+="		            AND D4_FILIAL = B2_FILIAL "+CRLF
   cQuery+="		            AND D4_DATA BETWEEN '"+DtoS(datainicio)+"' AND '"+DtoS(datafim)+"' "+cEof  
   cQuery+="		            AND D4_LOCAL = B2_LOCAL  "+CRLF
-  cQuery+="		            AND D4_COD IN (SB2.B2_COD,(SELECT Z4_CODDES FROM  SZ4100  SZ4 WHERE Z4_FILIAL = B2_FILIAL AND Z4_COD = B2_COD AND SZ4.D_E_L_E_T_ = ' ')))*3),0) "+CRLF
-  cQuery+="				AS CONSUMO "+CRLF
+  cQuery +="	               AND D4_COD IN (SELECT Z.CODIGO "+cEof 
+  cQuery +="									FROM ( "+cEof 
+  cQuery +="										SELECT SB1.B1_COD AS CODIGO "+cEof 
+  cQuery +="										UNION "+cEof 
+  cQuery +="										SELECT Z4.Z4_CODDES  "+cEof 
+  cQuery +="										FROM "+RetSqlName("SZ4")+" Z4 "+cEof 
+  cQuery +="										WHERE Z4.Z4_FILIAL = SB2.B2_FILIAL  "+cEof 
+  cQuery +="										  AND Z4.Z4_COD = SB2.B2_COD  "+cEof 
+  cQuery +="										  AND Z4.D_E_L_E_T_ = ' ' "+cEof 
+  cQuery +="									) AS Z ) ),0)  CONSUMO  "+cEof 
+
   cQuery+="FROM " + RetSqlName("SB2") + " SB2 "+CRLF
   cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = B2_COD AND B1_TIPO IN ('EM','MP','PI','PA') AND SB1.D_E_L_E_T_ = ' ' "+CRLF
   cQuery+="WHERE SB2.D_E_L_E_T_ = ' ' "+CRLF
@@ -164,11 +170,40 @@ Static function PCP80FS01(datainicio,datafim)
   dbSelectArea(cAlias)
   (cAlias)->( dbgotop() )
   DO WHILE (cAlias)->(!Eof())
- 
-    aSaldos := CalcEst((cAlias)->B2_COD, (cAlias)->B2_LOCAL, datafim)
-    nValor  := (aSaldos[1] * aSaldos[08] )
-    nQtdSlow:= IIF(aSaldos[1] - (cAlias)->CONSUMO <0,0, aSaldos[1] - (cAlias)->CONSUMO  )
-    nVrlSlow := nQtdSlow * aSaldos[08]
+
+    IF  (cAlias)->B1_TIPO == "PA" .AND. (cAlias)->B2_LOCAL = '08'
+    
+          aSaldos := CalcEst((cAlias)->B2_COD, (cAlias)->B2_LOCAL, datafim)
+          nValor  := (aSaldos[1] * aSaldos[08] )
+          nQtdSlow:= IIF(aSaldos[1] - (cAlias)->CONSUMO <0,0, aSaldos[1] - (cAlias)->CONSUMO  )
+          nVrlSlow := nQtdSlow * aSaldos[08]
+
+    ELSEIF  (cAlias)->B1_TIPO == "PI" .AND. (cAlias)->B2_LOCAL = '04'
+    
+          aSaldos := CalcEst((cAlias)->B2_COD, (cAlias)->B2_LOCAL, datafim)
+          nValor  := (aSaldos[1] * aSaldos[08] )
+          nQtdSlow:= IIF(aSaldos[1] - (cAlias)->CONSUMO <0,0, aSaldos[1] - (cAlias)->CONSUMO  )
+          nVrlSlow := nQtdSlow * aSaldos[08]
+
+    ELSEIF  (cAlias)->B1_TIPO == "EM" .AND. (cAlias)->B2_LOCAL = '02'
+    
+          aSaldos := CalcEst((cAlias)->B2_COD, (cAlias)->B2_LOCAL, datafim)
+          nValor  := (aSaldos[1] * aSaldos[08] )
+          nQtdSlow:= IIF(aSaldos[1] - (cAlias)->CONSUMO <0,0, aSaldos[1] - (cAlias)->CONSUMO  )
+          nVrlSlow := nQtdSlow * aSaldos[08]
+
+
+   ELSEIF  (cAlias)->B1_TIPO == "MP" .AND. (cAlias)->B2_LOCAL = '02'
+    
+          aSaldos := CalcEst((cAlias)->B2_COD, (cAlias)->B2_LOCAL, datafim)
+          nValor  := (aSaldos[1] * aSaldos[08] )
+          nQtdSlow:= IIF(aSaldos[1] - (cAlias)->CONSUMO <0,0, aSaldos[1] - (cAlias)->CONSUMO  )
+          nVrlSlow := nQtdSlow * aSaldos[08]
+    else
+           nValor := 0
+           nVrlSlow := 0
+    ENDIF            
+
 
     dbSelectArea(cTemp)
     (cTemp)->( dbSetOrder(1))
@@ -217,20 +252,25 @@ Static function PCP80FS02(datainicio,datafim)
   Local nVrlSlow := 0
 
   cQuery:="SELECT  B2_FILIAL "+CRLF
-  cQuery+="		,B2_COD "+CRLF
-  cQuery+="		,B1_TIPO "+CRLF
-  cQuery+="		,B2_LOCAL "+CRLF
-  cQuery+="		,B2_QATU "+CRLF
-  cQuery+="		,B2_CM1 "+CRLF
-  cQuery+="   ,ROUND((B2_CM1 * B2_QATU),2) TOTAL "+CRLF
-  cQuery+="		,ISNULL(((Select SUM(D4_QTDEORI)/ DATEDIFF(Month,  '"+DtoS(datainicio)+"','"+DtoS(datafim)+"')  QTDE "+cEof  
+  cQuery+="		    ,B2_COD "+CRLF
+  cQuery+="		    ,B1_TIPO "+CRLF
+  cQuery+="		    ,B2_LOCAL "+CRLF
+  cQuery+="		    ,ISNULL((Select SUM(D4_QTDEORI)/ DATEDIFF(Month,  '"+DtoS(datainicio)+"','"+DtoS(datafim)+"')  QTDE "+cEof  
   cQuery+="		            from  " + RetSqlName("SD4") + "   SD4  "+CRLF
   cQuery+="		            WHERE SD4.D_E_L_E_T_ = ' ' "+CRLF
   cQuery+="		            AND D4_FILIAL = B2_FILIAL "+CRLF
   cQuery+="		            AND D4_DATA BETWEEN '"+DtoS(datainicio)+"' AND '"+DtoS(datafim)+"' "+cEof  
   cQuery+="		            AND D4_LOCAL = B2_LOCAL  "+CRLF
-  cQuery+="		            AND D4_COD IN (SB2.B2_COD,(SELECT Z4_CODDES FROM  SZ4100  SZ4 WHERE Z4_FILIAL = B2_FILIAL AND Z4_COD = B2_COD AND SZ4.D_E_L_E_T_ = ' ')))*3),0) "+CRLF
-  cQuery+="				AS CONSUMO "+CRLF
+  cQuery +="	               AND D4_COD IN (SELECT Z.CODIGO "+cEof 
+  cQuery +="									FROM ( "+cEof 
+  cQuery +="										SELECT SB1.B1_COD AS CODIGO "+cEof 
+  cQuery +="										UNION "+cEof 
+  cQuery +="										SELECT Z4.Z4_CODDES  "+cEof 
+  cQuery +="										FROM "+RetSqlName("SZ4")+" Z4 "+cEof 
+  cQuery +="										WHERE Z4.Z4_FILIAL = SB2.B2_FILIAL  "+cEof 
+  cQuery +="										  AND Z4.Z4_COD = SB2.B2_COD  "+cEof 
+  cQuery +="										  AND Z4.D_E_L_E_T_ = ' ' "+cEof 
+  cQuery +="									) AS Z ) ),0)  CONSUMO  "+cEof 
   cQuery+="FROM " + RetSqlName("SB2") + " SB2 "+CRLF
   cQuery+="INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = B2_COD AND B1_TIPO IN ('EM','MP','PI','PA') AND SB1.D_E_L_E_T_ = ' ' "+CRLF
   cQuery+="WHERE SB2.D_E_L_E_T_ = ' ' "+CRLF
@@ -249,7 +289,6 @@ Static function PCP80FS02(datainicio,datafim)
   dbSelectArea(cAlias)
   (cAlias)->( dbgotop() )
   DO WHILE (cAlias)->(!Eof())
- 
     aSaldos := CalcEst((cAlias)->B2_COD, (cAlias)->B2_LOCAL, datafim)
     nValor  := (aSaldos[1] * aSaldos[08] )
     nQtdSlow:= IIF(aSaldos[1] - (cAlias)->CONSUMO <0,0, aSaldos[1] - (cAlias)->CONSUMO  )
