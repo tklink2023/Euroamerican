@@ -8,11 +8,11 @@
 #Include "PRCONST.ch"
 
 /*/{Protheus.doc} PCPM180
-description
+description Programação de Materiais
 @type function
 @version 1.0
 @author Paulo Lenzi
-@since 21/01/2025
+@since 30/04/2025
 @return variant, return_description
 /*/
 User Function PCPM180()
@@ -28,17 +28,18 @@ User Function PCPM180()
     Private nGetMedia := PARAMIXB[6]
     Private nGetMedDia:= PARAMIXB[7]
     Private nGetLead  := 0
-
+    // call da tela de Material
     PCP080Screen() 
+
     FwRestArea(aArea)
 Return
 
 /*/{Protheus.doc} PCP080Screen
-description
+description Tela de Tratamento da Programação de Materiais
 @type function
 @version 1.0
 @author Paulo Lenzi
-@since 21/01/2025
+@since 30/04/2025
 @return variant, return_description
 /*/
 Static Function PCP080Screen()  
@@ -47,7 +48,7 @@ Static Function PCP080Screen()
     Local nLinhaObj := 0
     Local nLargPanel:= 0
 
-    // Corpo da TEla
+    // Corpo da Tela
     Private oDlg
     Private oFwLayer
     Private oPantitulo
@@ -57,7 +58,7 @@ Static Function PCP080Screen()
 
     //Cabeçalho
     Private oSayModulo, cSayModulo := 'PCP'
-    Private oSayTitulo, cSayTitulo := 'Gestao de Risco'
+    Private oSayTitulo, cSayTitulo := 'Programação'
     Private oSaySubTit, cSaySubTit := 'Analise de Materias e Embalagem'
 
     //Tamanho da janela
@@ -162,10 +163,6 @@ Static Function PCP080Screen()
         oSayDesc  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Descrição"}, oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
         oGetDesc  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , cGetDesc := u, cGetDesc)}, oScroll, nTotEspCol - 9, 10, PesqPict("SB1", "B1_DESC"), /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
 
-       // nLinhaObj += 15
-       // oSayPerc  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Almoxarifado"},         oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
-       // oGetPerc  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , cGetLocal := u, cGetLocal)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)   
-
         nLinhaObj += 15
         oSaydtini := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Saldo Estoque"},     oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
         oGetDtIni := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetSLD := u, nGetSLD)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
@@ -190,11 +187,6 @@ Static Function PCP080Screen()
         oSayDias  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Media Consumo Dia"},     oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
         oGetDias  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetMedDia := u, nGetMedDia)}, oScroll, nTotEspCol - 9, 10, cMascara, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
 
-       // nLinhaObj += 15
-       // oSayDias  := TSay():New(nLinhaObj, 001 + nTotCol01, {|| "Lead Time"},     oScroll, "", oFontSay,  , , , .T., RGB(031, 073, 125), , nTotEspCol, 10, , , , , , .F., , )
-       // oGetDias  := TGet():New(nLinhaObj, 001 + nTotCol02, {|u| Iif(PCount() > 0 , nGetLead := u, nGetLead)}, oScroll, nTotEspCol - 9, 10, /*cMascara*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
-
-
         nLinhaObj += 25
         nPosLinha := nLinhaObj  += 15
         oBtnProc := TButton():New(nLinhaObj,  001 + nTotCol01, "Processar", oPanDados, {|| fPopula()}, nTotEspCol - 3, 018, , oFontBtn, , .T., , , , , , )
@@ -207,11 +199,11 @@ Static Function PCP080Screen()
 Return
 
 /*/{Protheus.doc} fCriaCols
-description
+description Criação das colunas que será tratado na tela inicial
 @type function
 @version 1.0
 @author Paulo Lenzi
-@since 21/01/2025
+@since 30/04/2025
 @return variant, return_description
 /*/
 Static Function fCriaCols()
@@ -346,9 +338,9 @@ description
 @return variant, return_description
 /*/
 Static Function fPopula()
-    Local aArea   := FwgetArea()
+    Local aArea         := FwgetArea()
     Local cQuery  as character 
-    Local cAlias  := "PCP_"+getNextAlias() 
+    Local cAlias        := "PCP_"+getNextAlias() 
     Local cAnoAtual     := cvaltochar(Year(dDataBase))
     Local cMesAtual     := cvaltochar(Month(dDataBase))
     Local aDados        := {}
@@ -480,8 +472,9 @@ Static Function fPopula()
         oMarkBrowse:SetColumns(aColunas)
         oMarkBrowse:SetOwner(oPanGrid)
 
-        oMarkBrowse:AddButton("Ordens Producao"   ,{||PCP180ORDENS((cAliasTmp)->CODIGO,(cAliasTmp)->DTMOV), oMarkBrowse:Refresh(), oMarkBrowse:Refresh()},,2,,.F.)
-
+        oMarkBrowse:AddButton("Ordens Producao"   ,{||PCP180ORDENS((cAliasTmp)->CODIGO,(cAliasTmp)->DTMOV,(cAliasTmp)->ENTRADA,(cAliasTmp)->SAIDA), oMarkBrowse:Refresh(), oMarkBrowse:Refresh()},,2,,.F.)
+        oMarkBrowse:AddButton("Pedido de Compras" ,{||PCP180PED((cAliasTmp)->CODIGO,(cAliasTmp)->DTMOV,(cAliasTmp)->ENTRADA,(cAliasTmp)->SAIDA), oMarkBrowse:Refresh(), oMarkBrowse:Refresh()},,2,,.F.)
+        oMarkBrowse:AddButton("Exporta Excell"    ,{||PCP180PLA((cAliasTmp)->CODIGO,(cAliasTmp)->DTMOV,(cAliasTmp)->ENTRADA,(cAliasTmp)->SAIDA), oMarkBrowse:Refresh(), oMarkBrowse:Refresh()},,2,,.F.)
         oMarkBrowse:Activate()
 
   (calias)->(DbCloseArea()) 
@@ -497,15 +490,21 @@ description
 @since 21/01/2025
 @return variant, return_description
 /*/
-Static Function PCP180ORDENS(cProduto,dDataMov)
+Static Function PCP180ORDENS(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
  Local aArea        := FwGetArea()
  lOCAL cAliasTmp    := "TMP_" + RetCodUsr()
- local aFields as array
- Local aCols   as array
- Local dtProd := dtoc(dDataMov)
- Local cAnoSel     := cvaltochar(Year(dDataMov))
- Local cMesSel     := cvaltochar(Month(dDataMov))
- Local cDiaSel     := cvaltochar(Day(dDataMov))
+ local aFields      as array
+ Local aCols        as array
+ Local dtProd       := dtoc(dDataMov)
+ Local cAnoSel      := cvaltochar(Year(dDataMov))
+ Local cMesSel      := cvaltochar(Month(dDataMov))
+ Local cDiaSel      := cvaltochar(Day(dDataMov))
+
+ IF QTDSAIDA <= 0
+    MsgAlert("Não ha quantidade de saída para demostrar")
+    FwRestArea(aArea)
+    Return   
+ endif
 
  if oMarkBrowse != nil
         oMarkBrowse:DeActivate()
@@ -523,7 +522,7 @@ Static Function PCP180ORDENS(cProduto,dDataMov)
  cQuery += "FROM " + RetSqlName("SD4") + " SD4             "+CRLF
  cQuery += "INNER JOIN " + RetSqlName("SB1") + " SB1 ON B1_COD = D4_COD AND B1_TIPO IN ( 'EM','MP') AND SB1.D_E_L_E_T_ = ' '  "+CRLF
  cQuery += "INNER JOIN " + RetSqlName("SB2") + " SB2 ON B2_FILIAL = D4_FILIAL AND B2_COD = D4_COD AND  B2_LOCAL = D4_LOCAL AND B2_QATU > 0 AND  SB2.D_E_L_E_T_ = ' ' "+CRLF
- cQuery += "INNER JOIN " + RetSqlName("SC2") + " SC2 ON C2_FILIAL = D4_FILIAL AND C2_NUM = SUBSTRING(D4_OP,1,6) AND C2_PRODUTO = D4_PRODUTO AND SC2.D_E_L_E_T_ = ' ' "+CRLF
+ cQuery += "INNER JOIN " + RetSqlName("SC2") + " SC2 ON C2_FILIAL = D4_FILIAL AND C2_NUM+C2_ITEM+C2_SEQUEN = D4_OP AND C2_PRODUTO = D4_PRODUTO AND SC2.D_E_L_E_T_ = ' ' "+CRLF
  cQuery += "Where SD4.D_E_L_E_T_ = ' '  "+CRLF                   
  cQuery += "AND D4_FILIAL =  '"+xFilial("SD4")+"'      "+CRLF     
  cQuery += "AND YEAR(D4_DATA) = '"+cValtoChar(cAnoSel)+"' "+CRLF         
@@ -572,13 +571,295 @@ Static Function PCP180ORDENS(cProduto,dDataMov)
     oMarkBrowse:addColumn({"OP", {||aCols[oMarkBrowse:At(),1]}, GetSx3Cache("D4_OP","X3_TIPO"), pesqPict("SB8","D4_OP") , 1, tamSx3("D4_OP")[1] ,, .T. ,, .F.,, "XD4_OP",, .F., .T.,, "XD4_OP"})
 
    oMarkBrowse:addColumn({"Lote", {||aCols[oMarkBrowse:At(),2]}, GetSx3Cache("B8_LOTECTL","X3_TIPO"), pesqPict("SB8","B8_LOTECTL") , 1, tamSx3("B8_LOTECTL")[1] ,, .T. ,, .F.,, "XB8_LOTECTL",, .F., .T.,, "XB8_LOTECTL"})
-   oMarkBrowse:addColumn({"Produto", {||aCols[oMarkBrowse:At(),3]}, GetSx3Cache("B1_COD","X3_TIPO"), pesqPict("SB1","B1_COD") , 1, tamSx3("B1_COD")[1] ,, .T. ,, .F.,, "XB1_COD",, .F., .T.,, "XB1_COD"}) 
+
+   oMarkBrowse:addColumn({"Produto", {||aCols[oMarkBrowse:At(),3]}, GetSx3Cache("B1_COD","X3_TIPO"), pesqPict("SB1","B1_COD") , 1, tamSx3("B1_COD")[1] ,, .T. ,, .F.,, "XB1_COD",, .F., .T.,, "XB1_COD"})
+
    oMarkBrowse:addColumn({"Quantidade", {|| aCols[oMarkBrowse:At(),4]}, GetSx3Cache("B2_COD","X3_TIPO"), pesqPict("SB2","B2_QATU") , 1, tamSx3("B2_QATU")[1] ,, .T. ,, .F.,, "XB2_QATU",, .F., .T.,, "XB2_QATU"})
-   oMarkBrowse:addColumn({"Data Prevista", {|| aCols[oMarkBrowse:At(),5]}, GetSx3Cache("C2_DATPRF","X3_TIPO"), pesqPict("SC2","C2_DATPRF") , 1, tamSx3("C2_DATPRF")[1] ,, .T. ,, .F.,{|| Alert("Processa aqui")}, "XC2_DATPRF",, .F., .T.,, "XC2_DATPRF"})
+
+   oMarkBrowse:addColumn({"Data Prevista", {|| aCols[oMarkBrowse:At(),5]}, GetSx3Cache("C2_DATPRF","X3_TIPO"), pesqPict("SC2","C2_DATPRF") , 1, tamSx3("C2_DATPRF")[1] ,, .T. ,, .F.,{|| PCP180SC2(aCols[oMarkBrowse:At(),1],aCols[oMarkBrowse:At(),5])}, "XC2_DATPRF",, .F., .T.,, "XC2_DATPRF"})
  
-   oMarkBrowse:acolumns[5]:ledit     := .T.
-   oMarkBrowse:acolumns[5]:cReadVar:= 'aCols[oMarkBrowse:At(),5]'
    oMarkBrowse:Activate()
 
  FwRestArea(aArea)
+Return
+
+
+/*/{Protheus.doc} PCP180PED
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 29/04/2025
+@param cProduto, character, param_description
+@param dDataMov, date, param_description
+@param QTDENTRADA, variant, param_description
+@param QTDSAIDA, variant, param_description
+@return variant, return_description
+/*/
+Static Function PCP180PED(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
+ Local aArea        := FwGetArea()
+ lOCAL cAliasTmp    := "TMP_" + RetCodUsr()
+ local aFields as array
+ Local aCols   as array
+ Local dtProd := dtoc(dDataMov)
+ Local cAnoSel     := cvaltochar(Year(dDataMov))
+ Local cMesSel     := cvaltochar(Month(dDataMov))
+ Local cDiaSel     := cvaltochar(Day(dDataMov))
+
+ IF QTDENTRADA <= 0
+    MsgAlert("Não ha quantidade de Entrada para demostrar")
+    FwRestArea(aArea)
+    Return   
+ endif
+
+ if oMarkBrowse != nil
+        oMarkBrowse:DeActivate()
+ endif
+
+ aFields := {}
+
+ Aadd( aFields, { "PEDIDO","PEDIDO","C",06,0,""} )
+ Aadd( aFields, { "EMISSAO","EMISSAO","C",08,0,""} )
+ Aadd( aFields, { "FORNECE","FORNECEDOR","C",15,0,""} )
+ Aadd( aFields, { "QUANTIDADE","QUANTIDADE","N",15,3,""} )
+ Aadd( aFields, { "PREVISTO","PREVISTO","C",08,0,""} )
+ Aadd( aFields, { "APROVADO","APROVADO","C",03,0,""} )
+ Aadd( aFields, { "ENCERRADO","ENCERRADO","C",03,0,""} )
+
+    cQuery := " Select	 C7_NUM PEDIDO  "+CRLF 
+    cQuery += "		,C7_EMISSAO EMISSAO  "+CRLF 
+    cQuery += "		,A2_NREDUZ FORNECEDOR  "+CRLF 
+    cQuery += "		,C7_QUANT QUANTIDADE  "+CRLF 
+    cQuery += "		,C7_DATPRF ENTREGA  "+CRLF 
+    cQuery += "		,C7_CONAPRO APROVADO  "+CRLF 
+    cQuery += "		,C7_ENCER ENCERRADO  "+CRLF 
+    cQuery += "     ,SC7.R_E_C_N_O_ RECNO1  "+CRLF 
+    cQuery += "FROM " + RetSqlName("SC7") + " SC7  "+CRLF 
+    cQuery += "INNER JOIN " + RetSqlName("SA2") + " SA2 ON A2_COD = C7_FORNECE AND A2_LOJA = C7_LOJA AND SA2.D_E_L_E_T_ = ' '  "+CRLF 
+    cQuery += "Where SC7.D_E_L_E_T_ = ' '  "+CRLF 
+    cQuery += "AND C7_FILIAL =  '"+xFilial("SC7")+"'      "+CRLF 
+    cQuery += "AND C7_PRODUTO =  '"+cProduto+"' "+CRLF
+    cQuery += "AND YEAR(C7_DATPRF) = '"+cValtoChar(cAnoSel)+"' "+CRLF  
+    cQuery += "AND MONTH(C7_DATPRF) = "+cValtoChar(cMesSel)+"  "+CRLF
+    cQuery += "AND DAY(C7_DATPRF) = "+cValtoChar(cDiaSel)+"  "+CRLF
+
+ DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAliasTmp, .T., .T.)
+
+ TCSetField(cAliasTmp, "C7_EMISSAO", "D")
+ TCSetField(cAliasTmp, "C7_DATPRF", "D")
+
+ IF (cAliasTmp)->(Eof())
+             MsgAlert("Não tem movimentação nesse dia") 
+            (cAliasTmp)->(DbCloseArea())   
+            FwRestArea(aArea)
+            Return
+ endif
+
+ aCols := {}
+ dbSelectArea(cAliasTmp)
+ (cAliasTmp)->( dbgotop())
+  DO WHILE !(cAliasTmp)->(Eof())
+        aAdd(aCols,  {  (cAliasTmp)->PEDIDO,;
+                        dtoc(stod((cAliasTmp)->EMISSAO)),;
+                        (cAliasTmp)->FORNECEDOR,;
+                        (cAliasTmp)->QUANTIDADE,;
+                        dtoc(stod((cAliasTmp)->entrega)),;
+                        (cAliasTmp)->APROVADO,;
+                        (cAliasTmp)->ENCERRADO,;
+                        (cAliasTmp)->RECNO1})
+        (cAliasTmp)->(dbskip())
+  ENDDO
+  (cAliasTmp)->(DbCloseArea()) 
+
+  @ nPosLinha, 001 SCROLLBOX oScroll VERTICAL HORIZONTAL SIZE (oPanDados:nHeight / 2) / 2, oPanDados:nWidth / 2 OF oPanDados
+
+    //Criando o browse da temporária
+   oMarkBrowse := FwBrowse():New()
+   oMarkBrowse:SetOwner(oScroll)
+   oMarkBrowse:SetDataArray()
+   oMarkBrowse:SetArray(aCols)
+   oMarkBrowse:SetFieldFilter(aFields)
+   oMarkBrowse:SetUseFilter()
+   oMarkBrowse:SetDescription("Pedido de Compras do Dia : " + dtProd)
+   oMarkBrowse:DisableSeek()
+   oMarkBrowse:DisableReport()
+   oMarkBrowse:DisableConfig()
+   oMarkBrowse:DisableLocate()
+   oMarkBrowse:SetEditCell(.T., {|| .F.}) 
+
+   oMarkBrowse:addColumn({"Pedido", {||aCols[oMarkBrowse:At(),1]}, GetSx3Cache("C7_NUM","X3_TIPO"), pesqPict("SC7","C7_NUM") , 1, tamSx3("C7_NUM")[1] ,, .T. ,, .F.,, "XC7_NUM",, .F., .T.,, "XC7_NUM"})
+
+   oMarkBrowse:addColumn({"Emissao", {||aCols[oMarkBrowse:At(),2]}, GetSx3Cache("C7_EMISSAO","X3_TIPO"), pesqPict("SC7","C7_EMISSAO") , 1, tamSx3("C7_EMISSAO")[1] ,, .T. ,, .F.,, "XC7_EMISSAO",, .F., .T.,, "XC7_EMISSAO"})
+
+   oMarkBrowse:addColumn({"Fornecedor", {||aCols[oMarkBrowse:At(),3]}, GetSx3Cache("A2_NREDUZ","X3_TIPO"), pesqPict("SA2","A2_NREDUZ") , 1, tamSx3("A2_NREDUZ")[1] ,, .T. ,, .F.,, "XA2_NREDUZ",, .F., .T.,, "XBA2_NREDUZ"})
+
+   oMarkBrowse:addColumn({"Quantidade", {|| aCols[oMarkBrowse:At(),4]}, GetSx3Cache("B2_COD","X3_TIPO"), pesqPict("SB2","B2_QATU") , 1, tamSx3("B2_QATU")[1] ,, .T. ,, .F.,, "XB2_QATU",, .F., .T.,, "XB2_QATU"})
+
+   oMarkBrowse:addColumn({"Data Prevista", {|| aCols[oMarkBrowse:At(),5]}, GetSx3Cache("C2_DATPRF","X3_TIPO"), pesqPict("SC2","C2_DATPRF") , 1, tamSx3("C2_DATPRF")[1] ,, .T. ,, .F.,{|| AlteraPC(aCols[oMarkBrowse:At(),8],2)}, "XC2_DATPRF",, .F., .T.,, "XC2_DATPRF"})
+
+   oMarkBrowse:Activate()
+
+ FwRestArea(aArea)
+Return
+
+
+/*/{Protheus.doc} PCP180SC2
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/04/2025
+@param cNumOP, character, param_description
+@param dDataPrev, date, param_description
+@return variant, return_description
+/*/
+Static Function PCP180SC2(cNumOP,dDataPrev)
+    Local aArea         := FWGetArea()
+    Local nCorFundo     := RGB(238, 238, 238)
+    Local nJanAltura    := 281
+    Local nJanLargur    := 318 
+    Local cJanTitulo    := 'Exemplo TGet'
+    Local lDimPixels    := .T. 
+    Local lCentraliz    := .T. 
+    Local nObjLinha     := 0
+    Local nObjColun     := 0
+    Local nObjLargu     := 0
+    Local nObjAltur     := 0
+    Private cFontNome   := 'Tahoma'
+    Private oFontPadrao := TFont():New(cFontNome, , -12)
+    Private oDialogPvt 
+    Private bBlocoIni   := {|| /*fSuaFuncao()*/ } //Aqui voce pode acionar funcoes customizadas que irao ser acionadas ao abrir a dialog 
+    // 
+    //objeto2 
+    Private oSayObj2 
+    Private cSayObj2    := 'Ordem :'
+
+    Private oGetObj3 
+    Private xGetObj3    := cNumOP //Se o get for data para inicilizar use dToS(''), se for numerico inicie com 0  
+    //objeto0 
+    Private oSayObj0 
+    Private cSayObj0    := 'Prevista para:' 
+    //objeto1 
+    Private oGetObj1 
+    Private xGetObj1    := dDataPrev // sToD("") //Se o get for data para inicilizar use dToS(''), se for numerico inicie com 0  
+    //objeto14 
+    Private oBtnObj14 
+    Private cBtnObj14    := 'Confirma' 
+    Private bBtnObj14    := {|| CorrigeOP(cNumOP,xGetObj1)}  
+
+    if oDialogPvt != nil
+            oDialogPvt:DeActivate()
+    endif
+
+    //Cria a dialog
+    oDialogPvt := TDialog():New(0, 0, nJanAltura, nJanLargur, cJanTitulo, , , , , , nCorFundo, , , lDimPixels)
+
+        //objeto2 - usando a classe TSay
+        nObjLinha := 4
+        nObjColun := 4
+        nObjLargu := 40
+        nObjAltur := 6
+        oSayObj2  := TSay():New(nObjLinha, nObjColun, {|| cSayObj2}, oDialogPvt, /*cPicture*/, oFontPadrao, , , , lDimPixels, /*nClrText*/, /*nClrBack*/, nObjLargu, nObjAltur, , , , , , /*lHTML*/)
+
+        //objeto3 - usando a classe TGet
+        nObjLinha := 3
+        nObjColun := 49
+        nObjLargu := 100
+        nObjAltur := 10
+
+        oGetObj3  := TGet():New(nObjLinha, nObjColun, {|u| Iif(PCount() > 0 , xGetObj3 := u, xGetObj3)}, oDialogPvt, nObjLargu, nObjAltur, /*cPict*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontPadrao, , , lDimPixels)
+        //oGetObj3:cPlaceHold := 'Digite aqui um texto...'   //Texto que sera exibido no campo antes de ter conteudo
+        //oGetObj3:cF3        := 'Codigo da consulta padrao' //Codigo da consulta padrao / F3 que sera habilitada
+        //oGetObj3:bValid     := {|| fFuncaoVld()}           //Funcao para validar o que foi digitado
+        oGetObj3:lReadOnly  := .F.                         //Para permitir o usuario clicar mas nao editar o campo
+        //oGetObj3:lActive    := .F.                         //Para deixar o campo inativo e o usuario nao conseguir nem clicar
+        //oGetObj3:Picture      := '@!'                        //Mascara / Picture do campo
+
+        //objeto0 - usando a classe TSay
+        nObjLinha := 19
+        nObjColun := 4
+        nObjLargu := 45
+        nObjAltur := 6
+        oSayObj0  := TSay():New(nObjLinha, nObjColun, {|| cSayObj0}, oDialogPvt, /*cPicture*/, oFontPadrao, , , , lDimPixels, /*nClrText*/, /*nClrBack*/, nObjLargu, nObjAltur, , , , , , /*lHTML*/)
+ 
+        //objeto1 - usando a classe TGet
+        nObjLinha := 18
+        nObjColun := 49
+        nObjLargu := 100
+        nObjAltur := 10
+        oGetObj1  := TGet():New(nObjLinha, nObjColun, {|u| Iif(PCount() > 0 , xGetObj1 := u, xGetObj1)}, oDialogPvt, nObjLargu, nObjAltur, /*cPict*/, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontPadrao, , , lDimPixels)
+        //oGetObj1:cPlaceHold := 'Digite aqui um texto...'   //Texto que sera exibido no campo antes de ter conteudo
+        //oGetObj1:cF3        := 'Codigo da consulta padrao' //Codigo da consulta padrao / F3 que sera habilitada
+        //oGetObj1:bValid     := {|| fFuncaoVld()}           //Funcao para validar o que foi digitado
+        //oGetObj1:lReadOnly  := .T.                         //Para permitir o usuario clicar mas nao editar o campo
+        //oGetObj1:lActive    := .F.                         //Para deixar o campo inativo e o usuario nao conseguir nem clicar
+        //oGetObj1:Picture      := '@!'                        //Mascara / Picture do campo
+ 
+        //objeto14 - usando a classe TButton
+        nObjLinha := 116
+        nObjColun := 2
+        nObjLargu := (nJanLargur/2) - 4
+        nObjAltur := 15
+        oBtnObj14  := TButton():New(nObjLinha, nObjColun, cBtnObj14, oDialogPvt, bBtnObj14, nObjLargu, nObjAltur, , oFontPadrao, , lDimPixels)
+ 
+     
+    //Ativa e exibe a janela
+    oDialogPvt:Activate(, , , lCentraliz, , , bBlocoIni)
+ 
+    FWRestArea(aArea)
+Return
+
+Static Function AlteraPC(nRecno,nOpc)
+    Local aArea		:= GetArea()
+    Local aAreaSC7	:= SC7->(GetArea())
+    dbSelectArea("SC7")
+    SC7->(dbGoto(nRecno))
+    Mata120(1,/*aCabec*/,/*aItens*/,nOpc,.T.) 
+	RestArea(aAreaSC7) 
+	RestArea(aArea) 
+Return .T.
+
+/*/{Protheus.doc} CorrigeOP
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 30/04/2025
+@param cNumOP, character, param_description
+@param dDataPrev, date, param_description
+@return variant, return_description
+/*/
+Static Function CorrigeOP(cNumOP,dDataPrev)
+  Local aArea		:= GetArea()
+  Local cQuery      := " "
+
+  cQuery := "UPDATE  "+RetSqlName("SC2")+" SET C2_DATPRF = '"+Dtos(cTod(dDataPrev))+"'   "+CRLF 
+  cQuery += "from  "+RetSqlName("SC2")+" SC2   "+CRLF 
+  cQuery += "WHERE SC2.D_E_L_E_T_ = ' '   "+CRLF 
+  cQuery += "AND C2_FILIAL = '"+xFilial("SC2")+"'   "+CRLF 
+  cQuery += "AND C2_NUM+C2_ITEM+C2_SEQUEN = '"+cNumOP+"'   "+CRLF 
+
+   If TCSqlExec(cQuery) < 0
+        FWAlertInfo("Falha: " + TCSQLError(), "Nao gravou a atualização")
+        oMarkBrowse:Refresh(.T.)	   
+        RestArea(aArea) 
+        Return         
+   ENDIF
+
+  cQuery := "UPDATE  "+RetSqlName("SD4")+" SET D4_DATA = '"+Dtos(cTod(dDataPrev))+"'   "+CRLF 
+  cQuery += "from  "+RetSqlName("SD4")+" SD4   "+CRLF 
+  cQuery += "WHERE SD4.D_E_L_E_T_ = ' '   "+CRLF 
+  cQuery += "AND D4_FILIAL = '"+xFilial("SD4")+"'   "+CRLF 
+  cQuery += "AND D4_OP = '"+cNumOP+"'   "+CRLF 
+
+   If TCSqlExec(cQuery) < 0
+        FWAlertInfo("Falha: " + TCSQLError(), "Nao gravou a atualização")
+        oMarkBrowse:Refresh(.T.)	   
+        RestArea(aArea) 
+        Return         
+   Else
+         MsgAlert("Atualizado com sucesso")
+   EndIf
+ 
+  RestArea(aArea) 
 Return
