@@ -150,89 +150,99 @@ Static Function fPopula()
     Local cAlias    := "PCP_"+getNextAlias() 
     Local cQuery    := ""
 
-    cQuery:="WITH Consumo AS ( "+CRLF
+    cQuery:="WITH AliasProdutos AS ( "+CRLF
     cQuery+="    SELECT  "+CRLF
-    cQuery+="        SD4.D4_FILIAL, "+CRLF
-    cQuery+="        SD4.D4_COD, "+CRLF
-    cQuery+="        SUM(SD4.D4_QTDEORI) / NULLIF(DATEDIFF(MONTH, DATEADD(MONTH, -6, GETDATE()), GETDATE()), 0) AS CONSUMO_MENSAL  "+CRLF
-    cQuery+="    FROM  "+CRLF
-    cQuery+="         " + RetSqlName("SD4") + "   SD4 "+CRLF
-    cQuery+="    WHERE  "+CRLF
-    cQuery+="        SD4.D_E_L_E_T_ = ' '  "+CRLF
-    cQuery+="        AND SD4.D4_LOCAL IN ('02') "+CRLF
-    cQuery+="        AND SD4.D4_DATA BETWEEN DATEADD(MONTH, -6, GETDATE()) AND GETDATE() "+CRLF
-    cQuery+="    GROUP BY   "+CRLF
-    cQuery+="        SD4.D4_FILIAL, SD4.D4_COD "+CRLF
-    cQuery+="), "+CRLF
-    cQuery+="AliasProdutos AS ( "+CRLF
-    cQuery+="    SELECT  "+CRLF
-    cQuery+="        Z4_FILIAL, "+CRLF
-    cQuery+="        Z4_COD, "+CRLF
+    cQuery+="        Z4_FILIAL, "+CRLF 
+    cQuery+="        Z4_COD,  "+CRLF
     cQuery+="        Z4_CODDES "+CRLF
-    cQuery+="    FROM  " + RetSqlName("SZ4") + "   "+CRLF
+    cQuery+="    FROM " + RetSqlName("SZ4") + " "+CRLF
     cQuery+="    WHERE D_E_L_E_T_ = ' ' "+CRLF
     cQuery+="), "+CRLF
-    cQuery+="AliasEmpenhos AS ( "+CRLF
+    cQuery+="BaseCodigos AS ( "+CRLF
+    cQuery+="    SELECT "+CRLF
+    cQuery+="        SB2.B2_FILIAL, "+CRLF
+    cQuery+="        SB2.B2_COD, "+CRLF
+    cQuery+="        ISNULL(AP.Z4_CODDES, SB2.B2_COD) AS CODBASE "+CRLF
+    cQuery+="    FROM " + RetSqlName("SB2") + " SB2 "+CRLF
+    cQuery+="    LEFT JOIN AliasProdutos AP "+CRLF
+    cQuery+="        ON AP.Z4_FILIAL = SB2.B2_FILIAL  "+CRLF
+    cQuery+="       AND AP.Z4_COD = SB2.B2_COD "+CRLF
+    cQuery+="    WHERE SB2.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery+="      AND SB2.B2_FILIAL =  '"+xFilial("SB2")+"'  "+CRLF
+    cQuery+="      AND SB2.B2_LOCAL = '02' "+CRLF
+    cQuery+="      AND SB2.B2_QATU > 0 "+CRLF
+    cQuery+="), "+CRLF
+    cQuery+="Consumo AS ( "+CRLF
+    cQuery+="    SELECT   "+CRLF
+    cQuery+="        SD4.D4_FILIAL,  "+CRLF
+    cQuery+="        ISNULL(AP.Z4_CODDES, SD4.D4_COD) AS CODBASE, "+CRLF
+    cQuery+="        SUM(SD4.D4_QTDEORI) / NULLIF(DATEDIFF(MONTH, DATEADD(MONTH, -6, GETDATE()), GETDATE()), 0) AS CONSUMO_MENSAL   "+CRLF
+    cQuery+="    FROM " + RetSqlName("SD4") + " SD4 "+CRLF
+    cQuery+="    LEFT JOIN AliasProdutos AP  "+CRLF
+    cQuery+="        ON AP.Z4_FILIAL = SD4.D4_FILIAL  "+CRLF
+    cQuery+="       AND AP.Z4_COD = SD4.D4_COD "+CRLF
+    cQuery+="    WHERE SD4.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery+="      AND SD4.D4_LOCAL IN ('02') "+CRLF
+    cQuery+="      AND SD4.D4_DATA BETWEEN DATEADD(MONTH, -6, GETDATE()) AND GETDATE()  "+CRLF
+    cQuery+="    GROUP BY SD4.D4_FILIAL, ISNULL(AP.Z4_CODDES, SD4.D4_COD) "+CRLF
+    cQuery+="), "+CRLF
+    cQuery+="Empenhos AS ( "+CRLF
     cQuery+="    SELECT  "+CRLF
-    cQuery+="        SD4.D4_FILIAL,"+CRLF
-    cQuery+="        SD4.D4_COD, "+CRLF
-    cQuery+="        SUM(SD4.D4_QUANT) QTEMP "+CRLF
-    cQuery+="    FROM  "+CRLF
-    cQuery+="         " + RetSqlName("SD4") + "   SD4 "+CRLF
-    cQuery+="    WHERE  "+CRLF
-    cQuery+="        SD4.D_E_L_E_T_ = ' '  "+CRLF
-    cQuery+="        AND SD4.D4_LOCAL IN ('02') "+CRLF
-    cQuery+="		 AND SD4.D4_QUANT > 0 "+CRLF
-    cQuery+="        GROUP BY SD4.D4_FILIAL, SD4.D4_COD "+CRLF
-    cQuery+=") "+CRLF
-    cQuery+="SELECT	"+CRLF
-    cQuery+="    SB2.B2_FILIAL,  "+CRLF
-    cQuery+="    SB2.B2_COD,  "+CRLF
+    cQuery+="        SD4.D4_FILIAL, "+CRLF
+    cQuery+="        ISNULL(AP.Z4_CODDES, SD4.D4_COD) AS CODBASE, "+CRLF
+    cQuery+="        SUM(SD4.D4_QUANT) AS QTEMP "+CRLF
+    cQuery+="    FROM " + RetSqlName("SD4") + " SD4 "+CRLF
+    cQuery+="    LEFT JOIN AliasProdutos AP  "+CRLF
+    cQuery+="        ON AP.Z4_FILIAL = SD4.D4_FILIAL  "+CRLF
+    cQuery+="       AND AP.Z4_COD = SD4.D4_COD "+CRLF
+    cQuery+="    WHERE SD4.D_E_L_E_T_ = ' '   "+CRLF
+    cQuery+="      AND SD4.D4_LOCAL IN ('02')  "+CRLF
+    cQuery+="      AND SD4.D4_QUANT > 0 "+CRLF
+    cQuery+="    GROUP BY SD4.D4_FILIAL, ISNULL(AP.Z4_CODDES, SD4.D4_COD) "+CRLF
+    cQuery+=")"+CRLF
+    cQuery+="SELECT "+CRLF
+    cQuery+="    BC.B2_FILIAL, "+CRLF
+    cQuery+="    BC.B2_COD,  "+CRLF
     cQuery+="    SB1.B1_DESC, "+CRLF
     cQuery+="    SB1.B1_TIPO, "+CRLF
-    cQuery+="	 CASE  "+CRLF
-    cQuery+="		WHEN B1_XTPBASE = 'A' THEN 'AGUA' "+CRLF
-    cQuery+="		WHEN B1_XTPBASE = 'S' THEN 'SOLVENTE' "+CRLF
-    cQuery+="		ELSE ' ' END AS  TIPO, "+CRLF
-    cQuery+="    SUM(SB2.B2_QATU) AS B2_QATU, "+CRLF
-    cQuery+="	 COALESCE(EMPX.QTEMP, 0) AS B2_QEMP, "+CRLF
-    cQuery+="    SUM(SB2.B2_QATU - SB2.B2_QEMP) AS DISPONIVEL,  "+CRLF
-    cQuery+="    COALESCE(CONS.CONSUMO_MENSAL, 0) AS CONSUMO_MENSAL, "+CRLF
-    cQuery+="    COALESCE(CONS.CONSUMO_MENSAL / 30.0, 0) AS CONSUMO_DIARIO, "+CRLF 
     cQuery+="    CASE  "+CRLF
-    cQuery+="        WHEN COALESCE(CONS.CONSUMO_MENSAL / 30.0, 0) > 0 THEN   "+CRLF
-    cQuery+="            SUM(SB2.B2_QATU - SB2.B2_QEMP) / (CONS.CONSUMO_MENSAL / 30.0)  "+CRLF
-    cQuery+="        ELSE NULL  "+CRLF
-    cQuery+="    END AS ESTOQUE_DIAS  "+CRLF
-    cQuery+="FROM   "+CRLF
-    cQuery+="     " + RetSqlName("SB2") + "   SB2  "+CRLF
-    cQuery+="    INNER JOIN  " + RetSqlName("SB1") + "  SB1   "+CRLF
-    cQuery+="        ON SB1.B1_COD = SB2.B2_COD "+CRLF
-    cQuery+="        AND SB1.B1_TIPO = 'EM'  "+CRLF
-    cQuery+="		AND SB1.B1_XTPCOMP = 'P' "+CRLF
-    cQuery+="        AND SB1.D_E_L_E_T_ = ' '   "+CRLF
-    cQuery+="    LEFT JOIN AliasProdutos ALIAS  "+CRLF
-    cQuery+="        ON ALIAS.Z4_FILIAL = SB2.B2_FILIAL AND ALIAS.Z4_COD = SB2.B2_COD  "+CRLF
-    cQuery+="    LEFT JOIN Consumo CONS  "+CRLF
-    cQuery+="        ON CONS.D4_FILIAL = SB2.B2_FILIAL "+CRLF
-    cQuery+="        AND (CONS.D4_COD = SB2.B2_COD OR CONS.D4_COD = ALIAS.Z4_CODDES) "+CRLF
-    cQuery+="    LEFT JOIN AliasEmpenhos EMPX   "+CRLF
-    cQuery+="        ON EMPX.D4_FILIAL = SB2.B2_FILIAL "+CRLF
-    cQuery+="        AND (EMPX.D4_COD = SB2.B2_COD OR EMPX.D4_COD = ALIAS.Z4_CODDES) "+CRLF
-    cQuery+="WHERE   "+CRLF
-    cQuery+="    SB2.D_E_L_E_T_ = ' '  "+CRLF
-    cQuery+="    AND SB2.B2_FILIAL = '0803' "+CRLF
-    cQuery+="    AND SB2.B2_LOCAL = '02' "+CRLF
-    cQuery+="    AND SB2.B2_QATU > 0 "+CRLF
-    cQuery+="GROUP BY "+CRLF
-    cQuery+="    SB2.B2_FILIAL,  "+CRLF
-    cQuery+="    SB2.B2_COD,  "+CRLF
-    cQuery+="    SB1.B1_DESC,  "+CRLF
+    cQuery+="        WHEN SB1.B1_XTPBASE = 'A' THEN 'AGUA' "+CRLF
+    cQuery+="        WHEN SB1.B1_XTPBASE = 'S' THEN 'SOLVENTE' "+CRLF
+    cQuery+="        ELSE ' ' "+CRLF
+    cQuery+="    END AS TIPO, "+CRLF
+    cQuery+="    SUM(SB2.B2_QATU) AS B2_QATU, "+CRLF
+    cQuery+="    ISNULL(E.QTEMP, 0) AS B2_QEMP, "+CRLF
+    cQuery+="    SUM(SB2.B2_QATU) - ISNULL(E.QTEMP, 0) AS DISPONIVEL, "+CRLF
+    cQuery+="    ISNULL(C.CONSUMO_MENSAL, 0) AS CONSUMO_MENSAL, "+CRLF
+    cQuery+="    ISNULL(C.CONSUMO_MENSAL / 30.0, 0) AS CONSUMO_DIARIO, "+CRLF
+    cQuery+="    CASE "+CRLF
+    cQuery+="        WHEN ISNULL(C.CONSUMO_MENSAL / 30.0, 0) > 0 THEN  "+CRLF
+    cQuery+="            (SUM(SB2.B2_QATU) - ISNULL(E.QTEMP, 0)) / (C.CONSUMO_MENSAL / 30.0) "+CRLF
+    cQuery+="        ELSE NULL "+CRLF
+    cQuery+="    END AS ESTOQUE_DIAS "+CRLF
+    cQuery+="FROM BaseCodigos BC "+CRLF
+    cQuery+="JOIN " + RetSqlName("SB2") + " SB2  "+CRLF
+    cQuery+="    ON SB2.B2_FILIAL = BC.B2_FILIAL  "+CRLF
+    cQuery+="   AND SB2.B2_COD = BC.B2_COD  "+CRLF
+    cQuery+="   AND SB2.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery+="JOIN " + RetSqlName("SB1") + " SB1  "+CRLF
+    cQuery+="    ON SB1.B1_COD = BC.B2_COD  "+CRLF
+    cQuery+="   AND SB1.B1_TIPO = 'EM'   "+CRLF
+    cQuery+="   AND SB1.B1_XTPCOMP = 'P'  "+CRLF
+    cQuery+="   AND SB1.D_E_L_E_T_ = ' ' "+CRLF
+    cQuery+="LEFT JOIN Consumo C  "+CRLF
+    cQuery+="    ON C.D4_FILIAL = BC.B2_FILIAL AND C.CODBASE = BC.CODBASE "+CRLF
+    cQuery+="LEFT JOIN Empenhos E  "+CRLF
+    cQuery+="    ON E.D4_FILIAL = BC.B2_FILIAL AND E.CODBASE = BC.CODBASE "+CRLF
+    cQuery+="GROUP BY  "+CRLF
+    cQuery+="    BC.B2_FILIAL, "+CRLF
+    cQuery+="    BC.B2_COD, "+CRLF
+    cQuery+="    SB1.B1_DESC, "+CRLF
     cQuery+="    SB1.B1_TIPO, "+CRLF
-    cQuery+="	SB1.B1_XTPBASE, "+CRLF
-    cQuery+="    CONS.CONSUMO_MENSAL, "+CRLF
-    cQuery+="	EMPX.QTEMP "+CRLF
-    cQuery+="    ORDER BY DISPONIVEL "+CRLF
+    cQuery+="    SB1.B1_XTPBASE, "+CRLF
+    cQuery+="    C.CONSUMO_MENSAL, "+CRLF
+    cQuery+="    E.QTEMP "+CRLF
+    cQuery+="ORDER BY DISPONIVEL "+CRLF
 
     DBUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAlias, .T., .T.)
 
