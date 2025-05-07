@@ -586,7 +586,7 @@ Static Function PCP180ORDENS(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
    oMarkBrowse:DisableReport()
    oMarkBrowse:DisableConfig()
    oMarkBrowse:DisableLocate()
-   oMarkBrowse:SetEditCell(.T., {|| .T.}) 
+   oMarkBrowse:SetEditCell(.F., {|| .F.}) 
 
     oMarkBrowse:addColumn({"OP", {||aCols[oMarkBrowse:At(),1]}, GetSx3Cache("D4_OP","X3_TIPO"), pesqPict("SB8","D4_OP") , 1, tamSx3("D4_OP")[1] ,, .T. ,, .F.,, "XD4_OP",, .F., .T.,, "XD4_OP"})
 
@@ -705,7 +705,7 @@ Static Function PCP180PED(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
    oMarkBrowse:DisableReport()
    oMarkBrowse:DisableConfig()
    oMarkBrowse:DisableLocate()
-   oMarkBrowse:SetEditCell(.T., {|| .F.}) 
+   oMarkBrowse:SetEditCell(.F., {|| .F.}) 
 
    oMarkBrowse:addColumn({"Pedido", {||aCols[oMarkBrowse:At(),1]}, GetSx3Cache("C7_NUM","X3_TIPO"), pesqPict("SC7","C7_NUM") , 1, tamSx3("C7_NUM")[1] ,, .T. ,, .F.,, "XC7_NUM",, .F., .T.,, "XC7_NUM"})
 
