@@ -570,8 +570,6 @@ Static Function PCP180ORDENS(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
   ENDDO
   (cAliasTmp)->(DbCloseArea()) 
 
-
-
   @ nPosLinha, 001 SCROLLBOX oScroll VERTICAL HORIZONTAL SIZE (oPanDados:nHeight / 2) / 2, oPanDados:nWidth / 2 OF oPanDados
 
     //Criando o browse da temporária
@@ -588,7 +586,7 @@ Static Function PCP180ORDENS(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
    oMarkBrowse:DisableLocate()
    oMarkBrowse:SetEditCell(.F., {|| .F.}) 
 
-    oMarkBrowse:addColumn({"OP", {||aCols[oMarkBrowse:At(),1]}, GetSx3Cache("D4_OP","X3_TIPO"), pesqPict("SB8","D4_OP") , 1, tamSx3("D4_OP")[1] ,, .T. ,, .F.,, "XD4_OP",, .F., .T.,, "XD4_OP"})
+   oMarkBrowse:addColumn({"OP", {||aCols[oMarkBrowse:At(),1]}, GetSx3Cache("D4_OP","X3_TIPO"), pesqPict("SB8","D4_OP") , 1, tamSx3("D4_OP")[1] ,, .T. ,, .F.,, "XD4_OP",, .F., .T.,, "XD4_OP"})
 
    oMarkBrowse:addColumn({"Lote", {||aCols[oMarkBrowse:At(),2]}, GetSx3Cache("B8_LOTECTL","X3_TIPO"), pesqPict("SB8","B8_LOTECTL") , 1, tamSx3("B8_LOTECTL")[1] ,, .T. ,, .F.,, "XB8_LOTECTL",, .F., .T.,, "XB8_LOTECTL"})
 
@@ -597,7 +595,7 @@ Static Function PCP180ORDENS(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
    oMarkBrowse:addColumn({"Quantidade", {|| aCols[oMarkBrowse:At(),4]}, GetSx3Cache("B2_COD","X3_TIPO"), pesqPict("SB2","B2_QATU") , 1, tamSx3("B2_QATU")[1] ,, .T. ,, .F.,, "XB2_QATU",, .F., .T.,, "XB2_QATU"})
 
    oMarkBrowse:addColumn({"Data Prevista", {|| aCols[oMarkBrowse:At(),5]}, GetSx3Cache("C2_DATPRF","X3_TIPO"), pesqPict("SC2","C2_DATPRF") , 1, tamSx3("C2_DATPRF")[1] ,, .T. ,, .F.,{|| PCP180SC2(aCols[oMarkBrowse:At(),1],aCols[oMarkBrowse:At(),5])}, "XC2_DATPRF",, .F., .T.,, "XC2_DATPRF"})
- 
+
    oMarkBrowse:Activate()
 
  FwRestArea(aArea)
@@ -692,7 +690,6 @@ Static Function PCP180PED(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
   (cAliasTmp)->(DbCloseArea()) 
 
   @ nPosLinha, 001 SCROLLBOX oScroll VERTICAL HORIZONTAL SIZE (oPanDados:nHeight / 2) / 2, oPanDados:nWidth / 2 OF oPanDados
-
     //Criando o browse da temporária
    oMarkBrowse := FwBrowse():New()
    oMarkBrowse:SetOwner(oScroll)
@@ -715,14 +712,25 @@ Static Function PCP180PED(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
 
    oMarkBrowse:addColumn({"Quantidade", {|| aCols[oMarkBrowse:At(),4]}, GetSx3Cache("B2_COD","X3_TIPO"), pesqPict("SB2","B2_QATU") , 1, tamSx3("B2_QATU")[1] ,, .T. ,, .F.,, "XB2_QATU",, .F., .T.,, "XB2_QATU"})
 
-   oMarkBrowse:addColumn({"Data Prevista", {|| aCols[oMarkBrowse:At(),5]}, GetSx3Cache("C2_DATPRF","X3_TIPO"), pesqPict("SC2","C2_DATPRF") , 1, tamSx3("C2_DATPRF")[1] ,, .T. ,, .F.,{|| AlteraPC(aCols[oMarkBrowse:At(),8],2)}, "XC2_DATPRF",, .F., .T.,, "XC2_DATPRF"})
-
+   oMarkBrowse:addColumn({"Data Prevista", {|| aCols[oMarkBrowse:At(),5]}, GetSx3Cache("C2_DATPRF","X3_TIPO"), pesqPict("SC2","C2_DATPRF") , 1, tamSx3("C2_DATPRF")[1] ,, .T. ,, .F.,{|| MsgRun("Lendo informações...", "Teste", {|| AlteraPC(aCols[oMarkBrowse:At(),8],2) })}, "XC2_DATPRF",, .F., .T.,, "XC2_DATPRF"})
+    
    oMarkBrowse:Activate()
 
  FwRestArea(aArea)
 Return
 
-
+/*/{Protheus.doc} PCP180NFE
+description
+@type function
+@version 1.0
+@author Paulo Lenzi
+@since 07/05/2025
+@param cProduto, character, param_description
+@param dDataMov, date, param_description
+@param QTDENTRADA, variant, param_description
+@param QTDSAIDA, variant, param_description
+@return variant, return_description
+/*/
 Static Function PCP180NFE(cProduto,dDataMov,QTDENTRADA,QTDSAIDA)
     Local aArea        := FwGetArea()
     lOCAL cAliasTmp    := "TMP_" + RetCodUsr()
